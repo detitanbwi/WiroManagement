@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('projects.invoices', InvoiceController::class)->shallow();
     Route::resource('projects.quotations', QuotationController::class)->shallow();
+    Route::post('quotations/{quotation}/convert', [QuotationController::class, 'convertToInvoice'])->name('quotations.convert');
     Route::post('projects/{project}/status', [ProjectController::class, 'updateStatus'])->name('projects.status.update');
 
     Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('payments.store');

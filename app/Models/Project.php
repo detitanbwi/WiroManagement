@@ -45,7 +45,7 @@ class Project extends Model
     // Ledger Logic
     public function getContractValueAttribute()
     {
-        return $this->quotations()->where('status', 'approved')->sum('total_amount');
+        return $this->invoices()->where('type', '!=', 'change_request')->sum('total_amount');
     }
 
     public function getTotalCrValueAttribute()

@@ -68,4 +68,44 @@ class QuotationController extends Controller
 
         return redirect()->route('projects.show', $project)->with('success', 'Quotation deleted successfully.');
     }
+    public function convertToInvoice(Quotation $quotation)
+    {
+        if ($quotation->status !== 'approved') {
+            return back()->with('error', 'Hanya quotation yang sudah APPROVED yang dapat dikonversi menjadi invoice.');
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
+
+            $project = $quotation->project;
+            
+            // Create Invoice
+            $invoice = $project->invoices()->create([
+                'invoice_number' => 'INV/' . date('Ymd') . '/' . str_pad($project->invoices()->count() + 1, 2, '0', STR_PAD_LEFT),
+                'type' => 'final',
+                'subtotal' => $quotation->total_amount,
+                'tax' => 0,
+                'total_amount' => $quotation->total_amount,
+                'due_date' => now()->addDays(7),
+                'issued_date' => now(),
+                'status' => 'issued',
+                'notes' => 'Generated from Quotation ' . $quotation->quotation_number
+            ]);
+
+            // Create Invoice Item
+            $invoice->items()->create([
+                'description' => $quotation->description ?? $project->title,
+                'qty' => 1,
+                'price' => $quotation->total_amount,
+                'subtotal' => $quotation->total_amount
+            ]);
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return redirect()->route('invoices.show', $invoice)->with('success', 'Quotation berhasil dikonversi menjadi Invoice.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Gagal konversi quotation: ' . $e->getMessage());
+        }
+    }
 }

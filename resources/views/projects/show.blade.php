@@ -82,7 +82,7 @@
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <p class="text-sm text-gray-500 font-medium">Total Nilai Kontrak</p>
             <p class="text-2xl font-bold text-gray-900 mt-1 uppercase">Rp {{ number_format($project->contract_value, 0, ',', '.') }}</p>
-            <p class="text-xs text-gray-400 mt-2">Dari quotation yang disetujui</p>
+            <p class="text-xs text-gray-400 mt-2">Total dari invoice utama yang diterbitkan</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <p class="text-sm text-gray-500 font-medium">Extra (CR)</p>
@@ -137,8 +137,14 @@
                                         {{ $invoice->status }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-6 py-4 text-right flex justify-end items-center space-x-2">
                                     <a href="{{ route('invoices.show', $invoice) }}" class="text-primary font-bold hover:underline">Detail</a>
+                                    <span class="text-gray-300">|</span>
+                                    <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline" onsubmit="return confirm('Hapus invoice ini? Semua data pembayaran terkait juga akan terhapus.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 font-bold hover:underline">Hapus</button>
+                                    </form>
                                 </td>
                             </tr>
                             @empty

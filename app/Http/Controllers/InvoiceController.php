@@ -96,11 +96,8 @@ class InvoiceController extends Controller
 
     public function destroy(Invoice $invoice)
     {
-        if ($invoice->status !== 'draft') {
-            return back()->with('error', 'Issued or Paid invoices cannot be deleted.');
-        }
         $project = $invoice->project;
         $invoice->delete();
-        return redirect()->route('projects.show', $project)->with('success', 'Invoice deleted.');
+        return redirect()->route('projects.show', $project)->with('success', 'Invoice deleted successfully.');
     }
 }
