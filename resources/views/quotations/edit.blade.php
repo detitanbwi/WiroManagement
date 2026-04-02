@@ -14,7 +14,7 @@
     </div>
 
     <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-        <form action="{{ route('quotations.update', $quotation) }}" method="POST">
+        <form action="{{ route('quotations.update', $quotation) }}" method="POST" id="quotation-form">
             @csrf
             @method('PUT')
             
@@ -116,7 +116,7 @@
         }
     });
 
-    var form = document.querySelector('form');
+    var form = document.getElementById('quotation-form');
     form.onsubmit = function() {
         document.querySelector('#description_hidden').value = quill.root.innerHTML;
         return true;

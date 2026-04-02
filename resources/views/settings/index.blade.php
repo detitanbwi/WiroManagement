@@ -10,7 +10,7 @@
     </div>
 
     <div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-        <form action="{{ route('settings.update') }}" method="POST" class="p-6 space-y-8">
+        <form action="{{ route('settings.update') }}" method="POST" id="settings-form" class="p-6 space-y-8">
             @csrf
             
             <!-- Section: Document Terms -->
@@ -82,7 +82,7 @@
     var qQuoNotes = setupQuill('#editor-quotation-notes', '#quotation_notes_hidden');
     var qQuoTerms = setupQuill('#editor-quotation-terms', '#quotation_terms_hidden');
 
-    var form = document.querySelector('form');
+    var form = document.getElementById('settings-form');
     form.onsubmit = function() {
         document.querySelector('#invoice_terms_hidden').value = qInvoiceTerms.root.innerHTML;
         document.querySelector('#quotation_notes_hidden').value = qQuoNotes.root.innerHTML;

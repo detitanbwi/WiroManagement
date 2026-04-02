@@ -14,7 +14,7 @@
     </div>
 
     <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-        <form action="{{ route('projects.quotations.store', $project) }}" method="POST">
+        <form action="{{ route('projects.quotations.store', $project) }}" method="POST" id="quotation-form">
             @csrf
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -120,7 +120,7 @@
         }
     });
 
-    var form = document.querySelector('form');
+    var form = document.getElementById('quotation-form');
     form.onsubmit = function() {
         document.querySelector('#description_hidden').value = quill.root.innerHTML;
         return true;
