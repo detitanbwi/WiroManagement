@@ -89,7 +89,19 @@
                             {!! $quotation->description ?? 'Penawaran harga resmi untuk pengembangan proyek yang tertera.' !!}
                         </div>
                     </td>
-                    <td class="px-4 py-6 text-right font-bold text-gray-800 text-lg">
+                <tr class="border-b border-gray-100">
+                    <td class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Durasi Kerja:</td>
+                    <td class="px-4 py-3 text-right font-bold text-gray-800">{{ $quotation->working_duration }}</td>
+                </tr>
+                @if($quotation->warranty_days > 0)
+                <tr class="border-b border-gray-100">
+                    <td class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Garansi Layanan:</td>
+                    <td class="px-4 py-3 text-right font-bold text-gray-800">{{ $quotation->warranty_days }} Hari</td>
+                </tr>
+                @endif
+                <tr class="bg-blue-50">
+                    <td class="px-4 py-4 text-right font-bold text-primary uppercase text-sm">TOTAL NILAI INVESTASI (SUBTOTAL):</td>
+                    <td class="px-4 py-4 text-right font-bold text-primary text-xl">
                         Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}
                     </td>
                 </tr>
