@@ -2,6 +2,18 @@
 
 @section('title', 'Detail Quotation')
 
+<style>
+    .rich-text-content ul { list-style-type: disc !important; padding-left: 2rem !important; }
+    .rich-text-content ol { list-style-type: decimal !important; padding-left: 2rem !important; }
+    .rich-text-content .ql-indent-1 { padding-left: 3em !important; }
+    .rich-text-content .ql-indent-2 { padding-left: 6em !important; }
+    .rich-text-content .ql-indent-3 { padding-left: 9em !important; }
+    .rich-text-content .ql-indent-4 { padding-left: 12em !important; }
+    .rich-text-content h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; }
+    .rich-text-content h2 { font-size: 1.25rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.5rem; }
+    .rich-text-content h3 { font-size: 1.125rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; }
+</style>
+
 @section('content')
 <div class="max-w-4xl mx-auto">
     <div class="mb-6 flex justify-between items-end">
@@ -73,7 +85,7 @@
                 <tr class="border-b border-gray-100">
                     <td class="px-4 py-6">
                         <p class="font-bold text-gray-800">{{ $quotation->project->title }}</p>
-                        <div class="text-sm text-gray-700 mt-2 space-y-1">
+                        <div class="rich-text-content text-sm text-gray-700 mt-2 space-y-1">
                             {!! $quotation->description ?? 'Penawaran harga resmi untuk pengembangan proyek yang tertera.' !!}
                         </div>
                     </td>

@@ -13,8 +13,8 @@
         .title { font-size: 16px; font-weight: bold; text-transform: uppercase; border-bottom: 1.5px solid #333; display: inline-block; padding: 0 40px 3px 40px; }
         
         .info-table { width: 100%; margin-bottom: 25px; }
-        .info-left { width: 45%; vertical-align: top; }
-        .info-right { width: 55%; vertical-align: top; }
+        .info-left { width: 50%; vertical-align: top; }
+        .info-right { width: 50%; vertical-align: top; }
 
         .client-box { border: 1px solid #e5e7eb; padding: 12px; border-radius: 5px; background: #f9fafb; }
 
@@ -69,10 +69,10 @@
                         <div style="color: #6b7280; font-size: 10px; margin-top: 4px; line-height: 1.5; white-space: pre-line;">{{ $client->address }}</div>
                     </div>
                 </td>
-                <td class="info-right">
+                <td class="info-right" style="padding-left: 15px;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                         <tr>
-                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0; width: 110px; vertical-align: top;">No. Registrasi</td>
+                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0; width: 110px; vertical-align: top;">No Quotation</td>
                             <td style="padding: 3px 5px; font-weight: bold; vertical-align: top;">: {{ $quotation->quotation_number }}</td>
                         </tr>
                         <tr>
