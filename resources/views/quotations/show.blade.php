@@ -73,8 +73,8 @@
                 <tr class="border-b border-gray-100">
                     <td class="px-4 py-6">
                         <p class="font-bold text-gray-800">{{ $quotation->project->title }}</p>
-                        <div class="text-sm text-gray-500 mt-2 space-y-1">
-                            {!! nl2br(e($quotation->description ?? 'Penawaran harga resmi untuk pengembangan proyek yang tertera.')) !!}
+                        <div class="text-sm text-gray-700 mt-2 space-y-1">
+                            {!! $quotation->description ?? 'Penawaran harga resmi untuk pengembangan proyek yang tertera.' !!}
                         </div>
                     </td>
                     <td class="px-4 py-6 text-right font-bold text-gray-800 text-lg">
