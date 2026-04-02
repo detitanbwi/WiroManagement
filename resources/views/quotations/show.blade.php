@@ -74,39 +74,38 @@
             </div>
         </div>
 
-        <table class="w-full mb-8">
-            <thead class="bg-gray-50 border-y border-gray-200">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500">DESKRIPSI PROYEK</th>
-                    <th class="px-4 py-3 text-right text-xs font-bold text-gray-500">TOTAL</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="border-b border-gray-100">
-                    <td class="px-4 py-6">
-                        <p class="font-bold text-gray-800">{{ $quotation->project->title }}</p>
-                        <div class="rich-text-content text-sm text-gray-700 mt-2 space-y-1">
-                            {!! $quotation->description ?? 'Penawaran harga resmi untuk pengembangan proyek yang tertera.' !!}
+        <div class="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-200 bg-white">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Rincian Investasi & Pengembangan</h3>
+            </div>
+            <div class="p-8 bg-white">
+                <div class="mb-8">
+                    <h4 class="text-lg font-bold text-gray-800 mb-3">{{ $quotation->project->title }}</h4>
+                    <div class="rich-text-content text-sm text-gray-600 leading-relaxed">
+                        {!! $quotation->description ?? 'Penawaran harga resmi untuk pengembangan proyek yang tertera.' !!}
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row md:items-end justify-between pt-8 border-t border-gray-100 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Durasi Pengerjaan</p>
+                            <p class="text-sm font-bold text-gray-700">{{ $quotation->working_duration }}</p>
                         </div>
-                    </td>
-                <tr class="border-b border-gray-100">
-                    <td class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Durasi Kerja:</td>
-                    <td class="px-4 py-3 text-right font-bold text-gray-800">{{ $quotation->working_duration }}</td>
-                </tr>
-                @if($quotation->warranty_days > 0)
-                <tr class="border-b border-gray-100">
-                    <td class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Garansi Layanan:</td>
-                    <td class="px-4 py-3 text-right font-bold text-gray-800">{{ $quotation->warranty_days }} Hari</td>
-                </tr>
-                @endif
-                <tr class="bg-blue-50">
-                    <td class="px-4 py-4 text-right font-bold text-primary uppercase text-sm">TOTAL NILAI INVESTASI (SUBTOTAL):</td>
-                    <td class="px-4 py-4 text-right font-bold text-primary text-xl">
-                        Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        @if ($quotation->warranty_days > 0)
+                            <div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Garansi Layanan</p>
+                                <p class="text-sm font-bold text-gray-700">{{ $quotation->warranty_days }} Hari</p>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Nilai Investasi (Subtotal)</p>
+                        <p class="text-3xl font-black text-primary">Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="flex justify-end">
             <div class="w-64 text-center">

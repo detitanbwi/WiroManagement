@@ -212,11 +212,13 @@
                         <div style="font-size: 13px; font-weight: bold; color: #111827;">{{ $client->name }}</div>
                         @if($client->company_name)
                             <div style="font-size: 11px; font-weight: bold; color: #4b5563; margin-top: 1px;">
-                                {{ $client->company_name }}</div>
+                                {{ $client->company_name }}
+                            </div>
                         @endif
                         <div
                             style="color: #6b7280; font-size: 10px; margin-top: 4px; line-height: 1.5; white-space: pre-line;">
-                            {{ $client->address }}</div>
+                            {{ $client->address }}
+                        </div>
                     </div>
                 </td>
                 <td class="info-right" style="padding-left: 30px;">
@@ -226,19 +228,22 @@
                                 style="font-weight: bold; color: #6b7280; padding: 3px 0; width: 85px; vertical-align: top;">
                                 No Quotation</td>
                             <td style="padding: 3px 5px; font-weight: bold; vertical-align: top;">:
-                                {{ $quotation->quotation_number }}</td>
+                                {{ $quotation->quotation_number }}
+                            </td>
                         </tr>
                         <tr>
                             <td style="font-weight: bold; color: #6b7280; padding: 3px 0; vertical-align: top;">Tanggal
                             </td>
                             <td style="padding: 3px 5px; vertical-align: top;">:
-                                {{ $quotation->created_at->format('d F Y') }}</td>
+                                {{ $quotation->created_at->format('d F Y') }}
+                            </td>
                         </tr>
                         <tr>
                             <td style="font-weight: bold; color: #6b7280; padding: 3px 0; vertical-align: top;">Berlaku
                                 Sampai</td>
                             <td style="padding: 3px 5px; color: #dc2626; vertical-align: top;">:
-                                {{ $quotation->created_at->addDays(14)->format('d F Y') }}</td>
+                                {{ $quotation->created_at->addDays(14)->format('d F Y') }}
+                            </td>
                         </tr>
                     </table>
                 </td>
@@ -248,59 +253,53 @@
         <div class="description-box">
             <div class="section-title">Lingkup Pekerjaan & Deskripsi Proyek</div>
             <div style="font-weight: bold; font-size: 12px; margin-bottom: 6px; color: #111827;">
-                {{ $quotation->project->title }}</div>
+                {{ $quotation->project->title }}
+            </div>
             <div class="rich-text-content" style="font-size: 11px; color: #4b5563;">
                 {!! $quotation->description ?? 'Pengembangan sistem software sesuai dengan rincian teknis yang telah didiskusikan sebelumnya.' !!}
             </div>
         </div>
 
-        <div style="page-break-inside: avoid;">
-            <table class="table">
-                <thead>
+        <div
+            style="page-break-inside: avoid; border: 1px solid #e5e7eb; border-radius: 5px; background: #fff; margin-bottom: 20px; overflow: hidden;">
+            <div
+                style="background: #2563eb; color: #fff; padding: 10px 15px; font-weight: bold; font-size: 10px; text-transform: uppercase;">
+                Rincian Investasi Proyek
+            </div>
+            <div style="padding: 15px;">
+                <div style="margin-bottom: 15px;">
+                    <div style="font-weight: bold; color: #111827; font-size: 12px; margin-bottom: 2px;">Biaya
+                        Pengembangan Proyek (One-Time Cost)</div>
+                    <div style="font-size: 10px; color: #6b7280;">Lingkup pekerjaan sesuai dengan detail deskripsi
+                        rincian di atas.</div>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                     <tr>
-                        <th style="width: 70%;">DESKRIPSI INVESTASI</th>
-                        <th style="text-align: right; width: 30%;">TOTAL HARGA</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <div style="font-weight: bold; color: #111827;">Biaya Pengembangan Proyek (One-Time Cost)</div>
-                            <div style="font-size: 10px; color: #6b7280; margin-top: 4px;">Sesuai dengan lingkup pekerjaan
-                                yang tertera pada bagian rincian deskripsi di atas.</div>
-                        </td>
-                        <td style="text-align: right; font-weight: bold; vertical-align: middle;">
-                            Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: right; border-bottom: none; padding-top: 10px;">
-                            <span style="font-size: 10px; color: #666; text-transform: uppercase;">Durasi Kerja:</span>
-                        </td>
-                        <td style="text-align: right; border-bottom: none; padding-top: 10px; font-weight: bold;">
-                            {{ $quotation->working_duration }}
-                        </td>
+                        <td style="color: #6b7280; padding-bottom: 6px; width: 140px;">DURASI PENGERJAAN</td>
+                        <td style="font-weight: bold; color: #111827; padding-bottom: 6px;">:
+                            {{ $quotation->working_duration }}</td>
                     </tr>
                     @if($quotation->warranty_days > 0)
                         <tr>
-                            <td style="text-align: right; border-bottom: none; padding-top: 2px;">
-                                <span style="font-size: 10px; color: #666; text-transform: uppercase;">Garansi Layanan:</span>
-                            </td>
-                            <td style="text-align: right; border-bottom: none; padding-top: 2px; font-weight: bold;">
-                                {{ $quotation->warranty_days }} Hari
-                            </td>
+                            <td style="color: #6b7280; padding-bottom: 6px;">GARANSI LAYANAN</td>
+                            <td style="font-weight: bold; color: #111827; padding-bottom: 6px;">:
+                                {{ $quotation->warranty_days }} Hari</td>
                         </tr>
                     @endif
-                    <tr class="total-row">
-                        <td style="text-align: right; border-bottom: none; vertical-align: middle; padding: 15px 10px;">
-                            <span class="total-label">Total Nilai Investasi (Subtotal):</span>
-                        </td>
-                        <td style="text-align: right; border-bottom: none; vertical-align: middle;">
-                            <span class="total-value">Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                </table>
+            </div>
+            <div style="background: #f8fafc; padding: 15px; border-top: 1px solid #e5e7eb; overflow: hidden;">
+                <div style="float: left; padding-top: 4px;">
+                    <span style="font-size: 10px; font-weight: bold; color: #6b7280; text-transform: uppercase;">Total
+                        Nilai Investasi </span>
+                </div>
+                <div style="float: right;">
+                    <span style="font-size: 18px; color: #2563eb; font-weight: 900;">Rp
+                        {{ number_format($quotation->total_amount, 0, ',', '.') }}</span>
+                </div>
+                <div style="clear: both;"></div>
+            </div>
         </div>
 
         <div style="font-size: 9px; color: #6b7280; font-style: italic; margin-bottom: 35px;">
