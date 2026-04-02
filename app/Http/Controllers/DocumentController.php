@@ -52,11 +52,13 @@ class DocumentController extends Controller
         $quotation->load(['project.client']);
 
         $notes = Setting::where('key', 'quotation_notes')->first()?->value;
+        $terms = Setting::where('key', 'quotation_terms')->first()?->value;
 
         $data = [
             'quotation' => $quotation,
             'client' => $quotation->project->client,
             'notes' => $notes,
+            'terms' => $terms,
             'logo' => $this->getBase64Logo()
         ];
 

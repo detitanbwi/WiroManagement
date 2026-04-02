@@ -27,6 +27,17 @@
         
         .terms { margin-top: 40px; font-size: 10px; color: #333; width: 60%; }
         .status-badge { position: absolute; top: 150px; right: 50px; border: 3px solid #ccc; padding: 10px 20px; font-weight: bold; font-size: 24px; opacity: 0.3; transform: rotate(-15deg); z-index: 10; }
+
+        /* Rich Text Styles */
+        .rich-text-content { line-height: 1.4; text-align: left; }
+        .rich-text-content h1, .rich-text-content h2, .rich-text-content h3 { color: #111; margin-top: 10px; margin-bottom: 5px; }
+        .rich-text-content h1 { font-size: 12px; }
+        .rich-text-content h2 { font-size: 11px; }
+        .rich-text-content h3 { font-size: 10px; }
+        .rich-text-content p { margin-bottom: 6px; }
+        .rich-text-content ul, .rich-text-content ol { margin-left: 15px; margin-bottom: 6px; }
+        .rich-text-content li { margin-bottom: 2px; }
+        .rich-text-content strong { color: #111; }
     </style>
 </head>
 <body>
@@ -120,12 +131,19 @@
             <div style="float: left; width: 60%;">
                 @if($terms)
                 <div class="terms" style="width: 100%; margin-top: 0;">
-                    <div class="section-label">Syarat & Ketentuan:</div>
-                    <div style="font-size: 10px; white-space: pre-line; color: #444;">{{ $terms }}</div>
+                    <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #111;">Syarat & Ketentuan:</div>
+                    <div class="rich-text-content" style="font-size: 10px; color: #444;">
+                        {!! $terms !!}
+                    </div>
                 </div>
                 @endif
             </div>
             <div style="clear: both;"></div>
+        </div>
+
+        <!-- Aktivasi / Ketentuan Otomatis -->
+        <div style="margin-top: 50px; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-style: italic; font-size: 10px; color: #444;">
+            "Dengan melakukan pembayaran Down Payment (DP), Klien dinyatakan telah membaca, memahami, dan menyetujui seluruh Syarat & Ketentuan yang berlaku di Wirodayan Digital tanpa terkecuali."
         </div>
     </div>
 </body>

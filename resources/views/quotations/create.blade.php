@@ -43,7 +43,12 @@
 
                 <div class="col-span-2">
                     <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Deskripsi Pekerjaan / Fitur</label>
-                    <textarea name="description" id="description" rows="5" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border" placeholder="Jelaskan rincian pekerjaan atau fitur yang ditawarkan...">{{ old('description', $project->description) }}</textarea>
+                    <div class="bg-white">
+                        <div id="editor-description" style="height: 200px;">
+                            {!! old('description', $project->description) !!}
+                        </div>
+                    </div>
+                    <textarea name="description" id="description_hidden" class="hidden"></textarea>
                     @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -98,4 +103,27 @@
         </form>
     </div>
 </div>
+
+<!-- Quill Styles & Scripts -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+    var quill = new Quill('#editor-description', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['clean']
+            ]
+        }
+    });
+
+    var form = document.querySelector('form');
+    form.onsubmit = function() {
+        document.querySelector('#description_hidden').value = quill.root.innerHTML;
+        return true;
+    };
+</script>
 @endsection

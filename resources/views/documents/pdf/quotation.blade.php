@@ -32,6 +32,20 @@
         .footer { margin-top: 40px; }
         .signature-box { float: right; width: 220px; text-align: center; }
         .notes-box { float: left; width: 55%; font-size: 9px; color: #666; }
+        
+        /* Rich Text / T&C Styles */
+        .terms-page { page-break-before: always; padding: 20px 0; }
+        .terms-title { font-size: 16px; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        
+        .rich-text-content { line-height: 1.4; text-align: left; }
+        .rich-text-content h1, .rich-text-content h2, .rich-text-content h3 { color: #111; margin-top: 12px; margin-bottom: 6px; }
+        .rich-text-content h1 { font-size: 13px; }
+        .rich-text-content h2 { font-size: 11px; }
+        .rich-text-content h3 { font-size: 10px; }
+        .rich-text-content p { margin-bottom: 8px; }
+        .rich-text-content ul, .rich-text-content ol { margin-left: 15px; margin-bottom: 8px; }
+        .rich-text-content li { margin-bottom: 3px; }
+        .rich-text-content strong { color: #111; }
     </style>
 </head>
 <body>
@@ -58,25 +72,25 @@
                 <td class="info-right" style="padding-left: 30px;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                         <tr>
-                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0; width: 80px;">No. Registrasi</td>
-                            <td style="padding: 3px 5px; font-weight: bold;">: {{ $quotation->quotation_number }}</td>
+                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0; width: 110px; vertical-align: top;">No. Registrasi</td>
+                            <td style="padding: 3px 5px; font-weight: bold; vertical-align: top;">: {{ $quotation->quotation_number }}</td>
                         </tr>
                         <tr>
-                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0;">Tanggal</td>
-                            <td style="padding: 3px 5px;">: {{ $quotation->created_at->format('d F Y') }}</td>
+                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0; vertical-align: top;">Tanggal</td>
+                            <td style="padding: 3px 5px; vertical-align: top;">: {{ $quotation->created_at->format('d F Y') }}</td>
                         </tr>
                         <tr>
-                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0;">Berlaku Sampai</td>
-                            <td style="padding: 3px 5px; color: #dc2626;">: {{ $quotation->created_at->addDays(14)->format('d F Y') }}</td>
+                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0; vertical-align: top;">Berlaku Sampai</td>
+                            <td style="padding: 3px 5px; color: #dc2626; vertical-align: top;">: {{ $quotation->created_at->addDays(14)->format('d F Y') }}</td>
                         </tr>
                         <tr>
-                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0;">Durasi Kerja</td>
-                            <td style="padding: 3px 5px;">: {{ $quotation->working_duration }}</td>
+                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0; vertical-align: top;">Durasi Kerja</td>
+                            <td style="padding: 3px 5px; vertical-align: top;">: {{ $quotation->working_duration }}</td>
                         </tr>
                         @if($quotation->warranty_days > 0)
                         <tr>
-                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0;">Garansi</td>
-                            <td style="padding: 3px 5px;">: {{ $quotation->warranty_days }} Hari</td>
+                            <td style="font-weight: bold; color: #6b7280; padding: 3px 0; vertical-align: top;">Garansi</td>
+                            <td style="padding: 3px 5px; vertical-align: top;">: {{ $quotation->warranty_days }} Hari</td>
                         </tr>
                         @endif
                     </table>
@@ -87,7 +101,9 @@
         <div class="description-box">
             <div class="section-title">Lingkup Pekerjaan & Deskripsi Proyek</div>
             <div style="font-weight: bold; font-size: 12px; margin-bottom: 6px; color: #111827;">{{ $quotation->project->title }}</div>
-            <div style="font-size: 11px; color: #4b5563; line-height: 1.6; white-space: pre-line;">{!! nl2br(e($quotation->description ?? 'Pengembangan sistem software sesuai dengan rincian teknis yang telah didiskusikan sebelumnya.')) !!}</div>
+            <div class="rich-text-content" style="font-size: 11px; color: #4b5563;">
+                {!! $quotation->description ?? 'Pengembangan sistem software sesuai dengan rincian teknis yang telah didiskusikan sebelumnya.' !!}
+            </div>
         </div>
 
         <table class="table">
@@ -132,11 +148,36 @@
             <div class="notes-box">
                 @if($notes)
                     <p style="font-weight: bold; color: #374151; margin-bottom: 5px; text-decoration: underline;">Catatan Penawaran:</p>
-                    <div style="line-height: 1.6; white-space: pre-line;">{!! nl2br(e($notes)) !!}</div>
+                    <div class="rich-text-content" style="font-size: 10px; color: #666;">
+                        {!! $notes !!}
+                    </div>
                 @endif
             </div>
             <div style="clear: both;"></div>
         </div>
+        @if($terms)
+        <div class="terms-page">
+            <div class="terms-title">SYARAT & KETENTUAN LAYANAN</div>
+            <div class="rich-text-content" style="font-size: 10px; line-height: 1.6;">
+                {!! $terms !!}
+            </div>
+            
+            <div style="margin-top: 50px; border-top: 1px dashed #ccc; padding-top: 20px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 100%; font-size: 10px; color: #444; font-style: italic; text-align: center; line-height: 1.5;">
+                            "Dengan melakukan pembayaran Down Payment (DP), Klien dinyatakan telah membaca, memahami, dan menyetujui seluruh Syarat & Ketentuan yang berlaku di Wirodayan Digital tanpa terkecuali."
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right; font-size: 9px; color: #999; font-style: italic; padding-top: 15px;">
+                            Halaman ini merupakan lampiran tidak terpisahkan dari Quotation #{{ $quotation->quotation_number }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        @endif
     </div>
 </body>
 </html>
