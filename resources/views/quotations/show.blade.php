@@ -107,7 +107,25 @@
             </div>
         </div>
 
-        <div class="flex justify-end">
+        @if($quotation->attachment_pdf)
+            <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center text-red-600 mr-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-800">Lampiran Tambahan</p>
+                        <p class="text-xs text-gray-500">File PDF Lampiran Quotation</p>
+                    </div>
+                </div>
+                <a href="{{ asset('storage/' . $quotation->attachment_pdf) }}" target="_blank" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-50 flex items-center shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    DOWNLOAD
+                </a>
+            </div>
+        @endif
+
+        <div class="flex justify-end mt-12">
             <div class="w-64 text-center">
                 <p class="text-xs text-gray-500 mb-16">Mengetahui,</p>
                 <p class="font-bold text-gray-800 underline">Administration</p>

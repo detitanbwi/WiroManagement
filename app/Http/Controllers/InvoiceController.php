@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\InvoiceItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class InvoiceController extends Controller
 {
@@ -34,7 +35,8 @@ class InvoiceController extends Controller
             'items.*.description' => 'required|string',
             'items.*.qty' => 'required|numeric|min:1',
             'items.*.price' => 'required|numeric|min:0',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'attachment_pdf' => 'nullable|file|mimes:pdf|max:10240'
         ]);
 
         try {
@@ -52,7 +54,10 @@ class InvoiceController extends Controller
                 'due_date' => $request->due_date,
                 'issued_date' => $request->issued_date,
                 'status' => 'issued',
-                'notes' => $request->notes
+                'notes' => $request->notes,
+                'attachment_pdf' => $request->hasFile('attachment_pdf') 
+                    ? $request->file('attachment_pdf')->store('attachments/invoices', 'public') 
+                    : null
             ]);
 
             foreach ($request->items as $item) {
@@ -97,6 +102,10 @@ class InvoiceController extends Controller
     public function destroy(Invoice $invoice)
     {
         $project = $invoice->project;
+        if ($invoice->attachment_pdf) {
+            Storage::disk('public')->delete($invoice->attachment_pdf);
+        }
+
         $invoice->delete();
         return redirect()->route('projects.show', $project)->with('success', 'Invoice deleted successfully.');
     }

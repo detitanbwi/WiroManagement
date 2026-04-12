@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\Quotation;
+use Illuminate\Support\Facades\Storage;
 
 class QuotationController extends Controller
 {
@@ -21,8 +22,14 @@ class QuotationController extends Controller
             'warranty_days' => 'required|integer|min:0',
             'working_duration' => 'required|string|max:255',
             'total_amount' => 'required|numeric|min:0',
-            'status' => 'required|in:draft,issued,approved'
+            'status' => 'required|in:draft,issued,approved',
+            'attachment_pdf' => 'nullable|file|mimes:pdf|max:10240'
         ]);
+
+        if ($request->hasFile('attachment_pdf')) {
+            $path = $request->file('attachment_pdf')->store('attachments/quotations', 'public');
+            $validated['attachment_pdf'] = $path;
+        }
 
         $project->quotations()->create($validated);
 
@@ -43,8 +50,19 @@ class QuotationController extends Controller
             'warranty_days' => 'required|integer|min:0',
             'working_duration' => 'required|string|max:255',
             'total_amount' => 'required|numeric|min:0',
-            'status' => 'required|in:draft,issued,approved'
+            'status' => 'required|in:draft,issued,approved',
+            'attachment_pdf' => 'nullable|file|mimes:pdf|max:10240'
         ]);
+
+        if ($request->hasFile('attachment_pdf')) {
+            // Delete old file if exists
+            if ($quotation->attachment_pdf) {
+                Storage::disk('public')->delete($quotation->attachment_pdf);
+            }
+            
+            $path = $request->file('attachment_pdf')->store('attachments/quotations', 'public');
+            $validated['attachment_pdf'] = $path;
+        }
 
         $quotation->update($validated);
 
@@ -62,6 +80,10 @@ class QuotationController extends Controller
 
         if ($quotation->status === 'approved') {
             return back()->with('error', 'Quotation yang sudah APPROVED tidak dapat dihapus.');
+        }
+
+        if ($quotation->attachment_pdf) {
+            Storage::disk('public')->delete($quotation->attachment_pdf);
         }
 
         $quotation->delete();

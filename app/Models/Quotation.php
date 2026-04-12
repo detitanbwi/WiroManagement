@@ -13,7 +13,8 @@ class Quotation extends Model
         'warranty_days',
         'working_duration',
         'total_amount',
-        'status'
+        'status',
+        'attachment_pdf'
     ];
 
     public function project()

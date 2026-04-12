@@ -14,7 +14,7 @@
     </div>
 
     <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-        <form action="{{ route('quotations.update', $quotation) }}" method="POST" id="quotation-form">
+        <form action="{{ route('quotations.update', $quotation) }}" method="POST" id="quotation-form" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             
@@ -85,6 +85,20 @@
                         <input type="hidden" name="total_amount" :value="rawTotal">
                     </div>
                     @error('total_amount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="col-span-2">
+                    <label for="attachment_pdf" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Attachment PDF (Opsional)</label>
+                    <input type="file" name="attachment_pdf" id="attachment_pdf" accept="application/pdf"
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
+                    <p class="mt-1 text-[10px] text-gray-400">Pilih file PDF (Maks. 10MB) untuk mengganti lampiran lama.</p>
+                    @if($quotation->attachment_pdf)
+                        <div class="mt-2 flex items-center p-2 bg-blue-50 rounded border border-blue-100">
+                            <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                            <a href="{{ asset('storage/' . $quotation->attachment_pdf) }}" target="_blank" class="text-xs font-bold text-blue-600 hover:underline">Lampiran Saat Ini</a>
+                        </div>
+                    @endif
+                    @error('attachment_pdf') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
 

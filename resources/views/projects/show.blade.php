@@ -129,7 +129,12 @@
                         <tbody class="divide-y divide-gray-200 text-sm">
                             @forelse($project->invoices as $invoice)
                             <tr>
-                                <td class="px-6 py-4 font-medium">{{ $invoice->invoice_number }}</td>
+                                <td class="px-6 py-4 font-medium flex items-center">
+                                    {{ $invoice->invoice_number }}
+                                    @if($invoice->attachment_pdf)
+                                        <svg class="w-3 h-3 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 capitalize">{{ $invoice->type }}</td>
                                 <td class="px-6 py-4">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4">
@@ -174,7 +179,12 @@
                         <tbody class="divide-y divide-gray-200 text-sm">
                             @forelse($project->quotations as $quotation)
                             <tr>
-                                <td class="px-6 py-4 font-medium">{{ $quotation->quotation_number }}</td>
+                                <td class="px-6 py-4 font-medium flex items-center">
+                                    {{ $quotation->quotation_number }}
+                                    @if($quotation->attachment_pdf)
+                                        <svg class="w-3 h-3 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4">Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 uppercase font-bold text-[10px]">{{ $quotation->status }}</td>
                                 <td class="px-6 py-4 text-right">

@@ -13,7 +13,7 @@
         <p class="text-gray-500">Proyek: <span class="font-bold">{{ $project->title }}</span></p>
     </div>
 
-    <form action="{{ route('projects.invoices.store', $project) }}" method="POST" x-data="invoiceForm()">
+    <form action="{{ route('projects.invoices.store', $project) }}" method="POST" x-data="invoiceForm()" enctype="multipart/form-data">
         @csrf
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Main Form -->
@@ -66,6 +66,13 @@
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
                     <label for="notes" class="block text-sm font-medium text-gray-700">Catatan Invoice (Opsional)</label>
                     <textarea name="notes" id="notes" rows="3" placeholder="Misal: Nomor rekening, instruksi pembayaran, dll." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"></textarea>
+                </div>
+
+                <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6 text-sm">
+                    <label for="attachment_pdf" class="block font-bold text-gray-700 uppercase tracking-wider mb-2">Attachment PDF (Opsional)</label>
+                    <input type="file" name="attachment_pdf" id="attachment_pdf" accept="application/pdf"
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
+                    <p class="mt-1 text-[10px] text-gray-400">Pilih file PDF (Maks. 10MB) jika ada lampiran tambahan.</p>
                 </div>
             </div>
 

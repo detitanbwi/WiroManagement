@@ -14,7 +14,7 @@
     </div>
 
     <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-        <form action="{{ route('projects.quotations.store', $project) }}" method="POST" id="quotation-form">
+        <form action="{{ route('projects.quotations.store', $project) }}" method="POST" id="quotation-form" enctype="multipart/form-data">
             @csrf
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -89,6 +89,14 @@
                         <input type="hidden" name="total_amount" :value="rawTotal">
                     </div>
                     @error('total_amount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="col-span-2">
+                    <label for="attachment_pdf" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Attachment PDF (Opsional)</label>
+                    <input type="file" name="attachment_pdf" id="attachment_pdf" accept="application/pdf"
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
+                    <p class="mt-1 text-[10px] text-gray-400">Pilih file PDF (Maks. 10MB) jika ada lampiran tambahan.</p>
+                    @error('attachment_pdf') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
 
