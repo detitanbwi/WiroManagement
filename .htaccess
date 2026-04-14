@@ -14,9 +14,9 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Redirect /storage requests to the public/storage directory
-    # This avoids conflicts with the real storage/ folder in root
-    RewriteRule ^storage/(.*)$ public/storage/$1 [L]
+    # Route /storage requests through Laravel to avoid broken symlinks on shared hosting
+    RewriteCond %{REQUEST_URI} ^/storage/
+    RewriteRule ^ index.php [L]
 
     # Handle Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d

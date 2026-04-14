@@ -11,6 +11,20 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+
+// Route to bypass broken symlinks on shared hosting
+Route::get('/storage/{path}', function ($path) {
+    // Only allow attachments directory
+    if (str_starts_with($path, 'attachments/')) {
+        $fullPath = storage_path("app/public/{$path}");
+        if (File::exists($fullPath)) {
+            return response()->file($fullPath);
+        }
+    }
+    abort(404);
+})->where('path', '.*')->name('custom.storage');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
