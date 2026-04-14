@@ -82,7 +82,7 @@
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <p class="text-sm text-gray-500 font-medium">Total Nilai Kontrak</p>
             <p class="text-2xl font-bold text-gray-900 mt-1 uppercase">Rp {{ number_format($project->contract_value, 0, ',', '.') }}</p>
-            <p class="text-xs text-gray-400 mt-2">Total dari invoice utama yang diterbitkan</p>
+            <p class="text-xs text-gray-400 mt-2">Total dari Quotation Approved atau Invoice utama</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <p class="text-sm text-gray-500 font-medium">Extra (CR)</p>
