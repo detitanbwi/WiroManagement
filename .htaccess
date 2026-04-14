@@ -15,7 +15,7 @@
     RewriteRule ^ %1 [L,R=301]
 
     # Route /storage requests through Laravel to avoid broken symlinks on shared hosting
-    RewriteCond %{REQUEST_URI} ^/storage/
+    RewriteCond %{REQUEST_URI} /storage/
     RewriteRule ^ index.php [L]
 
     # Handle Front Controller...
