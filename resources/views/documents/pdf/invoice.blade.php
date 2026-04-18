@@ -122,29 +122,42 @@
         </table>
 
         <div style="margin-top: 30px;">
+            <div style="float: left; width: 50%;">
+                <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #111;">Pembayaran Transfer:</div>
+                <div style="border-left: 3px solid #2563eb; padding-left: 10px;">
+                    <div style="font-size: 12px; font-weight: bold; color: #000;">BANK BRI</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #2563eb; margin: 2px 0;">000701072933500</div>
+                    <div style="font-size: 11px; font-weight: bold; color: #333;">a.n TITAN ANGGARAKSA</div>
+                </div>
+            </div>
+
             <div style="float: right; width: 250px; text-align: center;">
                 <p style="font-size: 12px; margin-bottom: 60px;">Banyuwangi, {{ $invoice->issued_date->format('d F Y') }}</p>
                 <p style="font-weight: bold; text-decoration: underline; margin-bottom: 0;">Wirodev Administration</p>
                 <p style="font-size: 10px; color: #666; margin-top: 2px;">Finance Department</p>
             </div>
-            
-            <div style="float: left; width: 60%;">
-                @if($terms)
-                <div class="terms" style="width: 100%; margin-top: 0;">
-                    <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #111;">Syarat & Ketentuan:</div>
-                    <div class="rich-text-content" style="font-size: 10px; color: #444;">
-                        {!! $terms !!}
-                    </div>
-                </div>
-                @endif
-            </div>
             <div style="clear: both;"></div>
         </div>
 
         <!-- Aktivasi / Ketentuan Otomatis -->
-        <div style="margin-top: 50px; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-style: italic; font-size: 10px; color: #444;">
+        <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-style: italic; font-size: 10px; color: #444;">
             "Dengan melakukan pembayaran Down Payment (DP), Klien dinyatakan telah membaca, memahami, dan menyetujui seluruh Syarat & Ketentuan yang berlaku di Wirodayan Digital tanpa terkecuali."
         </div>
+
+        @if($terms)
+        <div style="page-break-before: always; padding: 20px;">
+            <div class="invoice-title-box">
+                <div class="invoice-title">SYARAT & KETENTUAN LAYANAN</div>
+            </div>
+            <div class="rich-text-content" style="font-size: 11px; margin-top: 20px; line-height: 1.6;">
+                {!! $terms !!}
+            </div>
+            
+            <div style="margin-top: 50px; border-top: 1px dashed #ccc; padding-top: 20px; text-align: right; font-size: 9px; color: #999; font-style: italic;">
+                Halaman ini merupakan lampiran tidak terpisahkan dari Invoice #{{ $invoice->invoice_number }}
+            </div>
+        </div>
+        @endif
     </div>
 </body>
 </html>
