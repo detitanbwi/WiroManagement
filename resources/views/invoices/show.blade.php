@@ -10,7 +10,7 @@
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 Kembali ke Proyek
             </a>
-            <h1 class="text-2xl font-bold text-gray-800 mt-2 capitalize">{{ $invoice->type }} Invoice - {{ $invoice->invoice_number }}</h1>
+            <h1 class="text-2xl font-bold text-gray-800 mt-2">Invoice - {{ $invoice->invoice_number }}</h1>
         </div>
         <div class="flex space-x-2">
             <a href="{{ route('documents.invoice.pdf', $invoice) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md font-bold text-xs uppercase hover:bg-indigo-700 shadow-sm">
@@ -84,8 +84,12 @@
                                 <span class="font-bold">Rp {{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-500">Pajak / Lainnya</span>
+                                <span class="text-gray-500">Pajak / Lainnya (+)</span>
                                 <span class="font-bold">Rp {{ number_format($invoice->tax, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">Diskon (-)</span>
+                                <span class="font-bold text-red-600">Rp {{ number_format($invoice->discount, 0, ',', '.') }}</span>
                             </div>
                             <div class="flex justify-between text-xl border-t border-gray-200 pt-3">
                                 <span class="font-black text-gray-800">TOTAL</span>

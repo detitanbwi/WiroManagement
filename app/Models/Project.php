@@ -42,6 +42,11 @@ class Project extends Model
         return $this->hasMany(ChangeRequest::class);
     }
 
+    public function expenses()
+    {
+        return $this->hasMany(ProjectExpense::class);
+    }
+
     // Ledger Logic
     public function getContractValueAttribute()
     {
@@ -72,5 +77,10 @@ class Project extends Model
     public function getBalanceDueAttribute()
     {
         return $this->grand_total - $this->paid_amount;
+    }
+
+    public function getTotalExpensesAttribute()
+    {
+        return $this->expenses()->sum('amount');
     }
 }

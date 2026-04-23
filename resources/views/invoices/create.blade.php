@@ -93,14 +93,6 @@
                             <input type="text" name="invoice_number" required value="{{ $defaultInvoiceNumber }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Tipe Tagihan</label>
-                            <select name="type" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
-                                <option value="initial">DP / Awal (Initial)</option>
-                                <option value="change_request">Change Request</option>
-                                <option value="final">Pelunasan (Final)</option>
-                            </select>
-                        </div>
-                        <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase">Tanggal Terbit</label>
                             <input type="date" name="issued_date" required value="{{ date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
                         </div>
@@ -119,8 +111,12 @@
                             <span class="font-bold">Rp <span x-text="numberFormat(subtotal)"></span></span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span>Pajak (Opsional)</span>
+                            <span>Pajak (+)</span>
                             <input type="number" name="tax" x-model.number="tax" @input="calculateTotal()" class="w-24 bg-blue-800 border-none rounded text-right text-sm py-1 font-bold focus:ring-0">
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Diskon (-)</span>
+                            <input type="number" name="discount" x-model.number="discount" @input="calculateTotal()" class="w-24 bg-blue-800 border-none rounded text-right text-sm py-1 font-bold focus:ring-0">
                         </div>
                         <div class="border-t border-blue-400 mt-2 pt-2 flex justify-between text-lg font-black">
                             <span>TOTAL</span>
@@ -146,6 +142,7 @@
                 price: 0
             }],
             tax: 0,
+            discount: 0,
             subtotal: 0,
             total: 0,
             addItem() {
@@ -163,7 +160,7 @@
             },
             calculateTotal() {
                 this.subtotal = this.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
-                this.total = this.subtotal + this.tax;
+                this.total = this.subtotal + this.tax - this.discount;
             },
             numberFormat(val) {
                 return new Intl.NumberFormat('id-ID').format(val);

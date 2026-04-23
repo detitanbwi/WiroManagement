@@ -78,30 +78,35 @@
     </div>
 
     <!-- Financial Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-sm text-gray-500 font-medium">Total Nilai Kontrak</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1 uppercase">Rp {{ number_format($project->contract_value, 0, ',', '.') }}</p>
-            <p class="text-xs text-gray-400 mt-2">Total dari Quotation Approved atau Invoice utama</p>
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Kontrak</p>
+            <p class="text-xl font-bold text-gray-900 mt-1 uppercase">Rp {{ number_format($project->contract_value, 0, ',', '.') }}</p>
+            <p class="text-[10px] text-gray-400 mt-2 italic line-clamp-1">Quotation / Invoice Utama</p>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-sm text-gray-500 font-medium">Extra (CR)</p>
-            <p class="text-2xl font-bold text-indigo-600 mt-1 uppercase">Rp {{ number_format($project->total_cr_value, 0, ',', '.') }}</p>
-            <p class="text-xs text-gray-400 mt-2">{{ $project->changeRequests()->count() }} Change Requests</p>
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Extra (CR)</p>
+            <p class="text-xl font-bold text-indigo-600 mt-1 uppercase">Rp {{ number_format($project->total_cr_value, 0, ',', '.') }}</p>
+            <p class="text-[10px] text-gray-400 mt-2 italic">{{ $project->changeRequests()->count() }} CR Items</p>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-sm text-gray-500 font-medium">Terbayar</p>
-            <p class="text-2xl font-bold text-green-600 mt-1 uppercase">Rp {{ number_format($project->paid_amount, 0, ',', '.') }}</p>
-            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3">
-                <div class="bg-green-500 h-1.5 rounded-full" style="width: {{ $project->grand_total > 0 ? ($project->paid_amount / $project->grand_total) * 100 : 0 }}%"></div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Terbayar</p>
+            <p class="text-xl font-bold text-green-600 mt-1 uppercase">Rp {{ number_format($project->paid_amount, 0, ',', '.') }}</p>
+            <div class="w-full bg-gray-100 rounded-full h-1 mt-3">
+                <div class="bg-green-500 h-1 rounded-full" style="width: {{ $project->grand_total > 0 ? ($project->paid_amount / $project->grand_total) * 100 : 0 }}%"></div>
             </div>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-sm text-gray-500 font-medium">Sisa Tagihan</p>
-            <p class="text-2xl font-bold {{ $project->balance_due > 0 ? 'text-red-600' : 'text-green-600' }} mt-1 uppercase">Rp {{ number_format($project->balance_due, 0, ',', '.') }}</p>
-            <p class="text-xs font-bold mt-2 uppercase {{ $project->balance_due > 0 ? 'text-red-500' : 'text-green-500' }}">
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Tagihan Sisa</p>
+            <p class="text-xl font-bold {{ $project->balance_due > 0 ? 'text-red-600' : 'text-green-600' }} mt-1 uppercase">Rp {{ number_format($project->balance_due, 0, ',', '.') }}</p>
+            <p class="text-[10px] font-bold mt-2 uppercase {{ $project->balance_due > 0 ? 'text-red-500' : 'text-green-500' }}">
                 {{ $project->balance_due > 0 ? 'Belum lunas' : 'Lunas' }}
             </p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pengeluaran</p>
+            <p class="text-xl font-bold text-amber-600 mt-1 uppercase">Rp {{ number_format($project->total_expenses, 0, ',', '.') }}</p>
+            <p class="text-[10px] text-gray-400 mt-2 italic">Total biaya operasional</p>
         </div>
     </div>
 
@@ -120,7 +125,6 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Invoice</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
@@ -135,7 +139,6 @@
                                         <svg class="w-3 h-3 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 capitalize">{{ $invoice->type }}</td>
                                 <td class="px-6 py-4">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4">
                                     <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase {{ $invoice->status == 'paid' ? 'bg-green-100 text-green-700' : ($invoice->status == 'draft' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-700') }}">
@@ -207,6 +210,96 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- Section: Project Expenses -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" x-data="{ openAddExpense: false, editExpense: null }">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-800">Pengeluaran Proyek</h3>
+                    <button @click="openAddExpense = true; editExpense = null" class="text-sm font-bold text-primary hover:text-blue-700">+ Tambah Pengeluaran</button>
+                </div>
+                <div class="p-0">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 text-sm">
+                            @php $totalExpenses = 0; @endphp
+                            @forelse($project->expenses as $expense)
+                            @php $totalExpenses += $expense->amount; @endphp
+                            <tr>
+                                <td class="px-6 py-4">{{ $expense->date->format('d/m/Y') }}</td>
+                                <td class="px-6 py-4">{{ $expense->description }}</td>
+                                <td class="px-6 py-4">Rp {{ number_format($expense->amount, 0, ',', '.') }}</td>
+                                <td class="px-6 py-4 text-right flex justify-end space-x-2">
+                                    <button @click="editExpense = {{ json_encode($expense) }}; openAddExpense = true" class="text-amber-600 font-bold hover:underline">Edit</button>
+                                    <span class="text-gray-300">|</span>
+                                    <form action="{{ route('expenses.destroy', $expense) }}" method="POST" class="inline" onsubmit="return confirm('Hapus pengeluaran ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 font-bold hover:underline">Hapus</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">Belum ada data pengeluaran.</td></tr>
+                            @endforelse
+                        </tbody>
+                        @if($totalExpenses > 0)
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <td colspan="2" class="px-6 py-3 text-right font-bold text-gray-700">TOTAL PENGELUARAN</td>
+                                <td class="px-6 py-3 font-bold text-red-600">Rp {{ number_format($totalExpenses, 0, ',', '.') }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                        @endif
+                    </table>
+                </div>
+
+                <!-- Modal Form (Add/Edit) -->
+                <template x-if="openAddExpense">
+                    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="openAddExpense = false"></div>
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                                <form :action="editExpense ? '/expenses/' + editExpense.id : '{{ route('projects.expenses.store', $project) }}'" method="POST">
+                                    @csrf
+                                    <template x-if="editExpense">
+                                        <input type="hidden" name="_method" value="PUT">
+                                    </template>
+                                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                        <h3 class="text-lg leading-6 font-bold text-gray-900 mb-4" id="modal-title" x-text="editExpense ? 'Edit Pengeluaran' : 'Tambah Pengeluaran'"></h3>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Keterangan</label>
+                                                <input type="text" name="description" required :value="editExpense ? editExpense.description : ''" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
+                                                <input type="number" name="amount" required :value="editExpense ? editExpense.amount : ''" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Tanggal</label>
+                                                <input type="date" name="date" required :value="editExpense ? editExpense.date.split('T')[0] : '{{ date('Y-m-d') }}'" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Simpan</button>
+                                        <button type="button" @click="openAddExpense = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Batal</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
 

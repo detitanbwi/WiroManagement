@@ -27,10 +27,10 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'invoice_number' => 'required|unique:invoices,invoice_number',
-            'type' => 'required|in:initial,change_request,final',
             'due_date' => 'required|date',
             'issued_date' => 'required|date',
             'tax' => 'required|numeric|min:0',
+            'discount' => 'required|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
             'items.*.qty' => 'required|numeric|min:1',
@@ -43,12 +43,13 @@ class InvoiceController extends Controller
             DB::beginTransaction();
 
             $subtotal = collect($request->items)->sum(fn($item) => $item['qty'] * $item['price']);
-            $total_amount = $subtotal + $request->tax;
+            $total_amount = $subtotal + $request->tax - $request->discount;
 
             $invoice = $project->invoices()->create([
                 'invoice_number' => $request->invoice_number,
-                'type' => $request->type,
+                'type' => 'initial', // Default type
                 'subtotal' => $subtotal,
+                'discount' => $request->discount,
                 'tax' => $request->tax,
                 'total_amount' => $total_amount,
                 'due_date' => $request->due_date,

@@ -7,6 +7,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\ProjectExpenseController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
@@ -47,6 +48,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('projects.quotations', QuotationController::class)->shallow();
     Route::post('quotations/{quotation}/convert', [QuotationController::class, 'convertToInvoice'])->name('quotations.convert');
     Route::post('projects/{project}/status', [ProjectController::class, 'updateStatus'])->name('projects.status.update');
+    Route::post('projects/{project}/expenses', [ProjectExpenseController::class, 'store'])->name('projects.expenses.store');
+    Route::put('expenses/{expense}', [ProjectExpenseController::class, 'update'])->name('expenses.update');
+    Route::delete('expenses/{expense}', [ProjectExpenseController::class, 'destroy'])->name('expenses.destroy');
 
     Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('payments.store');
     Route::get('/documents/invoice/{invoice}/pdf', [DocumentController::class, 'streamInvoice'])->name('documents.invoice.pdf');

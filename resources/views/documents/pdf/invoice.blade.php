@@ -108,7 +108,7 @@
                         <div style="font-size: 11px; font-style: italic;"># {{ App\Http\Controllers\ProjectController::formatTerbilang($invoice->total_amount) }} Rupiah #</div>
                     </td>
                     <td style="font-weight: bold; font-size: 11px; background: #fdfdfd;">DISCOUNT</td>
-                    <td style="text-align: right; font-weight: bold;">Rp 0</td>
+                    <td style="text-align: right; font-weight: bold;">Rp {{ number_format($invoice->discount, 0, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <td style="font-weight: bold; font-size: 11px; background: #fdfdfd;">PAJAK / LAINNYA</td>
