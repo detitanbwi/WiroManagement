@@ -213,10 +213,26 @@
             </div>
 
             <!-- Section: Project Expenses -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" x-data="{ openAddExpense: false, editExpense: null }">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" x-data="{ 
+                openAddExpense: false, 
+                editExpense: null,
+                rawAmount: 0,
+                formatThousand(val) {
+                    if (!val || val === '0') return '0';
+                    return new Intl.NumberFormat('id-ID').format(val);
+                },
+                parseNumber(val) {
+                    let num = val.replace(/\D/g, '');
+                    return num ? parseInt(num) : 0;
+                },
+                resetForm() {
+                    this.editExpense = null;
+                    this.rawAmount = 0;
+                }
+            }">
                 <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                     <h3 class="text-lg font-bold text-gray-800">Pengeluaran Proyek</h3>
-                    <button @click="openAddExpense = true; editExpense = null" class="text-sm font-bold text-primary hover:text-blue-700">+ Tambah Pengeluaran</button>
+                    <button @click="resetForm(); openAddExpense = true" class="text-sm font-bold text-primary hover:text-blue-700 uppercase tracking-widest text-xs">+ Tambah Pengeluaran</button>
                 </div>
                 <div class="p-0">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -234,10 +250,10 @@
                             @php $totalExpenses += $expense->amount; @endphp
                             <tr>
                                 <td class="px-6 py-4">{{ $expense->date->format('d/m/Y') }}</td>
-                                <td class="px-6 py-4">{{ $expense->description }}</td>
-                                <td class="px-6 py-4">Rp {{ number_format($expense->amount, 0, ',', '.') }}</td>
+                                <td class="px-6 py-4 font-medium">{{ $expense->description }}</td>
+                                <td class="px-6 py-4 font-bold text-gray-900">Rp {{ number_format($expense->amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 text-right flex justify-end space-x-2">
-                                    <button @click="editExpense = {{ json_encode($expense) }}; openAddExpense = true" class="text-amber-600 font-bold hover:underline">Edit</button>
+                                    <button @click="editExpense = {{ json_encode($expense) }}; rawAmount = editExpense.amount; openAddExpense = true" class="text-amber-600 font-bold hover:underline">Edit</button>
                                     <span class="text-gray-300">|</span>
                                     <form action="{{ route('expenses.destroy', $expense) }}" method="POST" class="inline" onsubmit="return confirm('Hapus pengeluaran ini?')">
                                         @csrf
@@ -253,8 +269,8 @@
                         @if($totalExpenses > 0)
                         <tfoot class="bg-gray-50">
                             <tr>
-                                <td colspan="2" class="px-6 py-3 text-right font-bold text-gray-700">TOTAL PENGELUARAN</td>
-                                <td class="px-6 py-3 font-bold text-red-600">Rp {{ number_format($totalExpenses, 0, ',', '.') }}</td>
+                                <td colspan="2" class="px-6 py-3 text-right font-black text-gray-700 text-xs uppercase tracking-widest">TOTAL PENGELUARAN</td>
+                                <td class="px-6 py-3 font-black text-red-600 text-lg">Rp {{ number_format($totalExpenses, 0, ',', '.') }}</td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -268,32 +284,41 @@
                         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="openAddExpense = false"></div>
                             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                                 <form :action="editExpense ? '/expenses/' + editExpense.id : '{{ route('projects.expenses.store', $project) }}'" method="POST">
                                     @csrf
                                     <template x-if="editExpense">
                                         <input type="hidden" name="_method" value="PUT">
                                     </template>
-                                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                        <h3 class="text-lg leading-6 font-bold text-gray-900 mb-4" id="modal-title" x-text="editExpense ? 'Edit Pengeluaran' : 'Tambah Pengeluaran'"></h3>
-                                        <div class="space-y-4">
+                                    <div class="bg-white px-4 pt-5 pb-4 sm:p-8 sm:pb-4">
+                                        <h3 class="text-xl leading-6 font-black text-gray-900 mb-6 uppercase tracking-widest" id="modal-title" x-text="editExpense ? 'Edit Pengeluaran' : 'Tambah Pengeluaran'"></h3>
+                                        <div class="space-y-6">
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700">Keterangan</label>
-                                                <input type="text" name="description" required :value="editExpense ? editExpense.description : ''" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Keterangan Pengeluaran</label>
+                                                <input type="text" name="description" required :value="editExpense ? editExpense.description : ''" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-4 border font-medium">
                                             </div>
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
-                                                <input type="number" name="amount" required :value="editExpense ? editExpense.amount : ''" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Jumlah Nominal (Rp)</label>
+                                                <div class="relative">
+                                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                        <span class="text-gray-400 font-bold">Rp</span>
+                                                    </div>
+                                                    <input type="text" 
+                                                        :value="formatThousand(rawAmount)"
+                                                        @input="rawAmount = parseNumber($event.target.value)"
+                                                        class="block w-full pl-12 border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary sm:text-lg p-4 border font-black text-primary">
+                                                    <input type="hidden" name="amount" :value="rawAmount">
+                                                </div>
                                             </div>
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700">Tanggal</label>
-                                                <input type="date" name="date" required :value="editExpense ? editExpense.date.split('T')[0] : '{{ date('Y-m-d') }}'" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Transaksi</label>
+                                                <input type="date" name="date" required :value="editExpense ? editExpense.date.split('T')[0] : '{{ date('Y-m-d') }}'" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-4 border font-bold text-gray-700">
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Simpan</button>
-                                        <button type="button" @click="openAddExpense = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Batal</button>
+                                    <div class="bg-gray-50 px-4 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
+                                        <button type="submit" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-lg px-6 py-3 bg-primary text-sm font-black text-white uppercase tracking-widest hover:bg-blue-800 transition sm:w-auto">Simpan Data</button>
+                                        <button type="button" @click="openAddExpense = false" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-sm font-bold text-gray-700 uppercase tracking-widest hover:bg-gray-100 transition sm:mt-0 sm:w-auto">Batal</button>
                                     </div>
                                 </form>
                             </div>

@@ -19,113 +19,149 @@
             <!-- Main Form -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Rincian Pekerjaan</h3>
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 uppercase tracking-widest text-xs">Rincian Pekerjaan</h3>
                     
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Deskripsi</th>
-                                <th class="px-4 py-2 text-center text-xs font-bold text-gray-500 uppercase w-20">Qty</th>
-                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase w-40">Harga (Rp)</th>
-                                <th class="px-4 py-2 text-right text-xs font-bold text-gray-500 uppercase w-40">Total</th>
-                                <th class="px-2 py-2 w-10"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <template x-for="(item, index) in items" :key="index">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
                                 <tr>
-                                    <td class="px-2 py-3">
-                                        <input type="text" :name="'items['+index+'][description]'" x-model="item.description" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
-                                    </td>
-                                    <td class="px-2 py-3">
-                                        <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" @input="calculateTotal()" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm text-center">
-                                    </td>
-                                    <td class="px-2 py-3">
-                                        <input type="number" :name="'items['+index+'][price]'" x-model.number="item.price" @input="calculateTotal()" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
-                                    </td>
-                                    <td class="px-4 py-3 text-right text-sm font-medium">
-                                        Rp <span x-text="numberFormat(item.qty * item.price)"></span>
-                                    </td>
-                                    <td class="px-2 py-3 text-center">
-                                        <button type="button" @click="removeItem(index)" class="text-red-600 hover:text-red-900">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </button>
-                                    </td>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                                    <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Qty</th>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-48">Harga (Rp)</th>
+                                    <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider w-40">Total</th>
+                                    <th class="px-2 py-3 w-10"></th>
                                 </tr>
-                            </template>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="(item, index) in items" :key="index">
+                                    <tr>
+                                        <td class="px-2 py-3">
+                                            <input type="text" :name="'items['+index+'][description]'" x-model="item.description" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
+                                        </td>
+                                        <td class="px-2 py-3 text-center">
+                                            <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" @input="calculateTotal()" required class="block w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm text-center p-3 border">
+                                        </td>
+                                        <td class="px-2 py-3">
+                                            <div class="relative">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span class="text-gray-400 text-xs font-bold">Rp</span>
+                                                </div>
+                                                <input type="text" 
+                                                    :value="formatThousand(item.price)"
+                                                    @input="item.price = parseNumber($event.target.value); calculateTotal()"
+                                                    class="block w-full pl-9 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
+                                                <input type="hidden" :name="'items['+index+'][price]'" :value="item.price">
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-sm font-bold text-gray-900">
+                                            Rp <span x-text="numberFormat(item.qty * item.price)"></span>
+                                        </td>
+                                        <td class="px-2 py-3 text-center">
+                                            <button type="button" @click="removeItem(index)" class="text-red-400 hover:text-red-600 transition">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
                     
                     <div class="mt-4">
-                        <button type="button" @click="addItem()" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            + Tambah Baris
+                        <button type="button" @click="addItem()" class="inline-flex items-center px-4 py-2 border border-dashed border-gray-300 shadow-sm text-xs font-bold uppercase tracking-widest rounded-md text-gray-500 bg-white hover:bg-gray-50 transition w-full justify-center">
+                            + Tambah Baris Pekerjaan
                         </button>
                     </div>
                 </div>
 
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-                    <label for="notes" class="block text-sm font-medium text-gray-700">Catatan Invoice (Opsional)</label>
-                    <textarea name="notes" id="notes" rows="3" placeholder="Misal: Nomor rekening, instruksi pembayaran, dll." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"></textarea>
+                    <label for="notes" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Catatan Invoice (Opsional)</label>
+                    <textarea name="notes" id="notes" rows="3" placeholder="Misal: Nomor rekening, instruksi pembayaran, dll." class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border"></textarea>
                 </div>
 
-                <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6 text-sm">
-                    <label for="attachment_pdf" class="block font-bold text-gray-700 uppercase tracking-wider mb-2">Attachment PDF (Opsional)</label>
+                <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
+                    <label for="attachment_pdf" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Attachment PDF (Opsional)</label>
                     <input type="file" name="attachment_pdf" id="attachment_pdf" accept="application/pdf"
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
-                    <p class="mt-1 text-[10px] text-gray-400">Pilih file PDF (Maks. 10MB) jika ada lampiran tambahan.</p>
+                    <p class="mt-1 text-[10px] text-gray-400 font-medium">Pilih file PDF (Maks. 10MB) jika ada lampiran tambahan.</p>
                 </div>
             </div>
 
             <!-- Sidebar Info -->
             <div class="space-y-6">
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Informasi Invoice</h3>
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 uppercase tracking-widest text-xs">Informasi Invoice</h3>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">No. Invoice</label>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">No. Invoice</label>
                             @php
                                 $today = date('Ymd');
                                 $count = \App\Models\Invoice::whereDate('created_at', date('Y-m-d'))->count() + 1;
                                 $serial = str_pad($count, 2, '0', STR_PAD_LEFT);
                                 $defaultInvoiceNumber = "INV/WIRODEV/{$today}/{$serial}";
                             @endphp
-                            <input type="text" name="invoice_number" required value="{{ $defaultInvoiceNumber }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                            <input type="text" name="invoice_number" required value="{{ $defaultInvoiceNumber }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Tanggal Terbit</label>
-                            <input type="date" name="issued_date" required value="{{ date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tanggal Terbit</label>
+                            <input type="date" name="issued_date" required value="{{ date('Y-m-d') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Jatuh Tempo</label>
-                            <input type="date" name="due_date" required value="{{ date('Y-m-d', strtotime('+7 days')) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Jatuh Tempo</label>
+                            <input type="date" name="due_date" required value="{{ date('Y-m-d', strtotime('+7 days')) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-primary shadow-sm rounded-lg p-6 text-white">
-                    <h3 class="font-bold mb-4 border-b border-blue-400 pb-2">Ringkasan Biaya</h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Subtotal</span>
-                            <span class="font-bold">Rp <span x-text="numberFormat(subtotal)"></span></span>
+                <div class="bg-white shadow-xl rounded-2xl border border-primary p-6 overflow-hidden relative">
+                    <div class="absolute top-0 right-0 p-3">
+                        <svg class="w-12 h-12 text-primary opacity-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-gray-800 mb-6 border-b pb-2 uppercase tracking-widest text-xs">Ringkasan Biaya</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500 font-bold uppercase tracking-tighter">Subtotal</span>
+                            <span class="font-bold text-gray-800">Rp <span x-text="numberFormat(subtotal)"></span></span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span>Pajak (+)</span>
-                            <input type="number" name="tax" x-model.number="tax" @input="calculateTotal()" class="w-24 bg-blue-800 border-none rounded text-right text-sm py-1 font-bold focus:ring-0">
+                        
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-black text-gray-400 uppercase">Pajak / Biaya Lain (+)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-400 text-xs font-bold">Rp</span>
+                                </div>
+                                <input type="text" 
+                                    :value="formatThousand(tax)"
+                                    @input="tax = parseNumber($event.target.value); calculateTotal()"
+                                    class="block w-full pl-9 border-gray-200 rounded-lg bg-gray-50 sm:text-sm py-2 font-bold text-gray-700 focus:ring-primary focus:border-primary border">
+                                <input type="hidden" name="tax" :value="tax">
+                            </div>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span>Diskon (-)</span>
-                            <input type="number" name="discount" x-model.number="discount" @input="calculateTotal()" class="w-24 bg-blue-800 border-none rounded text-right text-sm py-1 font-bold focus:ring-0">
+
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-black text-gray-400 uppercase">Diskon (-)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-400 text-xs font-bold">Rp</span>
+                                </div>
+                                <input type="text" 
+                                    :value="formatThousand(discount)"
+                                    @input="discount = parseNumber($event.target.value); calculateTotal()"
+                                    class="block w-full pl-9 border-gray-200 rounded-lg bg-gray-50 sm:text-sm py-2 font-bold text-red-600 focus:ring-primary focus:border-primary border">
+                                <input type="hidden" name="discount" :value="discount">
+                            </div>
                         </div>
-                        <div class="border-t border-blue-400 mt-2 pt-2 flex justify-between text-lg font-black">
-                            <span>TOTAL</span>
-                            <span>Rp <span x-text="numberFormat(total)"></span></span>
+
+                        <div class="border-t-2 border-dashed border-gray-100 mt-4 pt-4 flex justify-between items-center">
+                            <span class="text-xs font-black text-gray-800 uppercase">Grand Total</span>
+                            <span class="text-xl font-black text-primary">Rp <span x-text="numberFormat(total)"></span></span>
                         </div>
                     </div>
                     
-                    <button type="submit" class="w-full mt-6 bg-white text-primary font-bold py-3 rounded-md hover:bg-gray-100 transition shadow-lg">
-                        TERBITKAN INVOICE
+                    <button type="submit" class="w-full mt-8 bg-primary text-white font-bold py-4 rounded-xl hover:bg-blue-800 transition shadow-lg shadow-blue-100 uppercase tracking-widest text-xs flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Terbitkan Invoice
                     </button>
                 </div>
             </div>
@@ -161,6 +197,14 @@
             calculateTotal() {
                 this.subtotal = this.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
                 this.total = this.subtotal + this.tax - this.discount;
+            },
+            formatThousand(val) {
+                if (val === 0 || val === '0') return '0';
+                if (!val) return '';
+                return new Intl.NumberFormat('id-ID').format(val);
+            },
+            parseNumber(val) {
+                return Number(val.replace(/\D/g, '')) || 0;
             },
             numberFormat(val) {
                 return new Intl.NumberFormat('id-ID').format(val);

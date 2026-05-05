@@ -17,32 +17,32 @@
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
-                    <label for="name" class="block text-sm font-medium text-gray-700">Nama Lengkap (PIC)</label>
-                    <input type="text" name="name" id="name" value="{{ old('name') }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                    <label for="name" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Nama Lengkap (PIC)</label>
+                    <input type="text" name="name" id="name" value="{{ old('name') }}" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                     @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-2">
-                    <label for="company_name" class="block text-sm font-medium text-gray-700">Nama Perusahaan / Organisasi</label>
-                    <input type="text" name="company_name" id="company_name" value="{{ old('company_name') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                    <label for="company_name" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Nama Perusahaan / Organisasi</label>
+                    <input type="text" name="company_name" id="company_name" value="{{ old('company_name') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                     @error('company_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email Utama</label>
-                    <input type="email" name="email" id="email" value="{{ old('email') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                    <label for="email" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Email Utama</label>
+                    <input type="email" name="email" id="email" value="{{ old('email') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                     @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label for="phone" class="block text-sm font-medium text-gray-700">Nomor Telepon / WA</label>
-                    <input type="text" name="phone" id="phone" value="{{ old('phone') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                    <label for="phone" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Nomor Telepon / WA</label>
+                    <input type="text" name="phone" id="phone" value="{{ old('phone') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                     @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-2">
-                    <label for="address" class="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
-                    <textarea name="address" id="address" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">{{ old('address') }}</textarea>
+                    <label for="address" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Alamat Lengkap</label>
+                    <textarea name="address" id="address" rows="3" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">{{ old('address') }}</textarea>
                     @error('address') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>

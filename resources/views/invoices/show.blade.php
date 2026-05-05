@@ -153,9 +153,14 @@
             <!-- Record Payment Form -->
             @if($invoice->balance_due > 0)
             <div class="bg-gray-50 rounded-lg shadow-sm border border-gray-200 p-6" x-data="{ 
-                amount: {{ $invoice->balance_due }},
-                formatRupiah(val) {
-                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+                rawAmount: {{ $invoice->balance_due }},
+                formatThousand(val) {
+                    if (!val || val === '0') return '0';
+                    return new Intl.NumberFormat('id-ID').format(val);
+                },
+                parseNumber(val) {
+                    let num = val.replace(/\D/g, '');
+                    return num ? parseInt(num) : 0;
                 }
             }">
                 <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Catat Pembayaran Baru</h3>
@@ -163,23 +168,32 @@
                     @csrf
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Jumlah Bayar (Rp)</label>
-                            <input type="number" name="amount" x-model.number="amount" required max="{{ $invoice->balance_due }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm font-bold text-primary">
-                            <p class="mt-1 text-xs font-bold text-green-600" x-text="formatRupiah(amount)"></p>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Jumlah Bayar (Rp)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-400 text-xs font-bold">Rp</span>
+                                </div>
+                                <input type="text" 
+                                    :value="formatThousand(rawAmount)"
+                                    @input="rawAmount = parseNumber($event.target.value)"
+                                    class="block w-full pl-9 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm font-black text-primary p-3 border">
+                                <input type="hidden" name="amount" :value="rawAmount">
+                            </div>
+                            <p class="mt-2 text-[10px] text-gray-400 font-bold uppercase">Sisa Tagihan: Rp {{ number_format($invoice->balance_due, 0, ',', '.') }}</p>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Tanggal Bayar</label>
-                            <input type="date" name="payment_date" required value="{{ date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Tanggal Bayar</label>
+                            <input type="date" name="payment_date" required value="{{ date('Y-m-d') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Metode</label>
-                            <select name="payment_method" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Metode</label>
+                            <select name="payment_method" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
                                 <option value="Bank Transfer">Bank Transfer</option>
                                 <option value="Cash">Cash</option>
                                 <option value="Cheque">Cheque</option>
                             </select>
                         </div>
-                        <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-md hover:bg-green-700 transition shadow-sm">
+                        <button type="submit" class="w-full bg-green-600 text-white font-black py-4 rounded-xl hover:bg-green-700 transition shadow-lg shadow-green-100 uppercase tracking-widest text-xs">
                             SIMPAN PEMBAYARAN
                         </button>
                     </div>

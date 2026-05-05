@@ -12,6 +12,7 @@ class Quotation extends Model
         'description',
         'warranty_days',
         'working_duration',
+        'due_date',
         'total_amount',
         'status',
         'attachment_pdf'

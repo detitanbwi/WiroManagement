@@ -57,31 +57,40 @@
                 </div>
 
                 <div class="col-span-1">
+                    <label for="due_date" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Tanggal Jatuh Tempo</label>
+                    <input type="date" name="due_date" id="due_date" value="{{ old('due_date', $quotation->due_date ? $quotation->due_date->format('Y-m-d') : '') }}" required
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
+                    <p class="mt-1 text-[10px] text-gray-400 uppercase font-bold tracking-widest">Penting untuk deadline penawaran.</p>
+                    @error('due_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="col-span-1">
                     <label for="working_duration" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Durasi Pengerjaan</label>
                     <input type="text" name="working_duration" id="working_duration" value="{{ old('working_duration', $quotation->working_duration) }}" required placeholder="Contoh: 14 Hari Kerja"
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
                     @error('working_duration') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="col-span-2" x-data="{ 
                     rawTotal: '{{ old('total_amount', $quotation->total_amount) }}',
-                    get formattedTotal() {
-                        if (!this.rawTotal) return '';
-                        return new Intl.NumberFormat('id-ID').format(this.rawTotal);
+                    formatThousand(val) {
+                        if (!val || val === '0') return '0';
+                        return new Intl.NumberFormat('id-ID').format(val);
                     },
-                    updateTotal(val) {
-                        this.rawTotal = val.replace(/\D/g, '');
+                    parseNumber(val) {
+                        let num = val.replace(/\D/g, '');
+                        return num ? parseInt(num) : 0;
                     }
                 }">
                     <label for="display_total" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Total Nilai Penawaran (Rp)</label>
                     <div class="relative mt-1 rounded-md shadow-sm">
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <span class="text-gray-500 sm:text-sm">Rp</span>
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                            <span class="text-gray-400 font-bold sm:text-sm">Rp</span>
                         </div>
                         <input type="text" id="display_total" 
-                            :value="formattedTotal"
-                            @input="updateTotal($event.target.value)"
-                            class="block w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary pl-10 sm:text-sm p-3 border" placeholder="0">
+                            :value="formatThousand(rawTotal)"
+                            @input="rawTotal = parseNumber($event.target.value)"
+                            class="block w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary pl-12 sm:text-lg p-4 border font-black text-primary" placeholder="0">
                         <input type="hidden" name="total_amount" :value="rawTotal">
                     </div>
                     @error('total_amount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -93,9 +102,9 @@
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                     <p class="mt-1 text-[10px] text-gray-400">Pilih file PDF (Maks. 10MB) untuk mengganti lampiran lama.</p>
                     @if($quotation->attachment_pdf)
-                        <div class="mt-2 flex items-center p-2 bg-blue-50 rounded border border-blue-100">
+                        <div class="mt-2 flex items-center p-3 bg-blue-50 rounded-lg border border-blue-100">
                             <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                            <a href="{{ asset('storage/' . $quotation->attachment_pdf) }}" target="_blank" class="text-xs font-bold text-blue-600 hover:underline">Lampiran Saat Ini</a>
+                            <a href="{{ asset('storage/' . $quotation->attachment_pdf) }}" target="_blank" class="text-xs font-black text-blue-600 uppercase hover:underline">Lampiran Saat Ini (Lihat)</a>
                         </div>
                     @endif
                     @error('attachment_pdf') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror

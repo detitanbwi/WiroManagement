@@ -26,30 +26,15 @@
                         $defaultNo = "QUO/WIRODEV/" . date('Y') . "/" . $ref;
                     @endphp
                     <input type="text" name="quotation_number" id="quotation_number" value="{{ old('quotation_number', $defaultNo) }}" required
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
                     @error('quotation_number') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="col-span-1">
-                    <label for="status" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Status</label>
-                    <select name="status" id="status" required
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
-                        <option value="draft" {{ old('status') == 'draft' ? 'selected' : '' }}>DRAFT</option>
-                        <option value="issued" {{ old('status') == 'issued' ? 'selected' : '' }}>ISSUED (DIKIRIM)</option>
-                        <option value="approved" {{ old('status') == 'approved' ? 'selected' : '' }}>APPROVED (DISETUJUI)</option>
-                    </select>
-                    @error('status') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="col-span-2">
-                    <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Deskripsi Pekerjaan / Fitur</label>
-                    <div class="bg-white">
-                        <div id="editor-description" style="height: 200px;">
-                            {!! old('description', $project->description) !!}
-                        </div>
-                    </div>
-                    <textarea name="description" id="description_hidden" class="hidden"></textarea>
-                    @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <label for="due_date" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Berlaku Sampai (Due Date)</label>
+                    <input type="date" name="due_date" id="due_date" value="{{ old('due_date', date('Y-m-d', strtotime('+30 days'))) }}" required
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
+                    @error('due_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="col-span-1">
@@ -67,28 +52,50 @@
                     @error('working_duration') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="col-span-2" x-data="{ 
-                    rawTotal: '{{ old('total_amount') }}',
-                    get formattedTotal() {
-                        if (!this.rawTotal) return '';
-                        return new Intl.NumberFormat('id-ID').format(this.rawTotal);
+                <div class="col-span-1">
+                    <label for="status" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Status</label>
+                    <select name="status" id="status" required
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
+                        <option value="draft" {{ old('status') == 'draft' ? 'selected' : '' }}>DRAFT</option>
+                        <option value="issued" {{ old('status') == 'issued' ? 'selected' : '' }}>ISSUED (DIKIRIM)</option>
+                        <option value="approved" {{ old('status') == 'approved' ? 'selected' : '' }}>APPROVED (DISETUJUI)</option>
+                    </select>
+                    @error('status') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="col-span-1" x-data="{ 
+                    rawTotal: '{{ old('total_amount', 0) }}',
+                    formatThousand(val) {
+                        if (!val || val === '0') return '0';
+                        return new Intl.NumberFormat('id-ID').format(val);
                     },
-                    updateTotal(val) {
-                        this.rawTotal = val.replace(/\D/g, '');
+                    parseNumber(val) {
+                        return val.replace(/\D/g, '') || '0';
                     }
                 }">
                     <label for="display_total" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Total Nilai Penawaran (Rp)</label>
                     <div class="relative mt-1 rounded-md shadow-sm">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <span class="text-gray-500 sm:text-sm">Rp</span>
+                            <span class="text-gray-500 sm:text-sm font-bold">Rp</span>
                         </div>
                         <input type="text" id="display_total" 
-                            :value="formattedTotal"
-                            @input="updateTotal($event.target.value)"
-                            class="block w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary pl-10 sm:text-sm p-3 border" placeholder="0">
+                            :value="formatThousand(rawTotal)"
+                            @input="rawTotal = parseNumber($event.target.value)"
+                            class="block w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary pl-10 sm:text-sm p-3 border font-black text-primary text-lg" placeholder="0">
                         <input type="hidden" name="total_amount" :value="rawTotal">
                     </div>
                     @error('total_amount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="col-span-2">
+                    <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Deskripsi Pekerjaan / Fitur</label>
+                    <div class="bg-white">
+                        <div id="editor-description" style="height: 200px;">
+                            {!! old('description', $project->description) !!}
+                        </div>
+                    </div>
+                    <textarea name="description" id="description_hidden" class="hidden"></textarea>
+                    @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="col-span-2">
@@ -101,7 +108,7 @@
             </div>
 
             <div class="mt-8 flex justify-end space-x-3">
-                <a href="{{ route('projects.show', $project) }}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <a href="{{ route('projects.show', $project) }}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 uppercase tracking-widest text-xs font-bold">
                     Batal
                 </a>
                 <button type="submit" class="px-6 py-2 bg-primary border border-transparent rounded-md font-bold text-sm text-white uppercase tracking-widest hover:bg-blue-700 transition">
