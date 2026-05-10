@@ -8,6 +8,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ProjectExpenseController;
+use App\Http\Controllers\FinanceController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
@@ -59,4 +60,16 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+
+    // Finance Monitoring Routes
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('/overview', [\App\Http\Controllers\FinanceController::class, 'overview'])->name('overview');
+        
+        Route::get('/bank-accounts', [\App\Http\Controllers\FinanceController::class, 'bankAccounts'])->name('bank-accounts');
+        Route::post('/bank-accounts', [\App\Http\Controllers\FinanceController::class, 'storeBankAccount'])->name('bank-accounts.store');
+        Route::put('/bank-accounts/{id}', [\App\Http\Controllers\FinanceController::class, 'updateBankAccount'])->name('bank-accounts.update');
+        Route::delete('/bank-accounts/{id}', [\App\Http\Controllers\FinanceController::class, 'deleteBankAccount'])->name('bank-accounts.destroy');
+        
+        Route::get('/transactions', [\App\Http\Controllers\FinanceController::class, 'transactions'])->name('transactions');
+    });
 });

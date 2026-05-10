@@ -87,6 +87,42 @@
                             Projects
                         </a>
                     </li>
+                    <li x-data="{ open: {{ request()->routeIs('finance.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open" 
+                                class="w-full flex items-center justify-between px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-primary rounded-md group {{ request()->routeIs('finance.*') ? 'bg-blue-50 text-primary font-medium' : '' }}">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Finance
+                            </div>
+                            <svg class="w-4 h-4 transform transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <ul x-show="open" x-cloak x-transition class="mt-1 space-y-1 pl-12 pr-2 pb-2">
+                            <li>
+                                <a href="{{ route('finance.overview') }}" class="block px-2 py-1.5 text-xs rounded-md {{ request()->routeIs('finance.overview') ? 'text-primary font-bold bg-blue-50' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                                    Overview
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('finance.bank-accounts') }}" class="block px-2 py-1.5 text-xs rounded-md {{ request()->routeIs('finance.bank-accounts') ? 'text-primary font-bold bg-blue-50' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                                    Bank Account
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('finance.transactions') }}" class="block px-2 py-1.5 text-xs rounded-md {{ request()->routeIs('finance.transactions') ? 'text-primary font-bold bg-blue-50' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                                    Transaksi
+                                </a>
+                            </li>
+                            <li>
+                                <span class="block px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed italic">
+                                    Account (Soon)
+                                </span>
+                            </li>
+                        </ul>
+                    </li>
                     <li>
                         <a href="{{ route('settings.index') }}"
                             class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-primary rounded-md group {{ request()->routeIs('settings.*') ? 'bg-blue-50 text-primary font-medium' : '' }}">
