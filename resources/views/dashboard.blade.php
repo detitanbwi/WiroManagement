@@ -64,7 +64,7 @@
                 <h3 class="font-bold text-gray-800">Proyek Terbaru</h3>
                 <a href="{{ route('projects.index') }}" class="text-xs font-bold text-primary hover:underline">Lihat Semua &rarr;</a>
             </div>
-            <div class="p-0">
+            <div class="overflow-x-auto">
                 <table class="min-w-full">
                     <tbody class="divide-y divide-gray-50">
                         @foreach($recentProjects as $p)
@@ -92,7 +92,7 @@
                 <h3 class="font-bold text-gray-800">Invoice Belum Lunas</h3>
                 <a href="#" class="text-xs font-bold text-primary hover:underline">Lihat Semua &rarr;</a>
             </div>
-            <div class="p-0">
+            <div class="overflow-x-auto">
                 <table class="min-w-full">
                     <tbody class="divide-y divide-gray-50">
                         @foreach($unpaidInvoices as $inv)

@@ -5,23 +5,23 @@
 @section('content')
 <div class="max-w-7xl mx-auto">
     <!-- Breadcrumb & Title -->
-    <div class="mb-6 flex justify-between items-start">
+    <div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-start space-y-4 md:space-y-0">
         <div>
             <nav class="flex text-sm text-gray-500 mb-2">
                 <a href="{{ route('projects.index') }}" class="hover:text-primary">Proyek</a>
                 <span class="mx-2">/</span>
                 <span class="text-gray-800 font-medium">Detail</span>
             </nav>
-            <h1 class="text-3xl font-bold text-gray-900">{{ $project->title }}</h1>
-            <p class="text-gray-600 mt-1">Client: <span class="font-semibold">{{ $project->client->name }}</span> {{ $project->client->company_name ? "({$project->client->company_name})" : '' }}</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ $project->title }}</h1>
+            <p class="text-sm md:text-base text-gray-600 mt-1">Client: <span class="font-semibold text-gray-900">{{ $project->client->name }}</span> {{ $project->client->company_name ? "({$project->client->company_name})" : '' }}</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+        <div class="flex flex-wrap items-center gap-2 md:space-x-3">
+            <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-[10px] md:text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
                 Edit Proyek
             </a>
             <form action="{{ route('projects.status.update', $project) }}" method="POST" x-data x-ref="statusForm">
                 @csrf
-                <select name="status" @change="$refs.statusForm.submit()" class="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-xs uppercase font-bold cursor-pointer">
+                <select name="status" @change="$refs.statusForm.submit()" class="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-[10px] md:text-xs uppercase font-bold cursor-pointer bg-white">
                     @foreach(['draft', 'quotation_sent', 'approved', 'in_progress', 'completed', 'cancelled'] as $st)
                         <option value="{{ $st }}" {{ $project->status == $st ? 'selected' : '' }}>
                             {{ str_replace('_', ' ', strtoupper($st)) }}
@@ -33,7 +33,7 @@
     </div>
 
     <!-- Step Indicator -->
-    <div class="mb-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+    <div class="mb-8 bg-white p-6 pb-10 rounded-lg shadow-sm border border-gray-200">
         @php
             $steps = [
                 ['label' => 'Quotation', 'statuses' => ['draft', 'quotation_sent']],
@@ -54,7 +54,7 @@
             if($project->status == 'approved') $currentStepIndex = 1;
         @endphp
         
-        <div class="relative flex items-center justify-between">
+        <div class="relative flex items-center justify-between px-2 md:px-0">
             <!-- Progress Line Background -->
             <div class="absolute left-0 top-1/2 w-full h-0.5 bg-gray-200 -translate-y-1/2"></div>
             <!-- Progress Line Active -->
@@ -62,15 +62,15 @@
             
             @foreach($steps as $index => $step)
             <div class="relative flex flex-col items-center">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center z-10 transition-colors duration-500 {{ $index <= $currentStepIndex ? 'bg-primary text-white' : 'bg-white border-2 border-gray-300 text-gray-400' }}">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center z-10 transition-colors duration-500 {{ $index <= $currentStepIndex ? 'bg-primary text-white' : 'bg-white border-2 border-gray-300 text-gray-400' }}">
                     @if($index < $currentStepIndex || $project->status == 'completed')
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        <svg class="w-3 h-3 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                     @else
-                        <span class="text-xs font-bold">{{ $index + 1 }}</span>
+                        <span class="text-[10px] md:text-xs font-bold">{{ $index + 1 }}</span>
                     @endif
                 </div>
-                <div class="absolute -bottom-6 whitespace-nowrap">
-                    <span class="text-xs font-semibold {{ $index <= $currentStepIndex ? 'text-primary' : 'text-gray-400' }}">{{ $step['label'] }}</span>
+                <div class="absolute -bottom-6 w-16 md:w-24 flex justify-center">
+                    <span class="text-[8px] md:text-xs font-semibold {{ $index <= $currentStepIndex ? 'text-primary' : 'text-gray-400' }} text-center leading-tight">{{ $step['label'] }}</span>
                 </div>
             </div>
             @endforeach
@@ -120,7 +120,7 @@
                     <h3 class="text-lg font-bold text-gray-800">Tagihan (Invoices)</h3>
                     <a href="{{ route('projects.invoices.create', $project) }}" class="text-sm font-bold text-primary hover:text-blue-700">+ Buat Invoice</a>
                 </div>
-                <div class="p-0">
+                <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -169,7 +169,7 @@
                     <h3 class="text-lg font-bold text-gray-800">Penawaran (Quotations)</h3>
                     <a href="{{ route('projects.quotations.create', $project) }}" class="text-sm font-bold text-primary hover:text-blue-700">+ Buat Quotation</a>
                 </div>
-                <div class="p-0">
+                <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -234,7 +234,7 @@
                     <h3 class="text-lg font-bold text-gray-800">Pengeluaran Proyek</h3>
                     <button @click="resetForm(); openAddExpense = true" class="text-sm font-bold text-primary hover:text-blue-700 uppercase tracking-widest text-xs">+ Tambah Pengeluaran</button>
                 </div>
-                <div class="p-0">
+                <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>

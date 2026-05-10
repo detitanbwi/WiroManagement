@@ -30,14 +30,32 @@
 
 <body class="bg-gray-50 text-gray-800">
 
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen overflow-hidden" x-data="{ mobileMenuOpen: false }">
+        <!-- Sidebar Overlay (Mobile) -->
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 md:hidden" 
+             @click="mobileMenuOpen = false"></div>
+
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col shadow-sm z-10">
-            <div class="h-20 flex items-center justify-center border-b border-gray-200 px-4">
+        <aside :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'" 
+               class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col shadow-sm">
+            <div class="h-20 flex items-center justify-between border-b border-gray-200 px-6">
                 <div class="flex items-center space-x-2">
                     <img src="{{ asset('logo.png') }}" alt="Wiro Logo" class="h-10 w-auto">
                     <span class="text-lg font-bold text-primary tracking-wide">WIRO APP</span>
                 </div>
+                <!-- Close button for mobile -->
+                <button @click="mobileMenuOpen = false" class="md:hidden text-gray-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             </div>
 
             <nav class="flex-1 overflow-y-auto py-4">
@@ -125,7 +143,7 @@
             <!-- Top Header (Mobile mostly) -->
             <header class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 md:hidden">
                 <span class="text-xl font-bold text-primary">WIRO APP</span>
-                <button class="text-gray-500 focus:outline-none">
+                <button @click="mobileMenuOpen = true" class="text-gray-500 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16"></path>
@@ -134,7 +152,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6 relative">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-6 relative">
                 <!-- Notification Toast (Auto-dismiss) -->
                 @if(session('success') || session('error'))
                     <div x-data="{ show: true }" 

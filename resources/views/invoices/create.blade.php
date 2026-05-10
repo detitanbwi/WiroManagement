@@ -23,7 +23,7 @@
                     
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            <thead class="hidden md:table-header-group bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Deskripsi</th>
                                     <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Qty</th>
@@ -34,31 +34,51 @@
                             </thead>
                             <tbody class="divide-y divide-gray-200">
                                 <template x-for="(item, index) in items" :key="index">
-                                    <tr>
-                                        <td class="px-2 py-3">
+                                    <tr class="flex flex-col md:table-row border-b md:border-b-0 py-4 md:py-0 space-y-3 md:space-y-0">
+                                        <!-- Deskripsi -->
+                                        <td class="px-2 md:py-3 block md:table-cell">
+                                            <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Deskripsi Pekerjaan</label>
                                             <input type="text" :name="'items['+index+'][description]'" x-model="item.description" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                                         </td>
-                                        <td class="px-2 py-3 text-center">
-                                            <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" @input="calculateTotal()" required class="block w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm text-center p-3 border">
-                                        </td>
-                                        <td class="px-2 py-3">
-                                            <div class="relative">
-                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <span class="text-gray-400 text-xs font-bold">Rp</span>
+                                        
+                                        <div class="flex md:contents space-x-3">
+                                            <!-- Qty -->
+                                            <td class="px-2 md:py-3 block md:table-cell flex-1 md:flex-none">
+                                                <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Qty</label>
+                                                <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" @input="calculateTotal()" required class="block w-full md:w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm text-center p-3 border">
+                                            </td>
+                                            
+                                            <!-- Harga -->
+                                            <td class="px-2 md:py-3 block md:table-cell flex-[2] md:flex-none">
+                                                <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Harga Satuan</label>
+                                                <div class="relative">
+                                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <span class="text-gray-400 text-xs font-bold">Rp</span>
+                                                    </div>
+                                                    <input type="text" 
+                                                        :value="formatThousand(item.price)"
+                                                        @input="item.price = parseNumber($event.target.value); calculateTotal()"
+                                                        class="block w-full pl-9 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
+                                                    <input type="hidden" :name="'items['+index+'][price]'" :value="item.price">
                                                 </div>
-                                                <input type="text" 
-                                                    :value="formatThousand(item.price)"
-                                                    @input="item.price = parseNumber($event.target.value); calculateTotal()"
-                                                    class="block w-full pl-9 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
-                                                <input type="hidden" :name="'items['+index+'][price]'" :value="item.price">
+                                            </td>
+                                        </div>
+
+                                        <!-- Total -->
+                                        <td class="px-4 md:py-3 block md:table-cell text-right md:text-right">
+                                            <div class="flex justify-between md:block items-center">
+                                                <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase">Subtotal Item</label>
+                                                <span class="text-sm font-bold text-gray-900">
+                                                    Rp <span x-text="numberFormat(item.qty * item.price)"></span>
+                                                </span>
                                             </div>
                                         </td>
-                                        <td class="px-4 py-3 text-right text-sm font-bold text-gray-900">
-                                            Rp <span x-text="numberFormat(item.qty * item.price)"></span>
-                                        </td>
-                                        <td class="px-2 py-3 text-center">
-                                            <button type="button" @click="removeItem(index)" class="text-red-400 hover:text-red-600 transition">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+
+                                        <!-- Action -->
+                                        <td class="px-2 md:py-3 block md:table-cell text-right md:text-center pt-2 md:pt-0">
+                                            <button type="button" @click="removeItem(index)" class="inline-flex items-center text-red-400 hover:text-red-600 transition text-xs font-bold md:p-0">
+                                                <svg class="w-5 h-5 mr-1 md:mr-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                <span class="md:hidden">Hapus Baris</span>
                                             </button>
                                         </td>
                                     </tr>

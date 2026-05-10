@@ -73,33 +73,36 @@
                 <h3 class="text-xs font-black text-gray-800 uppercase tracking-[0.2em] mb-4 pb-2 border-b">Item Pekerjaan</h3>
                 <div class="space-y-4">
                     <template x-for="(item, index) in items" :key="index">
-                        <div class="grid grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <div class="col-span-12 md:col-span-6">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Deskripsi</label>
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <div class="col-span-1 md:col-span-6">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Deskripsi Pekerjaan</label>
                                 <input type="text" :name="'items['+index+'][description]'" x-model="item.description" required
                                     class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                             </div>
-                            <div class="col-span-4 md:col-span-1">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qty</label>
-                                <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" required
-                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border text-center">
-                            </div>
-                            <div class="col-span-8 md:col-span-4">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Harga (Rp)</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-400 text-xs font-bold">Rp</span>
+                            <div class="flex md:contents space-x-3">
+                                <div class="flex-1 md:col-span-1">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qty</label>
+                                    <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" required
+                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border text-center">
+                                </div>
+                                <div class="flex-[2] md:col-span-4">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Harga (Rp)</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-400 text-xs font-bold">Rp</span>
+                                        </div>
+                                        <input type="text" 
+                                            :value="formatThousand(item.price)"
+                                            @input="item.price = parseNumber($event.target.value)"
+                                            class="block w-full pl-9 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
+                                        <input type="hidden" :name="'items['+index+'][price]'" :value="item.price">
                                     </div>
-                                    <input type="text" 
-                                        :value="formatThousand(item.price)"
-                                        @input="item.price = parseNumber($event.target.value)"
-                                        class="block w-full pl-9 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
-                                    <input type="hidden" :name="'items['+index+'][price]'" :value="item.price">
                                 </div>
                             </div>
-                            <div class="col-span-12 md:col-span-1 flex justify-end">
-                                <button type="button" @click="removeItem(index)" class="mt-6 text-red-500 hover:text-red-700">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <div class="col-span-1 md:col-span-1 flex justify-end md:justify-center">
+                                <button type="button" @click="removeItem(index)" class="mt-0 md:mt-6 text-red-500 hover:text-red-700 flex items-center text-[10px] font-bold uppercase md:block">
+                                    <svg class="w-5 h-5 md:mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    <span class="md:hidden ml-1">Hapus</span>
                                 </button>
                             </div>
                         </div>
