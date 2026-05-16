@@ -97,9 +97,13 @@ class NlpService {
       }
     }
 
+    if (amount == 0) {
+      throw Exception('Nominal transaksi tidak ditemukan');
+    }
+
     return NlpParseResult(
       transactionType: txType,
-      amount: amount == 0 ? 15000 : amount,
+      amount: amount,
       description: text,
       categoryId: catId,
       date: date,

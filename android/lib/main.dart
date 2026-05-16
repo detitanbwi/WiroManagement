@@ -21,6 +21,10 @@ import 'screens/about_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'theme/theme_notifier.dart';
+import 'services/widget_service.dart';
+import 'package:home_widget/home_widget.dart';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -161,7 +165,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String _activeMode = 'personal'; // 'personal' or 'company'
+  late String _activeMode;
   List<Map<String, dynamic>> _transactions = [];
   List<Map<String, dynamic>> _categoryData = [];
   List<Map<String, dynamic>> _trendData = [];
@@ -173,12 +177,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _activeMode = PreferenceService.instance.activeMode;
     _userName = PreferenceService.instance.userName;
     _loadTransactions();
+    _initWidgetListener();
     // Refresh UI otomatis saat sinkronisasi background selesai
     if (!AppConfig.instance.isOfflineMode) {
       SyncService.instance.onSyncComplete = _loadTransactions;
       SyncService.instance.init();
+    }
+  }
+
+  void _initWidgetListener() {
+    HomeWidget.initiallyLaunchedFromHomeWidget().then((Uri? uri) {
+      if (uri != null && uri.host == 'add_transaction') {
+        _triggerNlpFromWidget();
+      }
+    });
+
+    HomeWidget.widgetClicked.listen((Uri? uri) {
+      if (uri != null && uri.host == 'add_transaction') {
+        _triggerNlpFromWidget();
+      }
+    });
+  }
+
+  void _triggerNlpFromWidget() async {
+    final res = await NlpInputDialog.show(context, activeMode: _activeMode);
+    if (res != null && mounted) {
+      _openTransactionSheet(initialTransaction: {
+        'amount': res.amount,
+        'description': res.description,
+        'category_id': res.categoryId,
+        'transaction_type': res.transactionType,
+        'date': res.date.toIso8601String(),
+      });
     }
   }
 
@@ -213,6 +246,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _trendData = trendData;
       _isLoading = false;
     });
+
+    WidgetService.syncDataToWidget(_activeMode);
   }
 
   void _showDateRangePicker() async {
@@ -448,6 +483,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   child: GestureDetector(
                                     onTap: () {
                                       setState(() => _activeMode = 'personal');
+                                      PreferenceService.instance.setActiveMode('personal');
                                       ThemeNotifier.instance.toggleMode('personal');
                                       _loadTransactions(silent: true);
                                     },
@@ -470,6 +506,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   child: GestureDetector(
                                     onTap: () {
                                       setState(() => _activeMode = 'company');
+                                      PreferenceService.instance.setActiveMode('company');
                                       ThemeNotifier.instance.toggleMode('company');
                                       _loadTransactions(silent: true);
                                     },

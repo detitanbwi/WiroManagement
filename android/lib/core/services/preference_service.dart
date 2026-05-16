@@ -38,4 +38,13 @@ class PreferenceService {
     await _prefs?.setString('language_code', langCode);
     localeNotifier.value = Locale(langCode);
   }
+
+  String get activeMode {
+    return _prefs?.getString('active_mode') ?? 'personal';
+  }
+
+  Future<void> setActiveMode(String mode) async {
+    await _prefs?.setString('active_mode', mode);
+  }
 }
+

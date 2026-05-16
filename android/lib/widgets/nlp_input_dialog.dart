@@ -49,7 +49,11 @@ class _NlpInputDialogState extends State<NlpInputDialog> {
       }
     } catch (e) {
       if (mounted) {
-        TopToast.show(context, "Gagal memproses kalimat", isError: true);
+        String msg = "Gagal memproses kalimat";
+        if (e is Exception) {
+          msg = e.toString().replaceAll('Exception: ', '');
+        }
+        TopToast.show(context, msg, isError: true);
       }
     } finally {
       if (mounted) {
