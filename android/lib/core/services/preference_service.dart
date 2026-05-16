@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferenceService {
@@ -5,9 +6,12 @@ class PreferenceService {
   PreferenceService._();
 
   SharedPreferences? _prefs;
+  final ValueNotifier<Locale> localeNotifier = ValueNotifier<Locale>(const Locale('id'));
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    final lang = _prefs?.getString('language_code') ?? 'id';
+    localeNotifier.value = Locale(lang);
   }
 
   bool get isFirstLaunch {
@@ -24,5 +28,14 @@ class PreferenceService {
 
   Future<void> setUserName(String name) async {
     await _prefs?.setString('user_name', name);
+  }
+
+  String get languageCode {
+    return _prefs?.getString('language_code') ?? 'id';
+  }
+
+  Future<void> setLanguage(String langCode) async {
+    await _prefs?.setString('language_code', langCode);
+    localeNotifier.value = Locale(langCode);
   }
 }

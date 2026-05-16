@@ -8,12 +8,11 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Tentang WiroFin', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -24,15 +23,15 @@ class AboutScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF0D47A1).withOpacity(0.1),
+                color: primaryColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.account_balance_wallet, size: 80, color: Color(0xFF0D47A1)),
+              child: Icon(Icons.account_balance_wallet, size: 80, color: primaryColor),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'WiroFin',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color ?? const Color(0xFF1E293B)),
             ),
             FutureBuilder<PackageInfo>(
               future: PackageInfo.fromPlatform(),
@@ -53,7 +52,7 @@ class AboutScreen extends StatelessWidget {
               context,
               icon: Icons.business,
               title: 'Pengembang',
-              content: 'Wirodayan Digital Software House',
+              content: 'Wirodayan Digital',
             ),
             _buildInfoTile(
               context,
@@ -105,10 +104,11 @@ class AboutScreen extends StatelessWidget {
   }
 
   Widget _buildInfoTile(BuildContext context, {required IconData icon, required String title, required String content, VoidCallback? onTap}) {
+    final primaryColor = Theme.of(context).primaryColor;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -123,13 +123,13 @@ class AboutScreen extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: const Color(0xFF0D47A1), size: 20),
+          child: Icon(icon, color: primaryColor, size: 20),
         ),
         title: Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        subtitle: Text(content, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+        subtitle: Text(content, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         trailing: onTap != null ? const Icon(Icons.open_in_new, size: 16, color: Colors.grey) : null,
       ),
     );

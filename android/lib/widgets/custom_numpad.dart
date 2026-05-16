@@ -44,31 +44,11 @@ class CustomNumpad extends StatelessWidget {
           ),
           Row(
             children: [
-              _buildActionButton('C', onClear, color: Colors.orange.shade100, textColor: Colors.orange.shade800),
-              _buildNumberButton('0'),
               _buildIconActionButton(Icons.backspace_outlined, onBackspace, color: Colors.grey.shade100),
+              _buildNumberButton('0'),
+              _buildIconActionButton(Icons.check, onSave, color: Colors.blue.shade600, iconColor: Colors.white, hasShadow: true),
             ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0D47A1),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'SIMPAN TRANSAKSI',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
-              ),
-            ),
-          )
         ],
       ),
     );
@@ -82,7 +62,7 @@ class CustomNumpad extends StatelessWidget {
           onTap: () => onNumberPressed(number),
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            height: 64,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -118,7 +98,7 @@ class CustomNumpad extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            height: 64,
             decoration: BoxDecoration(
               color: color ?? Colors.grey.shade100,
               borderRadius: BorderRadius.circular(16),
@@ -138,7 +118,7 @@ class CustomNumpad extends StatelessWidget {
     );
   }
 
-  Widget _buildIconActionButton(IconData icon, VoidCallback onTap, {Color? color}) {
+  Widget _buildIconActionButton(IconData icon, VoidCallback onTap, {Color? color, Color? iconColor, bool hasShadow = false}) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(6.0),
@@ -146,16 +126,23 @@ class CustomNumpad extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            height: 64,
             decoration: BoxDecoration(
               color: color ?? Colors.grey.shade100,
               borderRadius: BorderRadius.circular(16),
+              boxShadow: hasShadow ? [
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                )
+              ] : null,
             ),
             alignment: Alignment.center,
             child: Icon(
               icon,
               size: 24,
-              color: const Color(0xFF1E293B),
+              color: iconColor ?? const Color(0xFF1E293B),
             ),
           ),
         ),

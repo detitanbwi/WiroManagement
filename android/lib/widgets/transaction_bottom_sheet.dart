@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/database_helper.dart';
 import 'custom_numpad.dart';
+import 'top_toast.dart';
 
 class TransactionBottomSheet extends StatefulWidget {
   final String activeMode; // 'personal' or 'company'
@@ -24,6 +25,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
   String? _selectedAccountId;
   late TextEditingController _descriptionController;
 
+  String _transactionType = 'expense';
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _accounts = [];
   bool _isLoading = true;
@@ -36,6 +38,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
       _description = widget.initialTransaction!['description'] ?? '';
       _selectedCategoryId = widget.initialTransaction!['category_id'];
       _selectedAccountId = widget.initialTransaction!['account_id'];
+      _transactionType = widget.initialTransaction!['transaction_type'] ?? 'expense';
     } else {
       _amount = '';
       _description = '';
@@ -44,15 +47,35 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
     _loadMasterData();
   }
 
+  List<Map<String, dynamic>> get _filteredCategories {
+    return _categories.where((c) => (c['transaction_type'] ?? 'expense') == _transactionType).toList();
+  }
+
+  void _updateSelectedCategory() {
+    final filtered = _filteredCategories;
+    if (filtered.isEmpty) {
+      _selectedCategoryId = null;
+    } else if (_selectedCategoryId == null || !filtered.any((c) => c['id'] == _selectedCategoryId)) {
+      _selectedCategoryId = filtered.first['id'];
+    }
+  }
+
+  void _switchType(String type) {
+    if (_transactionType != type) {
+      setState(() {
+        _transactionType = type;
+        _updateSelectedCategory();
+      });
+    }
+  }
+
   Future<void> _loadMasterData() async {
     final cats = await DatabaseHelper.instance.getCategories(widget.activeMode);
     final accs = await DatabaseHelper.instance.getAccounts(widget.activeMode);
     setState(() {
       _categories = cats;
       _accounts = accs;
-      if (_selectedCategoryId == null && cats.isNotEmpty) {
-        _selectedCategoryId = cats.first['id'];
-      }
+      _updateSelectedCategory();
       if (_selectedAccountId == null && accs.isNotEmpty) {
         _selectedAccountId = accs.first['id'];
       }
@@ -96,9 +119,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
 
   void _onSave() {
     if (_amount.isEmpty || _amount == '0') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nominal tidak boleh kosong')),
-      );
+      TopToast.show(context, 'Nominal tidak boleh kosong', isError: true);
       return;
     }
     
@@ -108,6 +129,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
       'category_id': _selectedCategoryId,
       'account_id': _selectedAccountId,
       'type': widget.activeMode,
+      'transaction_type': _transactionType,
     });
   }
 
@@ -153,27 +175,28 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.initialTransaction != null ? 'Edit Pengeluaran' : 'Catat Pengeluaran',
+                    widget.initialTransaction != null ? 'Edit Transaksi' : 'Catat Transaksi',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1E293B),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: themeColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      widget.activeMode.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: themeColor,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: themeColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          widget.activeMode.toUpperCase(),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: themeColor),
+                        ),
                       ),
-                    ),
+                    ],
                   )
                 ],
               ),
@@ -187,6 +210,70 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Segmented Control
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _switchType('expense'),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: _transactionType == 'expense' ? Colors.red.shade600 : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: _transactionType == 'expense' 
+                                      ? [BoxShadow(color: Colors.red.shade200, blurRadius: 8, offset: const Offset(0, 2))] 
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Pengeluaran',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: _transactionType == 'expense' ? Colors.white : Colors.grey.shade600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _switchType('income'),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: _transactionType == 'income' ? Colors.green.shade600 : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: _transactionType == 'income' 
+                                      ? [BoxShadow(color: Colors.green.shade200, blurRadius: 8, offset: const Offset(0, 2))] 
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Pemasukan',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: _transactionType == 'income' ? Colors.white : Colors.grey.shade600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
                     // Amount Display
                     Center(
                       child: Padding(
@@ -260,7 +347,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                                     _selectedCategoryId = newValue;
                                   });
                                 },
-                                items: _categories.map<DropdownMenuItem<String>>((cat) {
+                                items: _filteredCategories.map<DropdownMenuItem<String>>((cat) {
                                   return DropdownMenuItem<String>(
                                     value: cat['id'],
                                     child: Text(cat['name']),

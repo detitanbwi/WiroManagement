@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'database_helper.dart';
@@ -16,7 +17,7 @@ class BackupService {
       final categories = await db.queryAll('categories');
 
       final backupData = {
-        'version': 1,
+        'version': 2,
         'timestamp': DateTime.now().toIso8601String(),
         'expenses': transactions,
         'accounts': accounts,
@@ -24,26 +25,26 @@ class BackupService {
       };
 
       final jsonString = jsonEncode(backupData);
-      
+      final bytes = Uint8List.fromList(utf8.encode(jsonString));
+
       // Save to a temporary file first
       final tempDir = await getTemporaryDirectory();
       final file = File('${tempDir.path}/expense_backup_${DateTime.now().millisecondsSinceEpoch}.json');
       await file.writeAsString(jsonString);
 
-      // Use FilePicker to save it permanently
+      // Use FilePicker to save it permanently via Storage Access Framework
       String? outputFile = await FilePicker.platform.saveFile(
         dialogTitle: 'Pilih lokasi simpan backup',
-        fileName: 'expense_tracker_backup.json',
+        fileName: 'wirofin_backup_${DateTime.now().millisecondsSinceEpoch}.json',
         type: FileType.custom,
         allowedExtensions: ['json'],
+        bytes: bytes,
       );
 
       if (outputFile != null) {
-        final finalFile = File(outputFile);
-        await finalFile.writeAsString(jsonString);
         return outputFile;
       }
-      return null;
+      return file.path;
     } catch (e) {
       print('Export error: $e');
       return null;
@@ -55,37 +56,66 @@ class BackupService {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
+        withData: true, // Request bytes for compatibility across storage frameworks
       );
 
-      if (result != null) {
-        File file = File(result.files.single.path!);
-        String content = await file.readAsString();
-        Map<String, dynamic> data = jsonDecode(content);
+      if (result == null || result.files.isEmpty) return false;
 
-        if (data['expenses'] == null) return false;
+      final filePicked = result.files.single;
+      String content;
 
-        final db = await DatabaseHelper.instance.database;
-
-        await db.transaction((txn) async {
-          // Warning: This clears existing data to restore backup
-          await txn.delete('expenses');
-          await txn.delete('accounts');
-          await txn.delete('categories');
-
-          for (var item in data['accounts']) {
-            await txn.insert('accounts', item);
-          }
-          for (var item in data['categories']) {
-            await txn.insert('categories', item);
-          }
-          for (var item in data['expenses']) {
-            await txn.insert('expenses', item);
-          }
-        });
-
-        return true;
+      if (filePicked.path != null && File(filePicked.path!).existsSync()) {
+        content = await File(filePicked.path!).readAsString();
+      } else if (filePicked.bytes != null) {
+        content = utf8.decode(filePicked.bytes!);
+      } else {
+        return false;
       }
-      return false;
+
+      Map<String, dynamic> data;
+      try {
+        data = jsonDecode(content);
+      } catch (e) {
+        print('JSON Corrupted or Invalid: $e');
+        return false;
+      }
+
+      if (data['expenses'] is! List || data['accounts'] is! List || data['categories'] is! List) {
+        return false;
+      }
+
+      final db = await DatabaseHelper.instance.database;
+
+      await db.transaction((txn) async {
+        // Clear existing data before restoring
+        await txn.delete('expenses');
+        await txn.delete('accounts');
+        await txn.delete('categories');
+
+        for (var item in data['accounts']) {
+          final acc = Map<String, dynamic>.from(item);
+          await txn.insert('accounts', acc);
+        }
+        for (var item in data['categories']) {
+          final cat = Map<String, dynamic>.from(item);
+          cat['transaction_type'] ??= 'expense';
+          await txn.insert('categories', cat);
+        }
+        for (var item in data['expenses']) {
+          final exp = Map<String, dynamic>.from(item);
+          exp['transaction_type'] ??= 'expense';
+          // Sanitize description
+          if (exp['description'] != null) {
+            exp['description'] = exp['description'].toString().trim();
+          }
+          await txn.insert('expenses', exp);
+        }
+      });
+
+      // Ensure default income categories exist if the backup was from an older version
+      await DatabaseHelper.instance.ensureDefaultCategoriesExist();
+
+      return true;
     } catch (e) {
       print('Import error: $e');
       return false;

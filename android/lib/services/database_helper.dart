@@ -20,11 +20,13 @@ class DatabaseHelper {
 
     final db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
     await _ensureOtherCategoryExists(db);
+    await _ensureDefaultExpenseCategoriesExist(db);
+    await _ensureDefaultIncomeCategoriesExist(db);
     return db;
   }
 
@@ -32,22 +34,92 @@ class DatabaseHelper {
     if (oldVersion < 2) {
       await db.execute("ALTER TABLE accounts ADD COLUMN balance INTEGER NOT NULL DEFAULT 0;");
     }
+    if (oldVersion < 3) {
+      await db.execute("ALTER TABLE categories ADD COLUMN transaction_type TEXT NOT NULL DEFAULT 'expense';");
+      await db.execute("ALTER TABLE expenses ADD COLUMN transaction_type TEXT NOT NULL DEFAULT 'expense';");
+    }
+  }
+
+  Future<void> ensureDefaultCategoriesExist() async {
+    final db = await database;
+    await _ensureOtherCategoryExists(db);
+    await _ensureDefaultExpenseCategoriesExist(db);
+    await _ensureDefaultIncomeCategoriesExist(db);
   }
 
   Future<void> _ensureOtherCategoryExists(Database db) async {
     final uuid = const Uuid();
     for (var type in ['personal', 'company']) {
-      final List<Map<String, dynamic>> maps = await db.query(
-        'categories',
-        where: 'name = ? AND type = ?',
-        whereArgs: ['Other', type],
-      );
-      if (maps.isEmpty) {
+      for (var txType in ['expense', 'income']) {
+        final List<Map<String, dynamic>> maps = await db.query(
+          'categories',
+          where: 'name = ? AND type = ? AND transaction_type = ?',
+          whereArgs: ['Other', type, txType],
+        );
+        if (maps.isEmpty) {
+          await db.insert('categories', {
+            'id': uuid.v4(),
+            'name': 'Other',
+            'type': type,
+            'transaction_type': txType,
+            'sync_status': 'synced'
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _ensureDefaultExpenseCategoriesExist(Database db) async {
+    final uuid = const Uuid();
+    final defaultExpenseCats = ['Food & Drink', 'Transportation'];
+
+    for (var type in ['personal', 'company']) {
+      for (var name in defaultExpenseCats) {
+        final res = await db.query(
+          'categories',
+          where: 'name = ? AND type = ? AND transaction_type = ?',
+          whereArgs: [name, type, 'expense'],
+        );
+        if (res.isEmpty) {
+          await db.insert('categories', {
+            'id': uuid.v4(),
+            'name': name,
+            'type': type,
+            'transaction_type': 'expense',
+            'sync_status': 'synced',
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _ensureDefaultIncomeCategoriesExist(Database db) async {
+    final uuid = const Uuid();
+    final personalIncomeCats = ['Gaji', 'Freelance', 'Investasi'];
+    final companyIncomeCats = ['Proyek', 'Retainer', 'Penjualan Lisensi'];
+
+    for (var name in personalIncomeCats) {
+      final res = await db.query('categories', where: 'name = ? AND type = ? AND transaction_type = ?', whereArgs: [name, 'personal', 'income']);
+      if (res.isEmpty) {
         await db.insert('categories', {
           'id': uuid.v4(),
-          'name': 'Other',
-          'type': type,
-          'sync_status': 'synced'
+          'name': name,
+          'type': 'personal',
+          'transaction_type': 'income',
+          'sync_status': 'synced',
+        });
+      }
+    }
+
+    for (var name in companyIncomeCats) {
+      final res = await db.query('categories', where: 'name = ? AND type = ? AND transaction_type = ?', whereArgs: [name, 'company', 'income']);
+      if (res.isEmpty) {
+        await db.insert('categories', {
+          'id': uuid.v4(),
+          'name': name,
+          'type': 'company',
+          'transaction_type': 'income',
+          'sync_status': 'synced',
         });
       }
     }
@@ -73,6 +145,7 @@ class DatabaseHelper {
         id $uuidType,
         name $textType,
         type $textType, -- 'personal' or 'company'
+        transaction_type TEXT NOT NULL DEFAULT 'expense',
         sync_status TEXT DEFAULT 'pending'
       )
     ''');
@@ -86,6 +159,7 @@ class DatabaseHelper {
         account_id TEXT,
         date $textType,
         type $textType, -- 'personal' or 'company'
+        transaction_type TEXT NOT NULL DEFAULT 'expense',
         sync_status TEXT DEFAULT 'pending',
         FOREIGN KEY (category_id) REFERENCES categories (id),
         FOREIGN KEY (account_id) REFERENCES accounts (id)
@@ -102,10 +176,11 @@ class DatabaseHelper {
   }
 
   // Get Expenses with joins
-  Future<List<Map<String, dynamic>>> getExpensesWithDetails({String? type, DateTime? startDate, DateTime? endDate}) async {
+  Future<List<Map<String, dynamic>>> getExpensesWithDetails({String? type, String? transactionType, DateTime? startDate, DateTime? endDate}) async {
     final db = await instance.database;
     List<String> conditions = [];
     if (type != null) conditions.add("e.type = '$type'");
+    if (transactionType != null) conditions.add("e.transaction_type = '$transactionType'");
     if (startDate != null) conditions.add("e.date >= '${startDate.toIso8601String()}'");
     if (endDate != null) conditions.add("e.date <= '${endDate.toIso8601String()}'");
     
@@ -126,6 +201,7 @@ class DatabaseHelper {
     final db = await instance.database;
     final id = const Uuid().v4();
     await db.insert('expenses', {
+      'transaction_type': 'expense',
       ...data,
       'id': id,
       'sync_status': 'pending',
@@ -155,9 +231,15 @@ class DatabaseHelper {
   }
 
   // Get categories and accounts for a specific type
-  Future<List<Map<String, dynamic>>> getCategories(String type) async {
+  Future<List<Map<String, dynamic>>> getCategories(String type, {String? transactionType}) async {
     final db = await instance.database;
-    return await db.query('categories', where: 'type = ?', whereArgs: [type]);
+    List<String> conditions = ['type = ?'];
+    List<dynamic> args = [type];
+    if (transactionType != null) {
+      conditions.add('transaction_type = ?');
+      args.add(transactionType);
+    }
+    return await db.query('categories', where: conditions.join(' AND '), whereArgs: args);
   }
 
   Future<List<Map<String, dynamic>>> getAccounts(String type) async {
@@ -196,6 +278,7 @@ class DatabaseHelper {
     final db = await instance.database;
     final id = const Uuid().v4();
     await db.insert('categories', {
+      'transaction_type': 'expense',
       ...data,
       'id': id,
       'sync_status': 'pending',
@@ -215,15 +298,44 @@ class DatabaseHelper {
 
   Future<int> deleteCategory(String id) async {
     final db = await instance.database;
+    final cats = await db.query('categories', where: 'id = ?', whereArgs: [id]);
+    if (cats.isEmpty) return 0;
+    
+    final cat = cats.first;
+    final type = cat['type'] as String;
+    final txType = cat['transaction_type'] as String;
+
+    if (cat['name'] == 'Other') return 0;
+
+    final others = await db.query(
+      'categories',
+      where: 'name = ? AND type = ? AND transaction_type = ?',
+      whereArgs: ['Other', type, txType],
+    );
+
+    if (others.isNotEmpty) {
+      final otherId = others.first['id'] as String;
+      await db.update(
+        'expenses',
+        {'category_id': otherId, 'sync_status': 'pending'},
+        where: 'category_id = ?',
+        whereArgs: [id],
+      );
+    }
+
     return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 
   // Statistics Queries
-  Future<List<Map<String, dynamic>>> getCategoryExpenses(String type, {DateTime? startDate, DateTime? endDate}) async {
+  Future<List<Map<String, dynamic>>> getCategoryExpenses(String type, {String? transactionType, DateTime? startDate, DateTime? endDate}) async {
     final db = await instance.database;
     List<String> conditions = ["e.type = ?"];
     List<dynamic> args = [type];
     
+    if (transactionType != null) {
+      conditions.add("e.transaction_type = ?");
+      args.add(transactionType);
+    }
     if (startDate != null) {
       conditions.add("e.date >= ?");
       args.add(startDate.toIso8601String());
@@ -242,11 +354,15 @@ class DatabaseHelper {
     ''', args);
   }
 
-  Future<List<Map<String, dynamic>>> getDailyExpensesTrend(String type, {DateTime? startDate, DateTime? endDate}) async {
+  Future<List<Map<String, dynamic>>> getDailyExpensesTrend(String type, {String? transactionType, DateTime? startDate, DateTime? endDate}) async {
     final db = await instance.database;
     List<String> conditions = ["type = ?"];
     List<dynamic> args = [type];
     
+    if (transactionType != null) {
+      conditions.add("transaction_type = ?");
+      args.add(transactionType);
+    }
     if (startDate != null) {
       conditions.add("date >= ?");
       args.add(startDate.toIso8601String());

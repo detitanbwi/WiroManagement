@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 class ExpenseStatisticsCard extends StatelessWidget {
   final List<Map<String, dynamic>> categoryData;
-  final List<Map<String, dynamic>> trendData;
+  final List<Map<String, dynamic>> trendData; // Kept for API compatibility with main.dart
   final Color themeColor;
 
   const ExpenseStatisticsCard({
@@ -16,39 +16,38 @@ class ExpenseStatisticsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _buildPieChart(context)),
-        const SizedBox(width: 12),
-        Expanded(child: _buildBarChart(context)),
-      ],
-    );
-  }
-
-  Widget _buildPieChart(BuildContext context) {
-    if (categoryData.isEmpty) return _buildEmptyState('Distribusi');
+    if (categoryData.isEmpty) return _buildEmptyState('Distribusi Pengeluaran');
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cardTitle('Distribusi'),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 120,
-            child: PieChart(
-              PieChartData(
-                sectionsSpace: 2,
-                centerSpaceRadius: 20,
-                sections: _generatePieSections(),
+          _cardTitle('Distribusi Pengeluaran'),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                flex: 5,
+                child: SizedBox(
+                  height: 140,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 3,
+                      centerSpaceRadius: 28,
+                      sections: _generatePieSections(),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 20),
+              Expanded(
+                flex: 7,
+                child: _buildExpandedLegend(),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          _buildCompactLegend(),
         ],
       ),
     );
@@ -57,12 +56,12 @@ class ExpenseStatisticsCard extends StatelessWidget {
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 6),
         ),
       ],
     );
@@ -74,7 +73,7 @@ class ExpenseStatisticsCard extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: const TextStyle(
-        fontSize: 13,
+        fontSize: 16,
         fontWeight: FontWeight.bold,
         color: Color(0xFF1E293B),
       ),
@@ -83,10 +82,15 @@ class ExpenseStatisticsCard extends StatelessWidget {
 
   Widget _buildEmptyState(String title) {
     return Container(
-      height: 200,
-      padding: const EdgeInsets.all(16),
+      height: 180,
+      padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
-      child: Center(child: Text(title, style: const TextStyle(fontSize: 10, color: Colors.grey))),
+      child: Center(
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+      ),
     );
   }
 
@@ -94,12 +98,12 @@ class ExpenseStatisticsCard extends StatelessWidget {
     final List<Color> colors = _getPalette();
     return List.generate(categoryData.length, (i) {
       final data = categoryData[i];
-      final total = data['total'] as int;
+      final total = (data['total'] as num).toDouble();
       return PieChartSectionData(
         color: colors[i % colors.length],
-        value: total.toDouble(),
+        value: total,
         title: '',
-        radius: 35,
+        radius: 38,
       );
     });
   }
@@ -107,41 +111,60 @@ class ExpenseStatisticsCard extends StatelessWidget {
   List<Color> _getPalette() {
     return [
       themeColor,
-      themeColor.withOpacity(0.7),
-      themeColor.withOpacity(0.4),
-      Colors.orange,
-      Colors.teal,
-      Colors.indigo,
+      const Color(0xFF38BDF8), // Sky Blue
+      const Color(0xFF34D399), // Emerald
+      const Color(0xFFFBBF24), // Amber
+      const Color(0xFFF472B6), // Pink
+      const Color(0xFFA78BFA), // Purple
+      const Color(0xFFFB7185), // Rose
     ];
   }
 
-  Widget _buildCompactLegend() {
+  Widget _buildExpandedLegend() {
     final List<Color> colors = _getPalette();
-    // Only show top 3 to keep it compact
-    final displayData = categoryData.take(3).toList();
+    final displayData = categoryData.take(6).toList();
+    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(displayData.length, (i) {
         final data = displayData[i];
+        final total = (data['total'] as num);
+        final formattedTotal = currencyFormat.format(total);
+
         return Padding(
-          padding: const EdgeInsets.only(bottom: 4),
+          padding: const EdgeInsets.only(bottom: 8),
           child: Row(
             children: [
               Container(
-                width: 8,
-                height: 8,
+                width: 10,
+                height: 10,
                 decoration: BoxDecoration(
                   color: colors[i % colors.length],
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   data['category'] ?? '...',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                formattedTotal,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
                 ),
               ),
             ],
@@ -149,84 +172,5 @@ class ExpenseStatisticsCard extends StatelessWidget {
         );
       }),
     );
-  }
-
-  Widget _buildBarChart(BuildContext context) {
-    if (trendData.isEmpty) return _buildEmptyState('Tren');
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardTitle('Tren'),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 120,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: _getMaxY(),
-                barTouchData: BarTouchData(enabled: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 || index >= trendData.length) return const SizedBox.shrink();
-                        final dateStr = trendData[index]['day'] as String;
-                        final date = DateTime.parse(dateStr);
-                        return Text(
-                          DateFormat('dd').format(date),
-                          style: const TextStyle(color: Colors.grey, fontSize: 9),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                gridData: const FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                barGroups: _generateBarGroups(),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text('7 Hari Terakhir', style: TextStyle(fontSize: 9, color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  double _getMaxY() {
-    double max = 0;
-    for (var data in trendData) {
-      final total = (data['total'] as int).toDouble();
-      if (total > max) max = total;
-    }
-    return max == 0 ? 10 : max * 1.2;
-  }
-
-  List<BarChartGroupData> _generateBarGroups() {
-    return List.generate(trendData.length, (i) {
-      final data = trendData[i];
-      final total = (data['total'] as int).toDouble();
-      return BarChartGroupData(
-        x: i,
-        barRods: [
-          BarChartRodData(
-            toY: total,
-            color: themeColor,
-            width: 10,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ],
-      );
-    });
   }
 }

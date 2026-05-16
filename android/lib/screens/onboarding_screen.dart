@@ -5,6 +5,8 @@ import '../services/database_helper.dart';
 import '../services/backup_service.dart';
 import 'package:intl/intl.dart';
 import 'terms_screen.dart';
+import '../widgets/top_toast.dart';
+import '../l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onFinish;
@@ -71,7 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       
       widget.onFinish();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      TopToast.show(context, 'Error: $e', isError: true);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -126,11 +128,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildWelcomePage() {
     return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: ValueListenableBuilder<Locale>(
+                valueListenable: PreferenceService.instance.localeNotifier,
+                builder: (context, locale, child) {
+                  return SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment<String>(
+                        value: 'id',
+                        label: Text('🇮🇩 ID', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                      ButtonSegment<String>(
+                        value: 'en',
+                        label: Text('🇬🇧 EN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                    selected: {locale.languageCode},
+                    onSelectionChanged: (Set<String> newSelection) {
+                      final lang = newSelection.first;
+                      PreferenceService.instance.setLanguage(lang);
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                        if (states.contains(MaterialState.selected)) {
+                          return Colors.orange.shade100;
+                        }
+                        return Colors.white;
+                      }),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
             Container(
               height: 280,
               width: double.infinity,
@@ -145,19 +182,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 errorBuilder: (context, error, stackTrace) => Icon(Icons.account_balance_wallet, size: 100, color: Colors.teal.shade600),
               ),
             ),
-            const SizedBox(height: 48),
-            const Text(
-              'Kelola Uang Lebih Baik',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 28),
             Text(
-              'Pantau pengeluaran, atur kategori, dan simpan data Anda secara offline dengan aman.',
+              AppLocalizations.of(context)?.onboardingTitle1 ?? 'Kelola Uang Lebih Baik',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              AppLocalizations.of(context)?.onboardingSubtitle1 ?? 'Pantau pengeluaran, atur kategori, dan simpan data Anda secara offline dengan aman.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600, height: 1.5),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 38),
             // Terms and Conditions Checkbox
             Container(
               padding: const EdgeInsets.all(16),
@@ -185,16 +222,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         text: TextSpan(
                           style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
                           children: [
-                            const TextSpan(text: 'Saya menyetujui '),
+                            TextSpan(text: AppLocalizations.of(context)?.agreeTerms ?? 'Saya menyetujui '),
                             TextSpan(
-                              text: 'Syarat & Ketentuan',
+                              text: AppLocalizations.of(context)?.termsConditions ?? 'Syarat & Ketentuan',
                               style: TextStyle(
                                 color: Colors.orange.shade700,
                                 fontWeight: FontWeight.bold,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
-                            const TextSpan(text: ' penggunaan WiroFin.'),
+                            TextSpan(text: AppLocalizations.of(context)?.usageWiroFin ?? ' penggunaan WiroFin.'),
                           ],
                         ),
                       ),
@@ -211,29 +248,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildChoicePage() {
     return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 40),
-            const Text(
-              'Mulai Perjalanan Anda',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            Text(
+              AppLocalizations.of(context)?.startJourney ?? 'Mulai Perjalanan Anda',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
             ),
             const SizedBox(height: 48),
             _buildActionCard(
               icon: Icons.add_circle_outline,
-              title: 'Mulai dari Awal',
-              subtitle: 'Buat akun baru dan atur profil Anda.',
+              title: AppLocalizations.of(context)?.startFresh ?? 'Mulai dari Awal',
+              subtitle: AppLocalizations.of(context)?.startFreshDesc ?? 'Buat akun baru dan atur profil Anda.',
               color: Colors.teal,
               onTap: _nextPage,
             ),
             const SizedBox(height: 24),
             _buildActionCard(
               icon: Icons.restore,
-              title: 'Import Data Lama',
-              subtitle: 'Pulihkan data dari file backup JSON.',
+              title: AppLocalizations.of(context)?.importOldData ?? 'Import Data Lama',
+              subtitle: AppLocalizations.of(context)?.importOldDataDesc ?? 'Pulihkan data dari file backup JSON.',
               color: Colors.orange,
               onTap: _importData,
             ),
@@ -276,6 +314,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildProfilePage() {
     return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(
@@ -290,13 +329,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Icon(Icons.person_outline, size: 80, color: Colors.blue.shade600),
             ),
             const SizedBox(height: 32),
-            const Text(
-              'Siapa nama Anda?',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            Text(
+              AppLocalizations.of(context)?.whatsYourName ?? 'Siapa nama Anda?',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
             ),
             const SizedBox(height: 8),
             Text(
-              'Nama ini akan digunakan untuk menyapa Anda.',
+              AppLocalizations.of(context)?.nameGreetingDesc ?? 'Nama ini akan digunakan untuk menyapa Anda.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade600),
             ),
@@ -309,7 +348,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               textCapitalization: TextCapitalization.words,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
               decoration: InputDecoration(
-                hintText: 'Masukkan nama',
+                hintText: AppLocalizations.of(context)?.enterName ?? 'Masukkan nama',
                 hintStyle: TextStyle(color: Colors.grey.withOpacity(0.4)),
                 filled: true,
                 fillColor: Colors.grey.shade50,
@@ -339,17 +378,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: [
         Expanded(
           child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  const Text(
-                    'Rekening Utama',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  Text(
+                    AppLocalizations.of(context)?.mainAccount ?? 'Rekening Utama',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Masukkan saldo awal Anda saat ini.',
+                    AppLocalizations.of(context)?.enterInitialBalance ?? 'Masukkan saldo awal Anda saat ini.',
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 32),
@@ -368,7 +408,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            hintText: 'Nama Rekening (Misal: BCA / Tunai)',
+                            hintText: AppLocalizations.of(context)?.accountNameHint ?? 'Nama Rekening (Misal: BCA / Tunai)',
                             hintStyle: TextStyle(color: Colors.grey.withOpacity(0.4)),
                           ),
                           controller: _walletController,
@@ -452,7 +492,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildBottomControls() {
     return Container(
       padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
       ),
       child: Row(
@@ -463,7 +503,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             TextButton.icon(
               onPressed: _prevPage,
               icon: const Icon(Icons.arrow_back, size: 20),
-              label: const Text('Kembali'),
+              label: Text(AppLocalizations.of(context)?.back ?? 'Kembali'),
               style: TextButton.styleFrom(foregroundColor: Colors.grey.shade600),
             )
           else
@@ -499,7 +539,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: _isLoading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : Text(
-                      _currentPage == 3 ? 'Selesai' : 'Lanjut',
+                      _currentPage == 3 
+                        ? (AppLocalizations.of(context)?.finish ?? 'Selesai')
+                        : (AppLocalizations.of(context)?.next ?? 'Lanjut'),
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
             )

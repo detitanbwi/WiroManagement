@@ -1,4 +1,4 @@
-package com.wirodev.expense
+package com.wirodev.wirofin
 
 import io.flutter.embedding.android.FlutterActivity
 

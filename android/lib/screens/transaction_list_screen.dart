@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../widgets/transaction_bottom_sheet.dart';
+import '../widgets/top_toast.dart';
 import '../services/database_helper.dart';
 import '../services/sync_service.dart';
 import '../core/config/app_config.dart';
@@ -87,9 +88,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               widget.onRefresh(); // Refresh Dashboard (untuk saat kembali)
               if (mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Transaksi dihapus')),
-                );
+                TopToast.show(context, 'Transaksi berhasil dihapus');
               }
             },
             child: const Text('Hapus', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
@@ -122,9 +121,13 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         'category_id': result['category_id'],
         'account_id': result['account_id'],
         'type': result['type'],
+        'transaction_type': result['transaction_type'] ?? 'expense',
       });
       await _loadTransactions(); // Refresh lokal
       widget.onRefresh(); // Refresh Dashboard
+      if (mounted) {
+        TopToast.show(context, 'Transaksi berhasil diperbarui');
+      }
     }
   }
 
@@ -231,6 +234,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               itemCount: _displayTransactions.length,
               itemBuilder: (context, index) {
                 final item = _displayTransactions[index];
+                final isIncome = item['transaction_type'] == 'income';
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
@@ -258,12 +262,12 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: themeColor.withOpacity(0.1),
+                                  color: isIncome ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(
-                                  Icons.shopping_bag_outlined,
-                                  color: themeColor,
+                                  isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                                  color: isIncome ? Colors.green.shade600 : Colors.red.shade600,
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -322,11 +326,11 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '- Rp ${formatter.format(item['amount'])}',
-                                    style: const TextStyle(
+                                    '${isIncome ? '+' : '-'} Rp ${formatter.format(item['amount'])}',
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: Colors.red,
+                                      color: isIncome ? Colors.green.shade600 : Colors.red.shade600,
                                     ),
                                   ),
                                   const SizedBox(height: 8),

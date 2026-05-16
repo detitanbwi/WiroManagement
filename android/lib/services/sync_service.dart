@@ -61,10 +61,14 @@ class SyncService {
             'id': cat['id'],
             'name': cat['name'],
             'type': cat['type'],
+            'transaction_type': cat['transaction_type'] ?? 'expense',
             'sync_status': 'synced'
           }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       }
+      
+      // Pastikan kategori default (Other dan Income) tetap ada setelah reset
+      await DatabaseHelper.instance.ensureDefaultCategoriesExist();
     } catch (e) {
       print('Fetch Master Data Error: $e');
     }
@@ -98,6 +102,7 @@ class SyncService {
           'account_id': e['account_id'],
           'category_id': e['category_id'],
           'type': e['type'],
+          'transaction_type': e['transaction_type'],
           'amount': e['amount'],
           'expense_date': e['date'],
           'description': e['description'],

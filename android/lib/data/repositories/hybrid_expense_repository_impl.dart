@@ -9,8 +9,8 @@ class HybridExpenseRepositoryImpl implements ExpenseRepository {
   HybridExpenseRepositoryImpl(this._dbHelper, this._syncService);
 
   @override
-  Future<List<Map<String, dynamic>>> getExpenses({String? type, DateTime? startDate, DateTime? endDate}) {
-    return _dbHelper.getExpensesWithDetails(type: type, startDate: startDate, endDate: endDate);
+  Future<List<Map<String, dynamic>>> getExpenses({String? type, String? transactionType, DateTime? startDate, DateTime? endDate}) {
+    return _dbHelper.getExpensesWithDetails(type: type, transactionType: transactionType, startDate: startDate, endDate: endDate);
   }
 
   @override

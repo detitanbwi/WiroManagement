@@ -2,6 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
+import 'widgets/top_toast.dart';
+import 'widgets/nlp_input_dialog.dart';
 import 'screens/transaction_list_screen.dart';
 import 'screens/master_data_screen.dart';
 import 'widgets/transaction_bottom_sheet.dart';
@@ -16,6 +20,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/about_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'theme/theme_notifier.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -96,10 +101,11 @@ class _WiroFinAppState extends State<WiroFinApp> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0D47A1),
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('Update Sekarang', style: TextStyle(color: Colors.white)),
+              child: const Text('Update Sekarang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -109,23 +115,40 @@ class _WiroFinAppState extends State<WiroFinApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'WiroFin',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0D47A1)),
-        useMaterial3: true,
-        fontFamily: 'Inter',
-      ),
-      home: _isFirstLaunch
-          ? OnboardingScreen(
-              onFinish: () {
-                setState(() {
-                  _isFirstLaunch = false;
-                });
-              },
-            )
-          : const DashboardScreen(),
+    return ValueListenableBuilder<Locale>(
+      valueListenable: PreferenceService.instance.localeNotifier,
+      builder: (context, locale, child) {
+        return ListenableBuilder(
+          listenable: ThemeNotifier.instance,
+          builder: (context, child) {
+            return MaterialApp(
+              title: 'WiroFin',
+              debugShowCheckedModeBanner: false,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('id'),
+                Locale('en'),
+              ],
+              locale: locale,
+              theme: ThemeNotifier.instance.currentTheme,
+              home: _isFirstLaunch
+                  ? OnboardingScreen(
+                      onFinish: () {
+                        setState(() {
+                          _isFirstLaunch = false;
+                        });
+                      },
+                    )
+                  : const DashboardScreen(),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -168,11 +191,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     final catData = await DatabaseHelper.instance.getCategoryExpenses(
       _activeMode,
+      transactionType: 'expense',
       startDate: _startDate,
       endDate: _endDate,
     );
     final trendData = await DatabaseHelper.instance.getDailyExpensesTrend(
       _activeMode,
+      transactionType: 'expense',
       startDate: _startDate,
       endDate: _endDate,
     );
@@ -229,16 +254,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadTransactions(silent: true);
   }
 
-  void _openTransactionSheet() async {
+  void _openTransactionSheet({Map<String, dynamic>? initialTransaction}) async {
     final result = await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
         padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 24,
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: TransactionBottomSheet(activeMode: _activeMode),
+        child: TransactionBottomSheet(
+          activeMode: _activeMode,
+          initialTransaction: initialTransaction,
+        ),
       ),
     );
 
@@ -250,12 +279,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'account_id': result['account_id'],
         'date': DateTime.now().toIso8601String(),
         'type': result['type'],
+        'transaction_type': result['transaction_type'] ?? 'expense',
       });
       await _loadTransactions();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transaksi disimpan offline')),
-        );
+        TopToast.show(context, 'Transaksi berhasil disimpan');
       }
     }
   }
@@ -268,15 +296,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Filter transactions based on active mode
     final filteredTransactions = _transactions.where((t) => t['type'] == _activeMode).toList();
     
-    // Calculate total balance for active mode
-    final totalExpense = filteredTransactions.fold<int>(0, (sum, item) => sum + (item['amount'] as int));
-    
-    final now = DateTime.now();
-    final todayExpense = filteredTransactions
-        .where((t) => (t['date'] as DateTime).year == now.year &&
-                     (t['date'] as DateTime).month == now.month &&
-                     (t['date'] as DateTime).day == now.day)
+    // Calculate total income, expense, and net balance
+    final totalIncome = filteredTransactions
+        .where((t) => t['transaction_type'] == 'income')
         .fold<int>(0, (sum, item) => sum + (item['amount'] as int));
+    final totalExpense = filteredTransactions
+        .where((t) => (t['transaction_type'] ?? 'expense') == 'expense')
+        .fold<int>(0, (sum, item) => sum + (item['amount'] as int));
+    final netBalance = totalIncome - totalExpense;
     
     final formatter = NumberFormat('#,###', 'id_ID');
     final Color themeColor = _activeMode == 'personal' ? Colors.orange.shade600 : Colors.teal.shade600;
@@ -303,9 +330,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Container(
                 height: MediaQuery.of(context).size.height * 0.75,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF00367D), Color(0xFF004B9B)],
+                    colors: [
+                      Theme.of(context).primaryColorDark,
+                      Theme.of(context).primaryColor,
+                    ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -418,6 +448,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   child: GestureDetector(
                                     onTap: () {
                                       setState(() => _activeMode = 'personal');
+                                      ThemeNotifier.instance.toggleMode('personal');
                                       _loadTransactions(silent: true);
                                     },
                                     behavior: HitTestBehavior.opaque,
@@ -439,6 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   child: GestureDetector(
                                     onTap: () {
                                       setState(() => _activeMode = 'company');
+                                      ThemeNotifier.instance.toggleMode('company');
                                       _loadTransactions(silent: true);
                                     },
                                     behavior: HitTestBehavior.opaque,
@@ -524,21 +556,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'PENGELUARAN BULAN INI',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
-                                letterSpacing: 1.2,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'SALDO BERSIH',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    letterSpacing: 1.2,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    'Live Update',
+                                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Rp ${formatter.format(totalExpense)}',
+                              '${netBalance < 0 ? '-' : ''}Rp ${formatter.format(netBalance.abs())}',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 28,
+                                fontSize: 32,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -548,41 +596,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               width: double.infinity,
                               color: Colors.white12,
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 16),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'HARI INI',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 10,
-                                        letterSpacing: 1.0,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.withOpacity(0.2),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.arrow_downward, size: 12, color: Colors.greenAccent),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Text(
+                                            'PEMASUKAN',
+                                            style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Rp ${formatter.format(todayExpense)}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '+Rp ${formatter.format(totalIncome)}',
+                                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20),
+                                    ],
                                   ),
-                                  child: const Text(
-                                    'Live Update',
-                                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600),
+                                ),
+                                Container(width: 1, height: 35, color: Colors.white12),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red.withOpacity(0.2),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.arrow_upward, size: 12, color: Colors.redAccent),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Text(
+                                            'PENGELUARAN',
+                                            style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '-Rp ${formatter.format(totalExpense)}',
+                                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -689,6 +763,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           itemCount: filteredTransactions.length > 5 ? 5 : filteredTransactions.length,
                           itemBuilder: (context, index) {
                             final item = filteredTransactions[index];
+                            final isIncome = item['transaction_type'] == 'income';
                             return Container(
                               margin: const EdgeInsets.only(bottom: 16),
                               padding: const EdgeInsets.all(16),
@@ -709,12 +784,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: themeColor.withOpacity(0.1),
+                                      color: isIncome ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
-                                      Icons.shopping_bag_outlined,
-                                      color: themeColor,
+                                      isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                                      color: isIncome ? Colors.green.shade600 : Colors.red.shade600,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -734,7 +809,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 ),
                                               ),
                                             ),
-                                             if (!AppConfig.instance.isOfflineMode) ...[
+                                            if (!AppConfig.instance.isOfflineMode) ...[
                                               if (item['sync_status'] == 'syncing')
                                                 const SizedBox(
                                                   width: 14,
@@ -762,11 +837,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '- Rp ${formatter.format(item['amount'])}',
-                                    style: const TextStyle(
+                                    '${isIncome ? '+' : '-'} Rp ${formatter.format(item['amount'])}',
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: Colors.red,
+                                      color: isIncome ? Colors.green.shade600 : Colors.red.shade600,
                                     ),
                                   ),
                                 ],
@@ -783,12 +858,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openTransactionSheet,
-        backgroundColor: themeColor,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'nlp_fab',
+            onPressed: () async {
+              final res = await NlpInputDialog.show(context, activeMode: _activeMode);
+              if (res != null) {
+                _openTransactionSheet(initialTransaction: {
+                  'amount': res.amount,
+                  'description': res.description,
+                  'category_id': res.categoryId,
+                  'transaction_type': res.transactionType,
+                  'date': res.date.toIso8601String(),
+                });
+              }
+            },
+            backgroundColor: Colors.deepPurple.shade600,
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            icon: const Icon(Icons.auto_awesome, color: Colors.white),
+            label: const Text('NLP', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 12),
+          FloatingActionButton(
+            heroTag: 'add_fab',
+            onPressed: _openTransactionSheet,
+            backgroundColor: themeColor,
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+        ],
       ),
         ),
       ),
