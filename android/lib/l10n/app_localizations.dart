@@ -104,10 +104,16 @@ abstract class AppLocalizations {
   /// **'WiroFin'**
   String get appName;
 
+  /// No description provided for @greetingPrefix.
+  ///
+  /// In id, this message translates to:
+  /// **'Halo'**
+  String get greetingPrefix;
+
   /// No description provided for @personalMode.
   ///
   /// In id, this message translates to:
-  /// **'Personal'**
+  /// **'Pribadi'**
   String get personalMode;
 
   /// No description provided for @companyMode.
@@ -134,29 +140,83 @@ abstract class AppLocalizations {
   /// **'Master Data'**
   String get masterData;
 
+  /// No description provided for @allTime.
+  ///
+  /// In id, this message translates to:
+  /// **'Semua Waktu'**
+  String get allTime;
+
   /// No description provided for @netBalance.
   ///
   /// In id, this message translates to:
-  /// **'SALDO BERSIH'**
+  /// **'Saldo Bersih'**
   String get netBalance;
 
   /// No description provided for @income.
   ///
   /// In id, this message translates to:
-  /// **'PEMASUKAN'**
+  /// **'Pemasukan'**
   String get income;
 
   /// No description provided for @expense.
   ///
   /// In id, this message translates to:
-  /// **'PENGELUARAN'**
+  /// **'Pengeluaran'**
   String get expense;
 
-  /// No description provided for @addTransaction.
+  /// No description provided for @liveUpdate.
+  ///
+  /// In id, this message translates to:
+  /// **'Terbaru'**
+  String get liveUpdate;
+
+  /// No description provided for @expenseDistribution.
+  ///
+  /// In id, this message translates to:
+  /// **'Distribusi Pengeluaran'**
+  String get expenseDistribution;
+
+  /// No description provided for @transactionHistory.
+  ///
+  /// In id, this message translates to:
+  /// **'Riwayat Transaksi'**
+  String get transactionHistory;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In id, this message translates to:
+  /// **'Lihat Semua'**
+  String get seeAll;
+
+  /// No description provided for @exitAppTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Keluar Aplikasi'**
+  String get exitAppTitle;
+
+  /// No description provided for @exitAppMessage.
+  ///
+  /// In id, this message translates to:
+  /// **'Apakah Anda yakin ingin keluar dari aplikasi WiroFin?'**
+  String get exitAppMessage;
+
+  /// No description provided for @cancel.
+  ///
+  /// In id, this message translates to:
+  /// **'Batal'**
+  String get cancel;
+
+  /// No description provided for @exit.
+  ///
+  /// In id, this message translates to:
+  /// **'Keluar'**
+  String get exit;
+
+  /// No description provided for @recordTransaction.
   ///
   /// In id, this message translates to:
   /// **'Catat Transaksi'**
-  String get addTransaction;
+  String get recordTransaction;
 
   /// No description provided for @editTransaction.
   ///
@@ -181,12 +241,6 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Simpan'**
   String get save;
-
-  /// No description provided for @cancel.
-  ///
-  /// In id, this message translates to:
-  /// **'Batal'**
-  String get cancel;
 
   /// No description provided for @delete.
   ///
@@ -218,11 +272,203 @@ abstract class AppLocalizations {
   /// **'Data berhasil diperbarui'**
   String get successUpdate;
 
+  /// No description provided for @successSaveTransaction.
+  ///
+  /// In id, this message translates to:
+  /// **'Transaksi berhasil tersimpan'**
+  String get successSaveTransaction;
+
+  /// No description provided for @amountEmptyError.
+  ///
+  /// In id, this message translates to:
+  /// **'Nominal tidak boleh kosong'**
+  String get amountEmptyError;
+
+  /// No description provided for @nlpTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Pencatatan Cerdas (NLP)'**
+  String get nlpTitle;
+
+  /// No description provided for @nlpSubtitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Ketik kalimat kasual, WiroFin otomatis mengisinya'**
+  String get nlpSubtitle;
+
+  /// No description provided for @nlpExampleHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Contoh: Beli Bensin 50rb kemarin...'**
+  String get nlpExampleHint;
+
+  /// No description provided for @nlpTrySentence.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba kalimat berikut:'**
+  String get nlpTrySentence;
+
+  /// No description provided for @nlpSample1.
+  ///
+  /// In id, this message translates to:
+  /// **'Ngopi kopi kenangan 28k'**
+  String get nlpSample1;
+
+  /// No description provided for @nlpSample2.
+  ///
+  /// In id, this message translates to:
+  /// **'Gaji bulanan masuk 5jt'**
+  String get nlpSample2;
+
+  /// No description provided for @nlpSample3.
+  ///
+  /// In id, this message translates to:
+  /// **'Beli bensin pertamax 50rb kemarin'**
+  String get nlpSample3;
+
+  /// No description provided for @nlpSample4.
+  ///
+  /// In id, this message translates to:
+  /// **'Makan siang warteg 20000'**
+  String get nlpSample4;
+
+  /// No description provided for @nlpErrorNoAmount.
+  ///
+  /// In id, this message translates to:
+  /// **'Nominal transaksi tidak ditemukan'**
+  String get nlpErrorNoAmount;
+
+  /// No description provided for @nlpErrorProcess.
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal memproses kalimat'**
+  String get nlpErrorProcess;
+
+  /// No description provided for @allTransactionsTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Semua Transaksi'**
+  String get allTransactionsTitle;
+
+  /// No description provided for @showingAll.
+  ///
+  /// In id, this message translates to:
+  /// **'Menampilkan Semua'**
+  String get showingAll;
+
+  /// No description provided for @filterLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Filter'**
+  String get filterLabel;
+
+  /// No description provided for @transactionCountLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Transaksi'**
+  String get transactionCountLabel;
+
+  /// No description provided for @successUpdateTransaction.
+  ///
+  /// In id, this message translates to:
+  /// **'Transaksi berhasil diperbarui'**
+  String get successUpdateTransaction;
+
+  /// No description provided for @deleteTransactionTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus Transaksi'**
+  String get deleteTransactionTitle;
+
+  /// No description provided for @confirmDeleteTransaction.
+  ///
+  /// In id, this message translates to:
+  /// **'Apakah Anda yakin ingin menghapus transaksi ini?'**
+  String get confirmDeleteTransaction;
+
+  /// No description provided for @successDeleteTransaction.
+  ///
+  /// In id, this message translates to:
+  /// **'Transaksi berhasil dihapus'**
+  String get successDeleteTransaction;
+
   /// No description provided for @emptyTransaction.
   ///
   /// In id, this message translates to:
   /// **'Belum ada transaksi'**
   String get emptyTransaction;
+
+  /// No description provided for @aboutWiroFin.
+  ///
+  /// In id, this message translates to:
+  /// **'Tentang WiroFin'**
+  String get aboutWiroFin;
+
+  /// No description provided for @versionLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Versi'**
+  String get versionLabel;
+
+  /// No description provided for @developerLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengembang'**
+  String get developerLabel;
+
+  /// No description provided for @createdOnLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Dibuat Pada'**
+  String get createdOnLabel;
+
+  /// No description provided for @licenseLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Lisensi'**
+  String get licenseLabel;
+
+  /// No description provided for @freeToUseLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Free to Use'**
+  String get freeToUseLabel;
+
+  /// No description provided for @legalLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Hukum'**
+  String get legalLabel;
+
+  /// No description provided for @websiteLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Website'**
+  String get websiteLabel;
+
+  /// No description provided for @userProfile.
+  ///
+  /// In id, this message translates to:
+  /// **'Profil Pengguna'**
+  String get userProfile;
+
+  /// No description provided for @bankAccountManagement.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengelolaan Rekening'**
+  String get bankAccountManagement;
+
+  /// No description provided for @transactionCategory.
+  ///
+  /// In id, this message translates to:
+  /// **'Kategori Transaksi'**
+  String get transactionCategory;
+
+  /// No description provided for @dataBackupRestore.
+  ///
+  /// In id, this message translates to:
+  /// **'Cadangan Data (Backup & Restore)'**
+  String get dataBackupRestore;
 
   /// No description provided for @profile.
   ///
@@ -230,23 +476,161 @@ abstract class AppLocalizations {
   /// **'Profil'**
   String get profile;
 
-  /// No description provided for @account.
+  /// No description provided for @usernameLabel.
   ///
   /// In id, this message translates to:
-  /// **'Rekening'**
-  String get account;
+  /// **'Nama Panggilan'**
+  String get usernameLabel;
 
-  /// No description provided for @category.
+  /// No description provided for @saveProfile.
   ///
   /// In id, this message translates to:
-  /// **'Kategori'**
-  String get category;
+  /// **'Simpan Profil'**
+  String get saveProfile;
 
-  /// No description provided for @backupRestore.
+  /// No description provided for @successSaveProfile.
   ///
   /// In id, this message translates to:
-  /// **'Backup & Restore'**
-  String get backupRestore;
+  /// **'Profil Berhasil Disimpan'**
+  String get successSaveProfile;
+
+  /// No description provided for @language.
+  ///
+  /// In id, this message translates to:
+  /// **'Bahasa'**
+  String get language;
+
+  /// No description provided for @languageSwitch.
+  ///
+  /// In id, this message translates to:
+  /// **'Indonesia / English'**
+  String get languageSwitch;
+
+  /// No description provided for @addBankAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah Rekening'**
+  String get addBankAccount;
+
+  /// No description provided for @editBankAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Edit Rekening'**
+  String get editBankAccount;
+
+  /// No description provided for @bankAccountName.
+  ///
+  /// In id, this message translates to:
+  /// **'Nama Rekening'**
+  String get bankAccountName;
+
+  /// No description provided for @initialBalance.
+  ///
+  /// In id, this message translates to:
+  /// **'Saldo Awal'**
+  String get initialBalance;
+
+  /// No description provided for @deleteDataTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus Data'**
+  String get deleteDataTitle;
+
+  /// No description provided for @confirmDeleteAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Apakah Anda yakin ingin menghapus rekening ini?'**
+  String get confirmDeleteAccount;
+
+  /// No description provided for @successSaveAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Rekening berhasil disimpan'**
+  String get successSaveAccount;
+
+  /// No description provided for @successDeleteAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Rekening berhasil dihapus'**
+  String get successDeleteAccount;
+
+  /// No description provided for @emptyAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada data rekening'**
+  String get emptyAccount;
+
+  /// No description provided for @addCategory.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah Kategori'**
+  String get addCategory;
+
+  /// No description provided for @editCategory.
+  ///
+  /// In id, this message translates to:
+  /// **'Edit Kategori'**
+  String get editCategory;
+
+  /// No description provided for @categoryName.
+  ///
+  /// In id, this message translates to:
+  /// **'Nama Kategori'**
+  String get categoryName;
+
+  /// No description provided for @transactionType.
+  ///
+  /// In id, this message translates to:
+  /// **'Jenis Transaksi'**
+  String get transactionType;
+
+  /// No description provided for @confirmDeleteCategory.
+  ///
+  /// In id, this message translates to:
+  /// **'Apakah Anda yakin ingin menghapus kategori ini?'**
+  String get confirmDeleteCategory;
+
+  /// No description provided for @successSaveCategory.
+  ///
+  /// In id, this message translates to:
+  /// **'Kategori berhasil disimpan'**
+  String get successSaveCategory;
+
+  /// No description provided for @successDeleteCategory.
+  ///
+  /// In id, this message translates to:
+  /// **'Kategori berhasil dihapus'**
+  String get successDeleteCategory;
+
+  /// No description provided for @emptyCategory.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada data kategori'**
+  String get emptyCategory;
+
+  /// No description provided for @defaultCategoryError.
+  ///
+  /// In id, this message translates to:
+  /// **'Kategori default \"Other\" tidak dapat dihapus.'**
+  String get defaultCategoryError;
+
+  /// No description provided for @defaultLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Default'**
+  String get defaultLabel;
+
+  /// No description provided for @backupRestoreTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Cadangan & Pemulihan Data'**
+  String get backupRestoreTitle;
+
+  /// No description provided for @backupRestoreDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'Simpan data Anda ke file lokal agar bisa dipulihkan kembali nanti'**
+  String get backupRestoreDesc;
 
   /// No description provided for @exportJson.
   ///
@@ -260,23 +644,41 @@ abstract class AppLocalizations {
   /// **'Impor Data dari JSON'**
   String get importJson;
 
+  /// No description provided for @successExport.
+  ///
+  /// In id, this message translates to:
+  /// **'Data Berhasil diekspor ke '**
+  String get successExport;
+
+  /// No description provided for @confirmRestoreTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Konfirmasi Restore'**
+  String get confirmRestoreTitle;
+
+  /// No description provided for @confirmRestoreWarning.
+  ///
+  /// In id, this message translates to:
+  /// **'PERHATIAN: Mengimpor data akan menghapus semua data saat ini dan menggantinya dengan isi file backup. Lanjutkan?'**
+  String get confirmRestoreWarning;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Lanjutkan'**
+  String get continueLabel;
+
+  /// No description provided for @successImport.
+  ///
+  /// In id, this message translates to:
+  /// **'Data berhasil diimpor!'**
+  String get successImport;
+
   /// No description provided for @voiceRecord.
   ///
   /// In id, this message translates to:
   /// **'Pencatatan Suara/Teks'**
   String get voiceRecord;
-
-  /// No description provided for @language.
-  ///
-  /// In id, this message translates to:
-  /// **'Bahasa'**
-  String get language;
-
-  /// No description provided for @languageSwitch.
-  ///
-  /// In id, this message translates to:
-  /// **'Ganti Bahasa'**
-  String get languageSwitch;
 
   /// No description provided for @onboardingTitle1.
   ///
@@ -391,6 +793,24 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Selesai'**
   String get finish;
+
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Update Tersedia!'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateAvailableMessage.
+  ///
+  /// In id, this message translates to:
+  /// **'Versi terbaru WiroFin sudah tersedia di Play Store. Silakan update untuk melanjutkan menggunakan aplikasi.'**
+  String get updateAvailableMessage;
+
+  /// No description provided for @updateNow.
+  ///
+  /// In id, this message translates to:
+  /// **'Update Sekarang'**
+  String get updateNow;
 }
 
 class _AppLocalizationsDelegate

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Enum untuk membedakan mode aplikasi (Flavor).
 enum Flavor { free, pro }
 
@@ -19,6 +21,10 @@ abstract class AppConfig {
 
   /// Identitas flavor yang sedang aktif.
   Flavor get flavor;
+
+  /// Flag untuk menentukan apakah menu Uji Coba & Debugging aktif.
+  /// Otomatis aktif saat mode Debug / testing, dan otomatis nonaktif saat rilis (Release mode) ke Play Store.
+  bool get enableDebugTools => kDebugMode;
 
   /// Global instance yang harus diinisialisasi di `main_free.dart` atau `main_pro.dart`.
   static late AppConfig instance;

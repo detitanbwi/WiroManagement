@@ -32,7 +32,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _nextPage() {
     FocusScope.of(context).unfocus();
-    if (_currentPage < 3) {
+    if (_currentPage < 4) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -115,6 +115,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _buildWelcomePage(),
                   _buildChoicePage(),
                   _buildProfilePage(),
+                  _buildWidgetIntroPage(),
                   _buildWalletSetupPage(),
                 ],
               ),
@@ -489,6 +490,74 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  Widget _buildWidgetIntroPage() {
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 8)),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.account_balance_wallet, color: Colors.white, size: 24),
+                          SizedBox(width: 8),
+                          Text('WiroFin Widget', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('Live', style: TextStyle(color: Colors.white, fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text('Rp 12.500.000', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text('Total Saldo Tersedia', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 48),
+            const Text(
+              'Pencatatan Instan via Widget',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Pantau performa keuangan dan total saldo Anda langsung dari layar utama HP tanpa repot membuka aplikasi setiap saat.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomControls() {
     return Container(
       padding: const EdgeInsets.all(24.0),
@@ -511,7 +580,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // Dots indicator
           Row(
-            children: List.generate(4, (index) {
+            children: List.generate(5, (index) {
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 margin: const EdgeInsets.only(right: 8),
@@ -539,7 +608,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: _isLoading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : Text(
-                      _currentPage == 3 
+                      _currentPage == 4 
                         ? (AppLocalizations.of(context)?.finish ?? 'Selesai')
                         : (AppLocalizations.of(context)?.next ?? 'Lanjut'),
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

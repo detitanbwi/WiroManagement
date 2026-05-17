@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TopToast {
-  static void show(BuildContext context, String message, {bool isError = false}) {
+  static void show(BuildContext context, String message, {bool isError = false, Duration duration = const Duration(milliseconds: 2650)}) {
     final overlay = Overlay.of(context);
     late OverlayEntry entry;
 
@@ -9,6 +9,7 @@ class TopToast {
       builder: (context) => _TopToastWidget(
         message: message,
         isError: isError,
+        duration: duration,
         onDismiss: () {
           if (entry.mounted) {
             entry.remove();
@@ -24,11 +25,13 @@ class TopToast {
 class _TopToastWidget extends StatefulWidget {
   final String message;
   final bool isError;
+  final Duration duration;
   final VoidCallback onDismiss;
 
   const _TopToastWidget({
     required this.message,
     required this.isError,
+    required this.duration,
     required this.onDismiss,
   });
 
@@ -55,7 +58,7 @@ class _TopToastWidgetState extends State<_TopToastWidget> with SingleTickerProvi
 
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 2650), () {
+    Future.delayed(widget.duration, () {
       if (mounted) {
         _controller.reverse().then((_) {
           if (mounted) {

@@ -6,17 +6,19 @@ class ExpenseStatisticsCard extends StatelessWidget {
   final List<Map<String, dynamic>> categoryData;
   final List<Map<String, dynamic>> trendData; // Kept for API compatibility with main.dart
   final Color themeColor;
+  final String title;
 
   const ExpenseStatisticsCard({
     super.key,
     required this.categoryData,
     required this.trendData,
     required this.themeColor,
+    required this.title,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (categoryData.isEmpty) return _buildEmptyState('Distribusi Pengeluaran');
+    if (categoryData.isEmpty) return _buildEmptyState(title);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -24,7 +26,7 @@ class ExpenseStatisticsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cardTitle('Distribusi Pengeluaran'),
+          _cardTitle(title),
           const SizedBox(height: 24),
           Row(
             children: [

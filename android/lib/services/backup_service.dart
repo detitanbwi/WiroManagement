@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import '../core/services/preference_service.dart';
 import 'database_helper.dart';
 
 class BackupService {
@@ -19,6 +20,7 @@ class BackupService {
       final backupData = {
         'version': 2,
         'timestamp': DateTime.now().toIso8601String(),
+        'preferences': PreferenceService.instance.exportPreferences(),
         'expenses': transactions,
         'accounts': accounts,
         'categories': categories,
@@ -82,6 +84,10 @@ class BackupService {
 
       if (data['expenses'] is! List || data['accounts'] is! List || data['categories'] is! List) {
         return false;
+      }
+
+      if (data['preferences'] is Map<String, dynamic>) {
+        await PreferenceService.instance.importPreferences(data['preferences'] as Map<String, dynamic>);
       }
 
       final db = await DatabaseHelper.instance.database;

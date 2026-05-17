@@ -12,6 +12,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appName => 'WiroFin';
 
   @override
+  String get greetingPrefix => 'Hello';
+
+  @override
   String get personalMode => 'Personal';
 
   @override
@@ -27,16 +30,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get masterData => 'Master Data';
 
   @override
-  String get netBalance => 'NET BALANCE';
+  String get allTime => 'All Time';
 
   @override
-  String get income => 'INCOME';
+  String get netBalance => 'Net Balance';
 
   @override
-  String get expense => 'EXPENSE';
+  String get income => 'Income';
 
   @override
-  String get addTransaction => 'Add Transaction';
+  String get expense => 'Expense';
+
+  @override
+  String get liveUpdate => 'Live Update';
+
+  @override
+  String get expenseDistribution => 'Expense Distribution';
+
+  @override
+  String get transactionHistory => 'Transaction History';
+
+  @override
+  String get seeAll => 'See All';
+
+  @override
+  String get exitAppTitle => 'Exit App';
+
+  @override
+  String get exitAppMessage => 'Are you sure you want to exit WiroFin?';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get exit => 'Exit';
+
+  @override
+  String get recordTransaction => 'Record Transaction';
 
   @override
   String get editTransaction => 'Edit Transaction';
@@ -49,9 +79,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get save => 'Save';
-
-  @override
-  String get cancel => 'Cancel';
 
   @override
   String get delete => 'Delete';
@@ -69,19 +96,190 @@ class AppLocalizationsEn extends AppLocalizations {
   String get successUpdate => 'Data successfully updated';
 
   @override
+  String get successSaveTransaction => 'Transaction saved successfully';
+
+  @override
+  String get amountEmptyError => 'Amount cannot be empty';
+
+  @override
+  String get nlpTitle => 'Smart Recording (NLP)';
+
+  @override
+  String get nlpSubtitle =>
+      'Type naturally, WiroFin will fill it in automatically';
+
+  @override
+  String get nlpExampleHint => 'Example: Bought gas for 50k yesterday...';
+
+  @override
+  String get nlpTrySentence => 'Try the following sentence:';
+
+  @override
+  String get nlpSample1 => 'Bought coffee at Kopi Kenangan for 28k';
+
+  @override
+  String get nlpSample2 => 'Monthly salary received: 5 million';
+
+  @override
+  String get nlpSample3 => 'Bought Pertamax fuel for 50k yesterday';
+
+  @override
+  String get nlpSample4 => 'Had lunch at warteg for 20000';
+
+  @override
+  String get nlpErrorNoAmount => 'Transaction amount not found';
+
+  @override
+  String get nlpErrorProcess => 'Failed to process sentence';
+
+  @override
+  String get allTransactionsTitle => 'All Transactions';
+
+  @override
+  String get showingAll => 'Showing All';
+
+  @override
+  String get filterLabel => 'Filter';
+
+  @override
+  String get transactionCountLabel => 'Transaction';
+
+  @override
+  String get successUpdateTransaction => 'Transaction updated successfully';
+
+  @override
+  String get deleteTransactionTitle => 'Delete Transaction';
+
+  @override
+  String get confirmDeleteTransaction =>
+      'Are you sure you want to delete this transaction?';
+
+  @override
+  String get successDeleteTransaction => 'Transaction deleted successfully';
+
+  @override
   String get emptyTransaction => 'No transactions yet';
+
+  @override
+  String get aboutWiroFin => 'About WiroFin';
+
+  @override
+  String get versionLabel => 'Version';
+
+  @override
+  String get developerLabel => 'Developer';
+
+  @override
+  String get createdOnLabel => 'Created On';
+
+  @override
+  String get licenseLabel => 'License';
+
+  @override
+  String get freeToUseLabel => 'Free to Use';
+
+  @override
+  String get legalLabel => 'Legal';
+
+  @override
+  String get websiteLabel => 'Website';
+
+  @override
+  String get userProfile => 'User Profile';
+
+  @override
+  String get bankAccountManagement => 'Bank Account Management';
+
+  @override
+  String get transactionCategory => 'Transaction Category';
+
+  @override
+  String get dataBackupRestore => 'Data Backup (Backup & Restore)';
 
   @override
   String get profile => 'Profile';
 
   @override
-  String get account => 'Account';
+  String get usernameLabel => 'Username';
 
   @override
-  String get category => 'Category';
+  String get saveProfile => 'Save Profile';
 
   @override
-  String get backupRestore => 'Backup & Restore';
+  String get successSaveProfile => 'Profile Saved Successfully';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get languageSwitch => 'Indonesia / English';
+
+  @override
+  String get addBankAccount => 'Add Bank Account';
+
+  @override
+  String get editBankAccount => 'Edit Bank Account';
+
+  @override
+  String get bankAccountName => 'Bank Account Name';
+
+  @override
+  String get initialBalance => 'Initial Balance';
+
+  @override
+  String get deleteDataTitle => 'Delete Data';
+
+  @override
+  String get confirmDeleteAccount =>
+      'Are you sure you want to delete this bank account?';
+
+  @override
+  String get successSaveAccount => 'Account saved successfully';
+
+  @override
+  String get successDeleteAccount => 'Account deleted successfully';
+
+  @override
+  String get emptyAccount => 'No bank account data yet';
+
+  @override
+  String get addCategory => 'Add Category';
+
+  @override
+  String get editCategory => 'Edit Category';
+
+  @override
+  String get categoryName => 'Category Name';
+
+  @override
+  String get transactionType => 'Transaction Type';
+
+  @override
+  String get confirmDeleteCategory =>
+      'Are you sure you want to delete this category?';
+
+  @override
+  String get successSaveCategory => 'Category saved successfully';
+
+  @override
+  String get successDeleteCategory => 'Category deleted successfully';
+
+  @override
+  String get emptyCategory => 'No category data yet';
+
+  @override
+  String get defaultCategoryError =>
+      'Default category \"Other\" cannot be deleted.';
+
+  @override
+  String get defaultLabel => 'Default';
+
+  @override
+  String get backupRestoreTitle => 'Backup & Restore Data';
+
+  @override
+  String get backupRestoreDesc =>
+      'Save your data to a local file so it can be restored later';
 
   @override
   String get exportJson => 'Export Data to JSON';
@@ -90,13 +288,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importJson => 'Import Data from JSON';
 
   @override
+  String get successExport => 'Data Successfully exported to ';
+
+  @override
+  String get confirmRestoreTitle => 'Confirm Restore';
+
+  @override
+  String get confirmRestoreWarning =>
+      'WARNING: Importing data will delete all current data and replace it with the contents of the backup file. Continue?';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get successImport => 'Data imported successfully!';
+
+  @override
   String get voiceRecord => 'Voice/Text Recording';
-
-  @override
-  String get language => 'Language';
-
-  @override
-  String get languageSwitch => 'Switch Language';
 
   @override
   String get onboardingTitle1 => 'Manage Money Better';
@@ -155,4 +363,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get finish => 'Finish';
+
+  @override
+  String get updateAvailableTitle => 'Update Available!';
+
+  @override
+  String get updateAvailableMessage =>
+      'A new version of WiroFin is available on the Play Store. Please update to continue using the application.';
+
+  @override
+  String get updateNow => 'Update Now';
 }

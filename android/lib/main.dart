@@ -26,6 +26,12 @@ import 'package:home_widget/home_widget.dart';
 
 
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:in_app_update/in_app_update.dart';
+import 'package:http/http.dart' as http;
+
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await PreferenceService.instance.init();
@@ -45,76 +51,6 @@ class _WiroFinAppState extends State<WiroFinApp> {
   @override
   void initState() {
     super.initState();
-    _checkUpdate();
-  }
-
-  Future<void> _checkUpdate() async {
-    try {
-      final packageInfo = await PackageInfo.fromPlatform();
-      final localVersion = packageInfo.version;
-      
-      // Mocking remote version check
-      // In real scenario, you would fetch this from an API or Play Store scrape
-      const remoteVersion = "1.1.0"; // Simulate a newer version available
-      
-      if (_isVersionGreater(remoteVersion, localVersion)) {
-        if (mounted) {
-          _showUpdateDialog();
-        }
-      }
-    } catch (e) {
-      debugPrint('Error checking update: $e');
-    }
-  }
-
-  bool _isVersionGreater(String remote, String local) {
-    try {
-      List<int> remoteParts = remote.split('.').map(int.parse).toList();
-      List<int> localParts = local.split('.').map(int.parse).toList();
-      for (int i = 0; i < 3; i++) {
-        if (remoteParts[i] > localParts[i]) return true;
-        if (remoteParts[i] < localParts[i]) return false;
-      }
-    } catch (_) {}
-    return false;
-  }
-
-  void _showUpdateDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => PopScope(
-        canPop: false,
-        onPopInvoked: (_) => false,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Update Tersedia!', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text(
-            'Versi terbaru WiroFin sudah tersedia di Play Store. Silakan update untuk melanjutkan menggunakan aplikasi.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => SystemNavigator.pop(),
-              child: Text('Keluar', style: TextStyle(color: Colors.grey.shade600)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final url = Uri.parse('https://play.google.com/store/apps/details?id=com.wirodev.wirofin');
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(url, mode: LaunchMode.externalApplication);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Update Sekarang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -173,6 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _userName = 'User';
   DateTime? _startDate;
   DateTime? _endDate;
+  int _totalInitialBalance = 0;
 
   @override
   void initState() {
@@ -186,6 +123,290 @@ class _DashboardScreenState extends State<DashboardScreen> {
       SyncService.instance.onSyncComplete = _loadTransactions;
       SyncService.instance.init();
     }
+    _checkUpdate().then((hasUpdate) {
+      if (!hasUpdate) {
+        _checkWhatsNew();
+      }
+    });
+  }
+
+  Future<void> _checkWhatsNew() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    final currentVersion = packageInfo.version;
+    final lastSeenVersion = PreferenceService.instance.lastSeenVersion;
+
+    if (lastSeenVersion.isEmpty && !PreferenceService.instance.isFirstLaunch) {
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 600));
+        _showWhatsNewModal();
+        await PreferenceService.instance.setLastSeenVersion(currentVersion);
+      }
+    } else if (lastSeenVersion.isNotEmpty && lastSeenVersion != currentVersion && !PreferenceService.instance.isFirstLaunch) {
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 600));
+        _showWhatsNewModal();
+        await PreferenceService.instance.setLastSeenVersion(currentVersion);
+      }
+    } else if (lastSeenVersion.isEmpty && PreferenceService.instance.isFirstLaunch) {
+      await PreferenceService.instance.setLastSeenVersion(currentVersion);
+    }
+  }
+
+  void _showWhatsNewModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 24, offset: const Offset(0, 10)),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 12, offset: Offset(0, 6)),
+                        ],
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.widgets_outlined, size: 56, color: Colors.white),
+                          SizedBox(height: 12),
+                          Text(
+                            'WiroFin Widget',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Baru! Pantau keuangan langsung dari layar HP Anda.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), height: 1.3),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Kini Anda dapat memasang widget WiroFin di beranda HP untuk melihat saldo dan mencatat transaksi secara instan.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('Tutup', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const WidgetGuidePage()),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              backgroundColor: const Color(0xFF2563EB),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('Cara Pasang', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> _checkUpdate() async {
+    try {
+      // 1. Cek koneksi internet terlebih dahulu (hanya ketika ada internet)
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult.isEmpty || connectivityResult.contains(ConnectivityResult.none)) {
+        debugPrint('Tidak ada koneksi internet, melewati pengecekan update.');
+        return false;
+      }
+
+      final packageInfo = await PackageInfo.fromPlatform();
+      final localVersion = packageInfo.version;
+
+      // Cek apakah ada simulasi paksa versi baru dari mode testing
+      final forcedRemoteVer = PreferenceService.instance.forcedRemoteVersion;
+      if (forcedRemoteVer.isNotEmpty && _isVersionGreater(forcedRemoteVer, localVersion)) {
+        if (mounted) {
+          _showUpdateDialog();
+        }
+        return true;
+      }
+
+      bool updateTriggered = false;
+
+      // 2. Coba gunakan InAppUpdate resmi dari Google Play Core API
+      try {
+        final updateInfo = await InAppUpdate.checkForUpdate();
+        if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
+          if (updateInfo.immediateUpdateAllowed) {
+            await InAppUpdate.performImmediateUpdate();
+            updateTriggered = true;
+          } else if (updateInfo.flexibleUpdateAllowed) {
+            await InAppUpdate.startFlexibleUpdate();
+            await InAppUpdate.completeFlexibleUpdate();
+            updateTriggered = true;
+          }
+        }
+      } catch (e) {
+        debugPrint('InAppUpdate native check failed (mungkin sideload/debug): $e');
+      }
+
+      if (updateTriggered) return true;
+
+      // 3. Fallback manual check: periksa halaman Play Store dan tampilkan popup custom
+      try {
+        final res = await http.get(Uri.parse('https://play.google.com/store/apps/details?id=com.wirodev.wirofin')).timeout(const Duration(seconds: 7));
+        if (res.statusCode == 200) {
+          final packageInfo = await PackageInfo.fromPlatform();
+          final localVersion = packageInfo.version;
+
+          String? remoteVersion;
+          // Cari pola versi semacam "1.2.0" di dalam body HTML Play Store
+          final regExp = RegExp(r'"(\d+\.\d+\.\d+)"');
+          final matches = regExp.allMatches(res.body);
+          for (final match in matches) {
+            final ver = match.group(1);
+            if (ver != null && _isValidVersion(ver)) {
+              if (_isVersionGreater(ver, localVersion)) {
+                remoteVersion = ver;
+                break;
+              }
+            }
+          }
+
+          if (remoteVersion != null && _isVersionGreater(remoteVersion, localVersion)) {
+            if (mounted) {
+              _showUpdateDialog();
+            }
+            return true;
+          }
+        }
+      } catch (e) {
+        debugPrint('Fallback scraping check failed: $e');
+      }
+    } catch (e) {
+      debugPrint('Error in _checkUpdate: $e');
+    }
+    return false;
+  }
+
+  bool _isValidVersion(String ver) {
+    final parts = ver.split('.');
+    if (parts.length != 3) return false;
+    for (final p in parts) {
+      if (int.tryParse(p) == null) return false;
+    }
+    return true;
+  }
+
+  bool _isVersionGreater(String remote, String local) {
+    try {
+      List<int> remoteParts = remote.split('.').map(int.parse).toList();
+      List<int> localParts = local.split('.').map(int.parse).toList();
+      for (int i = 0; i < 3; i++) {
+        if (remoteParts[i] > localParts[i]) return true;
+        if (remoteParts[i] < localParts[i]) return false;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  void _showUpdateDialog() {
+    final isDemo = AppConfig.instance.enableDebugTools && PreferenceService.instance.forcedRemoteVersion.isNotEmpty;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {},
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(AppLocalizations.of(context)?.updateAvailableTitle ?? 'Update Tersedia!', style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(
+            AppLocalizations.of(context)?.updateAvailableMessage ?? 'Versi terbaru WiroFin sudah tersedia di Play Store. Silakan update untuk melanjutkan menggunakan aplikasi.',
+          ),
+          actions: [
+            if (isDemo)
+              TextButton(
+                onPressed: () async {
+                  await PreferenceService.instance.setForcedRemoteVersion('');
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                  _checkWhatsNew();
+                },
+                child: const Text('Tutup Simulasi', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              ),
+            TextButton(
+              onPressed: () => SystemNavigator.pop(),
+              child: Text(AppLocalizations.of(context)?.exit ?? 'Keluar', style: TextStyle(color: Colors.grey.shade600)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final url = Uri.parse('https://play.google.com/store/apps/details?id=com.wirodev.wirofin');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text(AppLocalizations.of(context)?.updateNow ?? 'Update Sekarang', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _initWidgetListener() {
@@ -234,6 +455,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       startDate: _startDate,
       endDate: _endDate,
     );
+    final accounts = await DatabaseHelper.instance.getAccounts(_activeMode);
+    final totalInitBalance = accounts.fold<int>(0, (sum, acc) => sum + ((acc['balance'] as num?)?.toInt() ?? 0));
 
     setState(() {
       _transactions = List<Map<String, dynamic>>.from(data).map((item) {
@@ -244,6 +467,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }).toList();
       _categoryData = catData;
       _trendData = trendData;
+      _totalInitialBalance = totalInitBalance;
       _isLoading = false;
     });
 
@@ -318,7 +542,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
       await _loadTransactions();
       if (mounted) {
-        TopToast.show(context, 'Transaksi berhasil disimpan');
+        if (!PreferenceService.instance.hasCreatedFirstTransaction) {
+          await PreferenceService.instance.setHasCreatedFirstTransaction(true);
+          if (mounted) {
+            TopToast.show(context, 'Suka kemudahan ini? Tekan lama layar HP Anda untuk memasang widget WiroFin!', duration: const Duration(seconds: 5));
+          }
+        } else {
+          TopToast.show(context, AppLocalizations.of(context)?.successSaveTransaction ?? 'Transaksi berhasil tersimpan');
+        }
       }
     }
   }
@@ -338,10 +569,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final totalExpense = filteredTransactions
         .where((t) => (t['transaction_type'] ?? 'expense') == 'expense')
         .fold<int>(0, (sum, item) => sum + (item['amount'] as int));
-    final netBalance = totalIncome - totalExpense;
+    final netBalance = _totalInitialBalance + totalIncome - totalExpense;
     
     final formatter = NumberFormat('#,###', 'id_ID');
     final Color themeColor = _activeMode == 'personal' ? Colors.orange.shade600 : Colors.teal.shade600;
+    final loc = AppLocalizations.of(context)!;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -391,7 +623,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Halo, $_userName',
+                                '${loc.greetingPrefix}, $_userName',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   color: Colors.white70,
@@ -497,7 +729,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           color: _activeMode == 'personal' ? Colors.orange.shade700 : Colors.white70,
                                           fontSize: 12,
                                         ),
-                                        child: const Text('PERSONAL'),
+                                        child: Text(loc.personalMode.toUpperCase()),
                                       ),
                                     ),
                                   ),
@@ -520,7 +752,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           color: _activeMode == 'company' ? Colors.teal.shade700 : Colors.white70,
                                           fontSize: 12,
                                         ),
-                                        child: const Text('COMPANY'),
+                                        child: Text(loc.companyMode.toUpperCase()),
                                       ),
                                     ),
                                   ),
@@ -550,7 +782,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     const SizedBox(width: 12),
                                     Text(
                                       _startDate == null 
-                                        ? 'Semua Waktu' 
+                                        ? loc.allTime 
                                         : '${DateFormat('dd MMM').format(_startDate!)} - ${DateFormat('dd MMM').format(_endDate!)}',
                                       style: const TextStyle(color: Colors.white, fontSize: 13),
                                     ),
@@ -564,7 +796,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             IconButton(
                               icon: const Icon(Icons.close, color: Colors.white),
                               onPressed: _clearDateFilter,
-                              tooltip: 'Hapus Filter',
+                              tooltip: loc.cancel,
                             ),
                           ],
                         ],
@@ -573,6 +805,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 
+                // Dismissible Info Card
+                if (!PreferenceService.instance.isWidgetCardDismissed)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 16.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _activeMode == 'personal' ? const Color(0xFFDBEAFE) : const Color(0xFFD1FAE5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _activeMode == 'personal' ? Colors.blue.shade200 : Colors.teal.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.widgets, color: _activeMode == 'personal' ? Colors.blue.shade700 : Colors.teal.shade700, size: 28),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Ingin catat transaksi lebih cepat?',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: _activeMode == 'personal' ? Colors.blue.shade900 : Colors.teal.shade900, fontSize: 14),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Pasang Widget WiroFin di layar depan.',
+                                  style: TextStyle(color: _activeMode == 'personal' ? Colors.blue.shade800 : Colors.teal.shade800, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close, color: _activeMode == 'personal' ? Colors.blue.shade700 : Colors.teal.shade700, size: 20),
+                            onPressed: () async {
+                              await PreferenceService.instance.setWidgetCardDismissed(true);
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                 // Balance Card
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -596,9 +871,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'SALDO BERSIH',
-                                  style: TextStyle(
+                                Text(
+                                  loc.netBalance.toUpperCase(),
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 11,
                                     letterSpacing: 1.2,
@@ -611,9 +886,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     color: Colors.white.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: const Text(
-                                    'Live Update',
-                                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600),
+                                  child: Text(
+                                    loc.liveUpdate,
+                                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600),
                                   ),
                                 ),
                               ],
@@ -651,9 +926,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             child: const Icon(Icons.arrow_downward, size: 12, color: Colors.greenAccent),
                                           ),
                                           const SizedBox(width: 6),
-                                          const Text(
-                                            'PEMASUKAN',
-                                            style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
+                                          Text(
+                                            loc.income.toUpperCase(),
+                                            style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
                                           ),
                                         ],
                                       ),
@@ -682,9 +957,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             child: const Icon(Icons.arrow_upward, size: 12, color: Colors.redAccent),
                                           ),
                                           const SizedBox(width: 6),
-                                          const Text(
-                                            'PENGELUARAN',
-                                            style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
+                                          Text(
+                                            loc.expense.toUpperCase(),
+                                            style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
                                           ),
                                         ],
                                       ),
@@ -715,6 +990,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       categoryData: _categoryData,
                       trendData: _trendData,
                       themeColor: themeColor,
+                      title: loc.expenseDistribution,
                     ),
                   ),
 
@@ -738,9 +1014,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Riwayat Transaksi',
-                              style: TextStyle(
+                            Text(
+                              loc.transactionHistory,
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF1E293B),
@@ -763,7 +1039,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                                 child: Text(
-                                  'Lihat Semua',
+                                  loc.seeAll,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -785,7 +1061,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Icon(Icons.receipt_long, size: 64, color: Colors.grey.shade300),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'Belum ada transaksi',
+                                  loc.emptyTransaction,
                                   style: TextStyle(color: Colors.grey.shade500),
                                 ),
                               ],
@@ -941,6 +1217,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       barrierLabel: 'Dismiss',
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
+        final loc = AppLocalizations.of(context)!;
         return Center(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 32),
@@ -970,9 +1247,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Icon(Icons.exit_to_app, size: 40, color: Colors.orange.shade600),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Keluar Aplikasi',
-                    style: TextStyle(
+                  Text(
+                    loc.exitAppTitle,
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1E293B),
@@ -980,7 +1257,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Apakah Anda yakin ingin keluar dari aplikasi Wiro Expense Tracker?',
+                    loc.exitAppMessage,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,
@@ -1000,7 +1277,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
-                            'Batal',
+                            loc.cancel,
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
                           ),
                         ),
@@ -1015,9 +1292,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text(
-                            'Keluar',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          child: Text(
+                            loc.exit,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                         ),
                       ),

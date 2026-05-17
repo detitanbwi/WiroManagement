@@ -10,8 +10,10 @@ class WidgetService {
   static Future<void> syncDataToWidget(String activeMode) async {
     final db = DatabaseHelper.instance;
     final transactions = await db.getExpensesWithDetails(type: activeMode);
+    final accounts = await db.getAccounts(activeMode);
+    final totalInitBalance = accounts.fold<double>(0, (sum, acc) => sum + ((acc['balance'] as num?)?.toDouble() ?? 0));
     
-    double balance = 0;
+    double balance = totalInitBalance;
     double incomeThisMonth = 0;
     double expenseThisMonth = 0;
     
