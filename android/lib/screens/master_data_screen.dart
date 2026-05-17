@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../services/backup_service.dart';
 import '../core/services/preference_service.dart';
+import '../core/config/app_config.dart';
 import '../widgets/top_toast.dart';
 
 class MasterDataScreen extends StatelessWidget {

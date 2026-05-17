@@ -32,7 +32,7 @@ abstract class AppConfig {
 
 /// Konfigurasi khusus untuk Flavor Free (Full Offline).
 /// Di-inject melalui `lib/main_free.dart`.
-class FreeConfig implements AppConfig {
+class FreeConfig extends AppConfig {
   @override
   String get appName => "Expense Tracker Lite";
 
@@ -48,7 +48,7 @@ class FreeConfig implements AppConfig {
 
 /// Konfigurasi khusus untuk Flavor Pro (Hybrid/Private).
 /// Di-inject melalui `lib/main_pro.dart`.
-class ProConfig implements AppConfig {
+class ProConfig extends AppConfig {
   @override
   String get appName => "Expense Tracker Pro";
 
