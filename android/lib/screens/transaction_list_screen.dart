@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../widgets/transaction_bottom_sheet.dart';
 import '../widgets/top_toast.dart';
 import '../services/database_helper.dart';
@@ -74,12 +75,12 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Transaksi'),
-        content: const Text('Apakah Anda yakin ingin menghapus transaksi ini?'),
+        title: Text(AppLocalizations.of(context)?.deleteTransactionTitle ?? 'Hapus Transaksi'),
+        content: Text(AppLocalizations.of(context)?.confirmDeleteTransaction ?? 'Apakah Anda yakin ingin menghapus transaksi ini?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Batal', style: const TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () async {
@@ -88,10 +89,10 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               widget.onRefresh(); // Refresh Dashboard (untuk saat kembali)
               if (mounted) {
                 Navigator.pop(context);
-                TopToast.show(context, 'Transaksi berhasil dihapus');
+                TopToast.show(context, AppLocalizations.of(context)?.successDeleteTransaction ?? 'Transaksi berhasil dihapus');
               }
             },
-            child: const Text('Hapus', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'Hapus', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -126,7 +127,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
       await _loadTransactions(); // Refresh lokal
       widget.onRefresh(); // Refresh Dashboard
       if (mounted) {
-        TopToast.show(context, 'Transaksi berhasil diperbarui');
+        TopToast.show(context, AppLocalizations.of(context)?.successUpdateTransaction ?? 'Transaksi berhasil diperbarui');
       }
     }
   }
@@ -172,7 +173,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Semua Transaksi'),
+        title: Text(AppLocalizations.of(context)?.allTransactionsTitle ?? 'Semua Transaksi'),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1E293B),
         elevation: 0,
@@ -200,13 +201,13 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
               children: [
                 Text(
                   _selectedDateRange == null 
-                    ? 'Menampilkan Semua' 
-                    : 'Filter: ${DateFormat('dd MMM').format(_selectedDateRange!.start)} - ${DateFormat('dd MMM').format(_selectedDateRange!.end)}',
+                    ? (AppLocalizations.of(context)?.showingAll ?? 'Menampilkan Semua')
+                    : '${AppLocalizations.of(context)?.filterLabel ?? 'Filter'}: ${DateFormat('dd MMM').format(_selectedDateRange!.start)} - ${DateFormat('dd MMM').format(_selectedDateRange!.end)}',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                 ),
                 const Spacer(),
                 Text(
-                  '${_displayTransactions.length} Transaksi',
+                  '${_displayTransactions.length} ${AppLocalizations.of(context)?.transactionCountLabel ?? 'Transaksi'}',
                   style: TextStyle(fontSize: 12, color: themeColor, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -223,7 +224,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                   Icon(Icons.receipt_long, size: 64, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
                   Text(
-                    'Belum ada transaksi',
+                    AppLocalizations.of(context)?.emptyTransaction ?? 'Belum ada transaksi',
                     style: TextStyle(color: Colors.grey.shade500),
                   ),
                 ],

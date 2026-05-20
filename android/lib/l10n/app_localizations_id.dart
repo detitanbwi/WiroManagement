@@ -58,7 +58,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get exitAppMessage =>
-      'Apakah Anda yakin ingin keluar dari aplikasi WiroFin?';
+      'Apakah Anda yakin ingin keluar dari aplikasi Wirofin?';
 
   @override
   String get cancel => 'Batal';
@@ -332,7 +332,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get startFreshDesc => 'Buat akun baru dan atur profil Anda.';
 
   @override
-  String get importOldData => 'Import Data Lama';
+  String get importOldData => 'Impor Data Lama';
 
   @override
   String get importOldDataDesc => 'Pulihkan data dari file backup JSON.';
@@ -373,4 +373,100 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get updateNow => 'Update Sekarang';
+
+  @override
+  String get widgetStatus => 'Terbaru';
+
+  @override
+  String get totalBalanceAvailable => 'Total Saldo Tersedia';
+
+  @override
+  String get instantRecordingWidget => 'Pencatatan Instan via Widget';
+
+  @override
+  String get widgetDesc =>
+      'Pantau performa keuangan dan total saldo Anda langsung dari layar utama HP tanpa repot membuka aplikasi setiap saat.';
+
+  @override
+  String get termsConditionsTitle => 'Syarat & Ketentuan';
+
+  @override
+  String get termsConditionsSubtitle =>
+      'Syarat dan Ketentuan Penggunaan WiroFin';
+
+  @override
+  String get termsLastUpdated => 'Terakhir diperbarui: 11 Mei 2026';
+
+  @override
+  String get termsSec1Title => '1. Penerimaan Ketentuan';
+
+  @override
+  String get termsSec1Content =>
+      'Dengan mengunduh atau menggunakan aplikasi WiroFin, Anda secara otomatis menyetujui semua syarat dan ketentuan yang tertulis di sini. Jika Anda tidak setuju, harap segera menghentikan penggunaan aplikasi.';
+
+  @override
+  String get termsSec2Title => '2. Penggunaan Aplikasi';
+
+  @override
+  String get termsSec2Content =>
+      'Aplikasi ini disediakan untuk membantu Anda dalam pencatatan keuangan pribadi dan bisnis. Anda bertanggung jawab penuh atas keakuratan data yang Anda masukkan.';
+
+  @override
+  String get termsSec3Title => '3. Batasan Tanggung Jawab';
+
+  @override
+  String get termsSec3Content =>
+      'WIROFIN DISEDIAKAN \"APA ADANYA\" TANPA JAMINAN APAPUN. SEGALA KERUGIAN ATAS PEMAKAIAN APLIKASI INI ADALAH SEPENUHNYA TANGGUNG JAWAB PENGGUNA. KAMI TIDAK BERTANGGUNG JAWAB ATAS KEHILANGAN DATA, KESALAHAN PERHITUNGAN, ATAU DAMPAK FINANSIAL APAPUN YANG TIMBUL DARI PENGGUNAAN APLIKASI INI.';
+
+  @override
+  String get termsSec4Title => '4. Keamanan Data';
+
+  @override
+  String get termsSec4Content =>
+      'Dalam mode offline, data Anda disimpan secara lokal di perangkat Anda. Anda bertanggung jawab untuk melakukan backup data Anda sendiri.';
+
+  @override
+  String get termsSec5Title => '5. Perubahan Layanan';
+
+  @override
+  String get termsSec5Content =>
+      'Kami berhak mengubah atau menghentikan layanan aplikasi kapan saja tanpa pemberitahuan sebelumnya.';
+
+  @override
+  String get widgetGuideTitle => 'Panduan Pasang Widget';
+
+  @override
+  String get widgetHomeScreenTitle => 'Widget Home Screen WiroFin';
+
+  @override
+  String get widgetHomeScreenDesc =>
+      'Pantau terus kesehatan finansial Anda tanpa harus membuka aplikasi.';
+
+  @override
+  String get threeEasySteps => '3 Langkah Mudah Pemasangan';
+
+  @override
+  String get widgetStep1Title => 'Pergi ke Layar Utama HP';
+
+  @override
+  String get widgetStep1Desc =>
+      'Tutup atau minimalkan aplikasi WiroFin dan navigasikan ke layar utama (Home Screen) di HP Android atau iOS Anda.';
+
+  @override
+  String get widgetStep2Title => 'Tekan & Tahan Area Kosong';
+
+  @override
+  String get widgetStep2Desc =>
+      'Tekan dan tahan (long press) pada area kosong di layar utama selama beberapa detik hingga muncul menu pengaturan layar atau pop-up menu.';
+
+  @override
+  String get widgetStep3Title => 'Pilih & Seret Widget';
+
+  @override
+  String get widgetStep3Desc =>
+      'Ketuk menu \"Widget\" (atau ikon +), gulir untuk mencari \"WiroFin\", lalu seret varian widget yang Anda inginkan ke layar utama.';
+
+  @override
+  String get widgetTips =>
+      'Tips: Widget WiroFin akan otomatis menyesuaikan warnanya sesuai mode (Personal/Company) saat aplikasi dibuka.';
 }

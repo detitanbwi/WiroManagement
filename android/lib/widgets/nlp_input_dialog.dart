@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../services/nlp_service.dart';
 import 'top_toast.dart';
 
@@ -30,13 +31,6 @@ class _NlpInputDialogState extends State<NlpInputDialog> {
   final TextEditingController _controller = TextEditingController();
   bool _isProcessing = false;
 
-  final List<String> _suggestions = [
-    "Ngopi kopi kenangan 28k",
-    "Gaji bulanan masuk 5jt",
-    "Beli bensin pertamax 50rb kemaren",
-    "Makan siang warteg 20000",
-  ];
-
   Future<void> _processText(String text) async {
     if (text.trim().isEmpty) return;
 
@@ -49,9 +43,14 @@ class _NlpInputDialogState extends State<NlpInputDialog> {
       }
     } catch (e) {
       if (mounted) {
-        String msg = "Gagal memproses kalimat";
+        String msg = AppLocalizations.of(context)?.nlpErrorProcess ?? "Gagal memproses kalimat";
         if (e is Exception) {
-          msg = e.toString().replaceAll('Exception: ', '');
+          final errStr = e.toString();
+          if (errStr.contains('Nominal transaksi tidak ditemukan') || errStr.toLowerCase().contains('amount not found')) {
+            msg = AppLocalizations.of(context)?.nlpErrorNoAmount ?? "Nominal transaksi tidak ditemukan";
+          } else {
+            msg = errStr.replaceAll('Exception: ', '');
+          }
         }
         TopToast.show(context, msg, isError: true);
       }
@@ -70,6 +69,14 @@ class _NlpInputDialogState extends State<NlpInputDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final List<String> suggestions = [
+      localizations?.nlpSample1 ?? "Ngopi kopi kenangan 28k",
+      localizations?.nlpSample2 ?? "Gaji bulanan masuk 5jt",
+      localizations?.nlpSample3 ?? "Beli bensin pertamax 50rb kemaren",
+      localizations?.nlpSample4 ?? "Makan siang warteg 20000",
+    ];
+
     return Container(
       padding: const EdgeInsets.all(24),
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
@@ -96,17 +103,17 @@ class _NlpInputDialogState extends State<NlpInputDialog> {
                 child: Icon(Icons.auto_awesome, color: Colors.deepPurple.shade700),
               ),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Pencatatan Cerdas (NLP)",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                      localizations?.nlpTitle ?? "Pencatatan Cerdas (NLP)",
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
                     ),
                     Text(
-                      "Ketik kalimat kasual, WiroFin otomatis mengisinya",
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      localizations?.nlpSubtitle ?? "Ketik kalimat kasual, WiroFin otomatis mengisinya",
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -124,7 +131,7 @@ class _NlpInputDialogState extends State<NlpInputDialog> {
             maxLines: 2,
             style: const TextStyle(fontSize: 18),
             decoration: InputDecoration(
-              hintText: "Contoh: Beli bensin 50rb kemaren...",
+              hintText: localizations?.nlpExampleHint ?? "Contoh: Beli bensin 50rb kemaren...",
               hintStyle: TextStyle(color: Colors.grey.shade400),
               filled: true,
               fillColor: Colors.grey.shade50,
@@ -138,9 +145,9 @@ class _NlpInputDialogState extends State<NlpInputDialog> {
               ),
               suffixIcon: _isProcessing
                   ? const Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                       padding: EdgeInsets.all(12.0),
+                       child: CircularProgressIndicator(strokeWidth: 2),
+                     )
                   : IconButton(
                       icon: Icon(Icons.send, color: Colors.deepPurple.shade600),
                       onPressed: () => _processText(_controller.text),
@@ -150,14 +157,14 @@ class _NlpInputDialogState extends State<NlpInputDialog> {
           ),
           const SizedBox(height: 20),
           Text(
-            "Coba kalimat berikut:",
+            localizations?.nlpTrySentence ?? "Coba kalimat berikut:",
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _suggestions.map((sug) => ActionChip(
+            children: suggestions.map((sug) => ActionChip(
               label: Text(sug, style: TextStyle(color: Colors.deepPurple.shade700, fontSize: 13)),
               backgroundColor: Colors.deepPurple.shade50,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

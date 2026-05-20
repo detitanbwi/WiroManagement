@@ -23,7 +23,7 @@ class MasterDataScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('Master Data', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)?.masterData ?? 'Master Data', style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
@@ -34,7 +34,7 @@ class MasterDataScreen extends StatelessWidget {
           _buildMenuTile(
             context,
             icon: Icons.person_outline,
-            title: 'Profil Pengguna',
+            title: AppLocalizations.of(context)?.userProfile ?? 'Profil Pengguna',
             iconColor: leadingIconColor,
             trailingColor: trailingIconColor,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileSettingsPage())),
@@ -43,7 +43,7 @@ class MasterDataScreen extends StatelessWidget {
           _buildMenuTile(
             context,
             icon: Icons.account_balance_wallet_outlined,
-            title: 'Pengelolaan Rekening',
+            title: AppLocalizations.of(context)?.bankAccountManagement ?? 'Pengelolaan Rekening',
             iconColor: leadingIconColor,
             trailingColor: trailingIconColor,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AccountManagementPage(activeMode: activeMode))),
@@ -52,7 +52,7 @@ class MasterDataScreen extends StatelessWidget {
           _buildMenuTile(
             context,
             icon: Icons.category_outlined,
-            title: 'Kategori Transaksi',
+            title: AppLocalizations.of(context)?.transactionCategory ?? 'Kategori Transaksi',
             iconColor: leadingIconColor,
             trailingColor: trailingIconColor,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CategorySettingsPage(activeMode: activeMode))),
@@ -61,7 +61,7 @@ class MasterDataScreen extends StatelessWidget {
           _buildMenuTile(
             context,
             icon: Icons.backup_outlined,
-            title: 'Cadangan Data (Backup & Restore)',
+            title: AppLocalizations.of(context)?.dataBackupRestore ?? 'Cadangan Data (Backup & Restore)',
             iconColor: leadingIconColor,
             trailingColor: trailingIconColor,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BackupRestorePage())),
@@ -70,7 +70,7 @@ class MasterDataScreen extends StatelessWidget {
           _buildMenuTile(
             context,
             icon: Icons.help_outline,
-            title: 'Panduan Widget',
+            title: AppLocalizations.of(context)?.widgetGuideTitle ?? 'Panduan Widget',
             iconColor: leadingIconColor,
             trailingColor: trailingIconColor,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WidgetGuidePage())),
@@ -158,7 +158,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profil Pengguna', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)?.userProfile ?? 'Profil Pengguna', style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -178,10 +178,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             const SizedBox(height: 16),
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nama Panggilan',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.badge),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)?.usernameLabel ?? 'Nama Panggilan',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.badge),
               ),
             ),
             const SizedBox(height: 16),
@@ -190,7 +190,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 if (nameController.text.isNotEmpty) {
                   await PreferenceService.instance.setUserName(nameController.text);
                   if (mounted) {
-                    TopToast.show(context, 'Profil berhasil disimpan');
+                    TopToast.show(context, AppLocalizations.of(context)?.successSaveProfile ?? 'Profil berhasil disimpan');
                   }
                 }
               },
@@ -199,7 +199,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Simpan Profil'),
+              child: Text(AppLocalizations.of(context)?.saveProfile ?? 'Simpan Profil'),
             ),
             const SizedBox(height: 32),
             Text(
@@ -286,7 +286,9 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          item == null ? 'Tambah Rekening' : 'Edit Rekening',
+          item == null
+              ? (AppLocalizations.of(context)?.addBankAccount ?? 'Tambah Rekening')
+              : (AppLocalizations.of(context)?.editBankAccount ?? 'Edit Rekening'),
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         content: Column(
@@ -296,7 +298,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
             TextField(
               controller: nameController,
               decoration: InputDecoration(
-                labelText: 'Nama Rekening',
+                labelText: AppLocalizations.of(context)?.bankAccountName ?? 'Nama Rekening',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -306,7 +308,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
             TextField(
               controller: balanceController,
               decoration: InputDecoration(
-                labelText: 'Saldo Awal',
+                labelText: AppLocalizations.of(context)?.initialBalance ?? 'Saldo Awal',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -318,7 +320,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Batal', style: TextStyle(color: Colors.grey.shade600)),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Batal', style: TextStyle(color: Colors.grey.shade600)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -340,7 +342,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
-            child: const Text('Simpan'),
+            child: Text(AppLocalizations.of(context)?.save ?? 'Simpan'),
           ),
         ],
       ),
@@ -351,11 +353,11 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Data'),
-        content: const Text('Apakah Anda yakin ingin menghapus rekening ini?'),
+        title: Text(AppLocalizations.of(context)?.deleteDataTitle ?? 'Hapus Data'),
+        content: Text(AppLocalizations.of(context)?.confirmDeleteAccount ?? 'Apakah Anda yakin ingin menghapus rekening ini?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus', style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)?.cancel ?? 'Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context)?.delete ?? 'Hapus', style: const TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -368,14 +370,15 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isId = AppLocalizations.of(context)?.localeName == 'id';
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pengelolaan Rekening', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)?.bankAccountManagement ?? 'Pengelolaan Rekening', style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _accounts.isEmpty
-              ? Center(child: Text('Belum ada data rekening', style: TextStyle(color: Colors.grey.shade400)))
+              ? Center(child: Text(AppLocalizations.of(context)?.emptyAccount ?? 'Belum ada data rekening', style: TextStyle(color: Colors.grey.shade400)))
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _accounts.length,
@@ -386,7 +389,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                     final formattedBalance = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(balance);
                     return ListTile(
                       title: Text(item['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w500)),
-                      subtitle: Text('Saldo: $formattedBalance', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                      subtitle: Text('${isId ? "Saldo" : "Balance"}: $formattedBalance', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -455,7 +458,9 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
-              item == null ? 'Tambah Kategori' : 'Edit Kategori',
+              item == null
+                  ? (AppLocalizations.of(context)?.addCategory ?? 'Tambah Kategori')
+                  : (AppLocalizations.of(context)?.editCategory ?? 'Edit Kategori'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
             content: Column(
@@ -465,7 +470,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
-                    labelText: 'Nama Kategori',
+                    labelText: AppLocalizations.of(context)?.categoryName ?? 'Nama Kategori',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
@@ -473,7 +478,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                 ),
                 if (item == null) ...[
                   const SizedBox(height: 16),
-                  const Text('Jenis Transaksi', style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w600)),
+                  Text(AppLocalizations.of(context)?.transactionType ?? 'Jenis Transaksi', style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -489,7 +494,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                             ),
                             child: Center(
                               child: Text(
-                                'Pengeluaran',
+                                AppLocalizations.of(context)?.expense ?? 'Pengeluaran',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -513,7 +518,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                             ),
                             child: Center(
                               child: Text(
-                                'Pemasukan',
+                                AppLocalizations.of(context)?.income ?? 'Pemasukan',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -533,7 +538,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Batal', style: TextStyle(color: Colors.grey.shade600)),
+                child: Text(AppLocalizations.of(context)?.cancel ?? 'Batal', style: TextStyle(color: Colors.grey.shade600)),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -554,7 +559,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   elevation: 0,
                 ),
-                child: const Text('Simpan'),
+                child: Text(AppLocalizations.of(context)?.save ?? 'Simpan'),
               ),
             ],
           );
@@ -565,18 +570,18 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
 
   Future<void> _deleteItem(String id, String name) async {
     if (name == 'Other') {
-      TopToast.show(context, 'Kategori default "Other" tidak dapat dihapus.');
+      TopToast.show(context, AppLocalizations.of(context)?.defaultCategoryError ?? 'Kategori default "Other" tidak dapat dihapus.');
       return;
     }
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Data'),
-        content: const Text('Apakah Anda yakin ingin menghapus kategori ini?'),
+        title: Text(AppLocalizations.of(context)?.deleteDataTitle ?? 'Hapus Data'),
+        content: Text(AppLocalizations.of(context)?.confirmDeleteCategory ?? 'Apakah Anda yakin ingin menghapus kategori ini?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus', style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)?.cancel ?? 'Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context)?.delete ?? 'Hapus', style: const TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -591,12 +596,12 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kategori Transaksi', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)?.transactionCategory ?? 'Kategori Transaksi', style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _categories.isEmpty
-              ? Center(child: Text('Belum ada data kategori', style: TextStyle(color: Colors.grey.shade400)))
+              ? Center(child: Text(AppLocalizations.of(context)?.emptyCategory ?? 'Belum ada data kategori', style: TextStyle(color: Colors.grey.shade400)))
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _categories.length,
@@ -604,7 +609,9 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                   itemBuilder: (context, index) {
                     final item = _categories[index];
                     final isOther = item['name'] == 'Other';
-                    final txTypeStr = item['transaction_type'] == 'income' ? 'Pemasukan' : 'Pengeluaran';
+                    final txTypeStr = item['transaction_type'] == 'income'
+                        ? (AppLocalizations.of(context)?.income ?? 'Pemasukan')
+                        : (AppLocalizations.of(context)?.expense ?? 'Pengeluaran');
                     final badgeColor = item['transaction_type'] == 'income' ? Colors.green : Colors.red;
 
                     return ListTile(
@@ -614,7 +621,7 @@ class _CategorySettingsPageState extends State<CategorySettingsPage> {
                           ? Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12)),
-                              child: const Text('Default', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                              child: Text(AppLocalizations.of(context)?.defaultLabel ?? 'Default', style: const TextStyle(fontSize: 11, color: Colors.grey)),
                             )
                           : Row(
                               mainAxisSize: MainAxisSize.min,
@@ -659,7 +666,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
     final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadangan Data', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)?.backupRestoreTitle ?? 'Cadangan & Pemulihan Data', style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -668,23 +675,23 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
           children: [
             Icon(Icons.cloud_upload_outlined, size: 80, color: primaryColor),
             const SizedBox(height: 16),
-            const Text(
-              'Backup & Restore Data',
+            Text(
+              AppLocalizations.of(context)?.backupRestoreTitle ?? 'Cadangan & Pemulihan Data',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Simpan data Anda ke file lokal agar bisa dipulihkan kembali nanti.',
+            Text(
+              AppLocalizations.of(context)?.backupRestoreDesc ?? 'Simpan data Anda ke file lokal agar bisa dipulihkan kembali nanti.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 48),
             ElevatedButton.icon(
               onPressed: () async {
                 final path = await BackupService.instance.exportData();
                 if (path != null && mounted) {
-                  TopToast.show(context, 'Data berhasil diekspor ke $path');
+                  TopToast.show(context, (AppLocalizations.of(context)?.successExport ?? 'Data Berhasil diekspor ke ') + path);
                 }
               },
               icon: const Icon(Icons.upload_file),
@@ -703,11 +710,11 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Konfirmasi Restore'),
-                    content: const Text('PERHATIAN: Mengimpor data akan menghapus semua data saat ini dan menggantinya dengan isi file backup. Lanjutkan?'),
+                    title: Text(AppLocalizations.of(context)?.confirmRestoreTitle ?? 'Konfirmasi Restore'),
+                    content: Text(AppLocalizations.of(context)?.confirmRestoreWarning ?? 'PERHATIAN: Mengimpor data akan menghapus semua data saat ini dan menggantinya dengan isi file backup. Lanjutkan?'),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-                      TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Lanjutkan', style: TextStyle(color: Colors.red))),
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)?.cancel ?? 'Batal')),
+                      TextButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context)?.continueLabel ?? 'Lanjutkan', style: const TextStyle(color: Colors.red))),
                     ],
                   ),
                 );
@@ -715,7 +722,7 @@ class _BackupRestorePageState extends State<BackupRestorePage> {
                 if (confirmed == true) {
                   final success = await BackupService.instance.importData();
                   if (success && mounted) {
-                    TopToast.show(context, 'Data berhasil diimpor!');
+                    TopToast.show(context, AppLocalizations.of(context)?.successImport ?? 'Data berhasil diimpor!');
                   }
                 }
               },
@@ -748,7 +755,7 @@ class WidgetGuidePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Panduan Pasang Widget', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)?.widgetGuideTitle ?? 'Panduan Pasang Widget', style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
@@ -768,51 +775,51 @@ class WidgetGuidePage extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
-                  BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 12, offset: Offset(0, 6)),
+                  BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
                 ],
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Icon(Icons.widgets, size: 64, color: Colors.white),
-                  SizedBox(height: 16),
+                  const Icon(Icons.widgets, size: 64, color: Colors.white),
+                  const SizedBox(height: 16),
                   Text(
-                    'Widget Home Screen WiroFin',
+                    AppLocalizations.of(context)?.widgetHomeScreenTitle ?? 'Widget Home Screen WiroFin',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Pantau terus kesehatan finansial Anda tanpa harus membuka aplikasi.',
+                    AppLocalizations.of(context)?.widgetHomeScreenDesc ?? 'Pantau terus kesehatan finansial Anda tanpa harus membuka aplikasi.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.white70),
+                    style: const TextStyle(fontSize: 14, color: Colors.white70),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
-              '3 Langkah Mudah Pemasangan',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            Text(
+              AppLocalizations.of(context)?.threeEasySteps ?? '3 Langkah Mudah Pemasangan',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
             ),
             const SizedBox(height: 16),
             _buildStepCard(
               stepNumber: '1',
-              title: 'Pergi ke Layar Utama HP',
-              description: 'Tutup atau minimalkan aplikasi WiroFin dan navigasikan ke layar utama (Home Screen) di HP Android atau iOS Anda.',
+              title: AppLocalizations.of(context)?.widgetStep1Title ?? 'Pergi ke Layar Utama HP',
+              description: AppLocalizations.of(context)?.widgetStep1Desc ?? 'Tutup atau minimalkan aplikasi WiroFin dan navigasikan ke layar utama (Home Screen) di HP Android atau iOS Anda.',
               icon: Icons.home_outlined,
             ),
             const SizedBox(height: 16),
             _buildStepCard(
               stepNumber: '2',
-              title: 'Tekan & Tahan Area Kosong',
-              description: 'Tekan dan tahan (long press) pada area kosong di layar utama selama beberapa detik hingga muncul menu pengaturan layar atau pop-up menu.',
+              title: AppLocalizations.of(context)?.widgetStep2Title ?? 'Tekan & Tahan Area Kosong',
+              description: AppLocalizations.of(context)?.widgetStep2Desc ?? 'Tekan dan tahan (long press) pada area kosong di layar utama selama beberapa detik hingga muncul menu pengaturan layar atau pop-up menu.',
               icon: Icons.touch_app_outlined,
             ),
             const SizedBox(height: 16),
             _buildStepCard(
               stepNumber: '3',
-              title: 'Pilih & Seret Widget',
-              description: 'Ketuk menu "Widget" (atau ikon +), gulir untuk mencari "WiroFin", lalu seret varian widget yang Anda inginkan ke layar utama.',
+              title: AppLocalizations.of(context)?.widgetStep3Title ?? 'Pilih & Seret Widget',
+              description: AppLocalizations.of(context)?.widgetStep3Desc ?? 'Ketuk menu "Widget" (atau ikon +), gulir untuk mencari "WiroFin", lalu seret varian widget yang Anda inginkan ke layar utama.',
               icon: Icons.drag_indicator,
             ),
             const SizedBox(height: 32),
@@ -829,7 +836,7 @@ class WidgetGuidePage extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Tips: Widget WiroFin akan otomatis menyesuaikan warnanya sesuai mode (Personal/Company) saat aplikasi dibuka.',
+                      AppLocalizations.of(context)?.widgetTips ?? 'Tips: Widget WiroFin akan otomatis menyesuaikan warnanya sesuai mode (Personal/Company) saat aplikasi dibuka.',
                       style: TextStyle(fontSize: 13, color: Colors.amber.shade900, height: 1.4),
                     ),
                   ),

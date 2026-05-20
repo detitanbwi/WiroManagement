@@ -197,7 +197,7 @@ abstract class AppLocalizations {
   /// No description provided for @exitAppMessage.
   ///
   /// In id, this message translates to:
-  /// **'Apakah Anda yakin ingin keluar dari aplikasi WiroFin?'**
+  /// **'Apakah Anda yakin ingin keluar dari aplikasi Wirofin?'**
   String get exitAppMessage;
 
   /// No description provided for @cancel.
@@ -731,7 +731,7 @@ abstract class AppLocalizations {
   /// No description provided for @importOldData.
   ///
   /// In id, this message translates to:
-  /// **'Import Data Lama'**
+  /// **'Impor Data Lama'**
   String get importOldData;
 
   /// No description provided for @importOldDataDesc.
@@ -811,6 +811,174 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Update Sekarang'**
   String get updateNow;
+
+  /// No description provided for @widgetStatus.
+  ///
+  /// In id, this message translates to:
+  /// **'Terbaru'**
+  String get widgetStatus;
+
+  /// No description provided for @totalBalanceAvailable.
+  ///
+  /// In id, this message translates to:
+  /// **'Total Saldo Tersedia'**
+  String get totalBalanceAvailable;
+
+  /// No description provided for @instantRecordingWidget.
+  ///
+  /// In id, this message translates to:
+  /// **'Pencatatan Instan via Widget'**
+  String get instantRecordingWidget;
+
+  /// No description provided for @widgetDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'Pantau performa keuangan dan total saldo Anda langsung dari layar utama HP tanpa repot membuka aplikasi setiap saat.'**
+  String get widgetDesc;
+
+  /// No description provided for @termsConditionsTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Syarat & Ketentuan'**
+  String get termsConditionsTitle;
+
+  /// No description provided for @termsConditionsSubtitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Syarat dan Ketentuan Penggunaan WiroFin'**
+  String get termsConditionsSubtitle;
+
+  /// No description provided for @termsLastUpdated.
+  ///
+  /// In id, this message translates to:
+  /// **'Terakhir diperbarui: 11 Mei 2026'**
+  String get termsLastUpdated;
+
+  /// No description provided for @termsSec1Title.
+  ///
+  /// In id, this message translates to:
+  /// **'1. Penerimaan Ketentuan'**
+  String get termsSec1Title;
+
+  /// No description provided for @termsSec1Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Dengan mengunduh atau menggunakan aplikasi WiroFin, Anda secara otomatis menyetujui semua syarat dan ketentuan yang tertulis di sini. Jika Anda tidak setuju, harap segera menghentikan penggunaan aplikasi.'**
+  String get termsSec1Content;
+
+  /// No description provided for @termsSec2Title.
+  ///
+  /// In id, this message translates to:
+  /// **'2. Penggunaan Aplikasi'**
+  String get termsSec2Title;
+
+  /// No description provided for @termsSec2Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Aplikasi ini disediakan untuk membantu Anda dalam pencatatan keuangan pribadi dan bisnis. Anda bertanggung jawab penuh atas keakuratan data yang Anda masukkan.'**
+  String get termsSec2Content;
+
+  /// No description provided for @termsSec3Title.
+  ///
+  /// In id, this message translates to:
+  /// **'3. Batasan Tanggung Jawab'**
+  String get termsSec3Title;
+
+  /// No description provided for @termsSec3Content.
+  ///
+  /// In id, this message translates to:
+  /// **'WIROFIN DISEDIAKAN \"APA ADANYA\" TANPA JAMINAN APAPUN. SEGALA KERUGIAN ATAS PEMAKAIAN APLIKASI INI ADALAH SEPENUHNYA TANGGUNG JAWAB PENGGUNA. KAMI TIDAK BERTANGGUNG JAWAB ATAS KEHILANGAN DATA, KESALAHAN PERHITUNGAN, ATAU DAMPAK FINANSIAL APAPUN YANG TIMBUL DARI PENGGUNAAN APLIKASI INI.'**
+  String get termsSec3Content;
+
+  /// No description provided for @termsSec4Title.
+  ///
+  /// In id, this message translates to:
+  /// **'4. Keamanan Data'**
+  String get termsSec4Title;
+
+  /// No description provided for @termsSec4Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Dalam mode offline, data Anda disimpan secara lokal di perangkat Anda. Anda bertanggung jawab untuk melakukan backup data Anda sendiri.'**
+  String get termsSec4Content;
+
+  /// No description provided for @termsSec5Title.
+  ///
+  /// In id, this message translates to:
+  /// **'5. Perubahan Layanan'**
+  String get termsSec5Title;
+
+  /// No description provided for @termsSec5Content.
+  ///
+  /// In id, this message translates to:
+  /// **'Kami berhak mengubah atau menghentikan layanan aplikasi kapan saja tanpa pemberitahuan sebelumnya.'**
+  String get termsSec5Content;
+
+  /// No description provided for @widgetGuideTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Panduan Pasang Widget'**
+  String get widgetGuideTitle;
+
+  /// No description provided for @widgetHomeScreenTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Widget Home Screen WiroFin'**
+  String get widgetHomeScreenTitle;
+
+  /// No description provided for @widgetHomeScreenDesc.
+  ///
+  /// In id, this message translates to:
+  /// **'Pantau terus kesehatan finansial Anda tanpa harus membuka aplikasi.'**
+  String get widgetHomeScreenDesc;
+
+  /// No description provided for @threeEasySteps.
+  ///
+  /// In id, this message translates to:
+  /// **'3 Langkah Mudah Pemasangan'**
+  String get threeEasySteps;
+
+  /// No description provided for @widgetStep1Title.
+  ///
+  /// In id, this message translates to:
+  /// **'Pergi ke Layar Utama HP'**
+  String get widgetStep1Title;
+
+  /// No description provided for @widgetStep1Desc.
+  ///
+  /// In id, this message translates to:
+  /// **'Tutup atau minimalkan aplikasi WiroFin dan navigasikan ke layar utama (Home Screen) di HP Android atau iOS Anda.'**
+  String get widgetStep1Desc;
+
+  /// No description provided for @widgetStep2Title.
+  ///
+  /// In id, this message translates to:
+  /// **'Tekan & Tahan Area Kosong'**
+  String get widgetStep2Title;
+
+  /// No description provided for @widgetStep2Desc.
+  ///
+  /// In id, this message translates to:
+  /// **'Tekan dan tahan (long press) pada area kosong di layar utama selama beberapa detik hingga muncul menu pengaturan layar atau pop-up menu.'**
+  String get widgetStep2Desc;
+
+  /// No description provided for @widgetStep3Title.
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih & Seret Widget'**
+  String get widgetStep3Title;
+
+  /// No description provided for @widgetStep3Desc.
+  ///
+  /// In id, this message translates to:
+  /// **'Ketuk menu \"Widget\" (atau ikon +), gulir untuk mencari \"WiroFin\", lalu seret varian widget yang Anda inginkan ke layar utama.'**
+  String get widgetStep3Desc;
+
+  /// No description provided for @widgetTips.
+  ///
+  /// In id, this message translates to:
+  /// **'Tips: Widget WiroFin akan otomatis menyesuaikan warnanya sesuai mode (Personal/Company) saat aplikasi dibuka.'**
+  String get widgetTips;
 }
 
 class _AppLocalizationsDelegate

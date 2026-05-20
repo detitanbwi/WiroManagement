@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import 'custom_numpad.dart';
 import 'top_toast.dart';
@@ -119,7 +120,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
 
   void _onSave() {
     if (_amount.isEmpty || _amount == '0') {
-      TopToast.show(context, 'Nominal tidak boleh kosong', isError: true);
+      TopToast.show(context, AppLocalizations.of(context)?.amountEmptyError ?? 'Nominal tidak boleh kosong', isError: true);
       return;
     }
     
@@ -175,7 +176,9 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.initialTransaction != null ? 'Edit Transaksi' : 'Catat Transaksi',
+                    widget.initialTransaction != null
+                        ? (AppLocalizations.of(context)?.editTransaction ?? 'Edit Transaksi')
+                        : (AppLocalizations.of(context)?.recordTransaction ?? 'Catat Transaksi'),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -234,7 +237,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'Pengeluaran',
+                                    AppLocalizations.of(context)?.expense ?? 'Pengeluaran',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: _transactionType == 'expense' ? Colors.white : Colors.grey.shade600,
@@ -259,7 +262,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'Pemasukan',
+                                    AppLocalizations.of(context)?.income ?? 'Pemasukan',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: _transactionType == 'income' ? Colors.white : Colors.grey.shade600,
@@ -311,7 +314,7 @@ class _TransactionBottomSheetState extends State<TransactionBottomSheet> {
                       controller: _descriptionController,
                       onChanged: (val) => _description = val,
                       decoration: InputDecoration(
-                        hintText: 'Keterangan (Opsional)',
+                        hintText: AppLocalizations.of(context)?.descriptionOptional ?? 'Keterangan (Opsional)',
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         prefixIcon: Icon(Icons.edit_note, color: Colors.grey.shade400),
                         filled: true,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'terms_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../l10n/app_localizations.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -12,7 +13,7 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Tentang WiroFin', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)?.aboutWiroFin ?? 'Tentang WiroFin', style: const TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -38,11 +39,11 @@ class AboutScreen extends StatelessWidget {
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   return Text(
-                    'Versi ${snapshot.data!.version}',
+                    '${AppLocalizations.of(context)?.versionLabel ?? 'Versi'} ${snapshot.data!.version}',
                     style: const TextStyle(color: Colors.grey),
                   );
                 }
-                return const Text('Versi ...', style: TextStyle(color: Colors.grey));
+                return Text('${AppLocalizations.of(context)?.versionLabel ?? 'Versi'} ...', style: const TextStyle(color: Colors.grey));
               },
             ),
             const SizedBox(height: 40),
@@ -51,13 +52,13 @@ class AboutScreen extends StatelessWidget {
             _buildInfoTile(
               context,
               icon: Icons.business,
-              title: 'Pengembang',
+              title: AppLocalizations.of(context)?.developerLabel ?? 'Pengembang',
               content: 'Wirodayan Digital',
             ),
             _buildInfoTile(
               context,
               icon: Icons.language,
-              title: 'Website',
+              title: AppLocalizations.of(context)?.websiteLabel ?? 'Website',
               content: 'wirodev.com',
               onTap: () async {
                 final url = Uri.parse('https://wirodev.com');
@@ -69,20 +70,20 @@ class AboutScreen extends StatelessWidget {
             _buildInfoTile(
               context,
               icon: Icons.calendar_today,
-              title: 'Dibuat Pada',
+              title: AppLocalizations.of(context)?.createdOnLabel ?? 'Dibuat Pada',
               content: '2026',
             ),
             _buildInfoTile(
               context,
               icon: Icons.verified_user,
-              title: 'Lisensi',
-              content: 'Free to Use',
+              title: AppLocalizations.of(context)?.licenseLabel ?? 'Lisensi',
+              content: AppLocalizations.of(context)?.freeToUseLabel ?? 'Free to Use',
             ),
             _buildInfoTile(
               context,
               icon: Icons.description,
-              title: 'Hukum',
-              content: 'Syarat & Ketentuan',
+              title: AppLocalizations.of(context)?.legalLabel ?? 'Hukum',
+              content: AppLocalizations.of(context)?.termsConditions ?? 'Syarat & Ketentuan',
               onTap: () {
                 Navigator.push(
                   context,

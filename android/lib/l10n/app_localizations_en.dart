@@ -42,7 +42,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expense => 'Expense';
 
   @override
-  String get liveUpdate => 'Live Update';
+  String get liveUpdate => 'Live';
 
   @override
   String get expenseDistribution => 'Expense Distribution';
@@ -57,7 +57,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exitAppTitle => 'Exit App';
 
   @override
-  String get exitAppMessage => 'Are you sure you want to exit WiroFin?';
+  String get exitAppMessage => 'Are you sure you want to exit Wirofin?';
 
   @override
   String get cancel => 'Cancel';
@@ -373,4 +373,99 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateNow => 'Update Now';
+
+  @override
+  String get widgetStatus => 'Live';
+
+  @override
+  String get totalBalanceAvailable => 'Total Balance Available';
+
+  @override
+  String get instantRecordingWidget => 'Instant Recording via Widget';
+
+  @override
+  String get widgetDesc =>
+      'Monitor your financial performance and total balance directly from your phone\'s home screen without the hassle of opening the app every time.';
+
+  @override
+  String get termsConditionsTitle => 'Terms & Condition';
+
+  @override
+  String get termsConditionsSubtitle => 'WiroFin Terms and Conditions of Use';
+
+  @override
+  String get termsLastUpdated => 'Last updated: May 11, 2026';
+
+  @override
+  String get termsSec1Title => '1. Acceptance of Terms';
+
+  @override
+  String get termsSec1Content =>
+      'By downloading or using the WifoFin app, you automatically agree to all the terms and conditions written here. If you do not agree, please stop using the app immediately.';
+
+  @override
+  String get termsSec2Title => '2. App Usage';
+
+  @override
+  String get termsSec2Content =>
+      'This app is provided to help you with personal and business financial logging. You are fully responsible for the accuracy of the data you enter.';
+
+  @override
+  String get termsSec3Title => '3. Limitation of Liability';
+
+  @override
+  String get termsSec3Content =>
+      'WIROFIN IS PROVIDED \"AS IS\" WITHOUT ANY WARRANTY. ANY LOSSES FROM USING THIS APPLICATION ARE ENTIRELY THE USER\'S RESPONSIBILITY. WE ARE NOT LIABLE FOR DATA LOSS, CALCULATION ERRORS, OR ANY FINANCIAL IMPACT ARISING FROM THE USE OF THIS APP.';
+
+  @override
+  String get termsSec4Title => '4. Data Security';
+
+  @override
+  String get termsSec4Content =>
+      'In offline mode, your data is stored locally on your device. You are responsible for backing up your own data.';
+
+  @override
+  String get termsSec5Title => '5. Changes to Service';
+
+  @override
+  String get termsSec5Content =>
+      'We reserve the right to modify or terminate the app service at any time without prior notice.';
+
+  @override
+  String get widgetGuideTitle => 'Widget Installation Guide';
+
+  @override
+  String get widgetHomeScreenTitle => 'WiroFin Home Screen Widget';
+
+  @override
+  String get widgetHomeScreenDesc =>
+      'Keep monitoring your financial health without having to open the app.';
+
+  @override
+  String get threeEasySteps => '3 Easy Installation Steps';
+
+  @override
+  String get widgetStep1Title => 'Go to the Phone\'s Home Screen';
+
+  @override
+  String get widgetStep1Desc =>
+      'Close or minimize the WifoFin app and navigate to the home screen on your Android or iOS device.';
+
+  @override
+  String get widgetStep2Title => 'Press & Hold Empty Area';
+
+  @override
+  String get widgetStep2Desc =>
+      'Press and hold on hold and empty area on the home screen for a few seconds until the screen settings menu or pop-up menu appears.';
+
+  @override
+  String get widgetStep3Title => 'Choose & Drag Widget';
+
+  @override
+  String get widgetStep3Desc =>
+      'Tap the \"Widget\" menu (or + icon), scroll to find \"WiroFin\", then drag the vairan widget you want to the home screen.';
+
+  @override
+  String get widgetTips =>
+      'Tips: The WiroFin widget will automatically adjust its color according to the mode (Personal/Company) when the application is opened.';
 }
