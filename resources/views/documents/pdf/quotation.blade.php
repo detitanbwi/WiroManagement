@@ -190,6 +190,28 @@
         .rich-text-content strong {
             color: #111;
         }
+        .rich-text-content table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 15px 0 !important;
+        }
+        .rich-text-content table td, .rich-text-content table th {
+            border: 1px solid #ddd !important;
+            padding: 6px 8px !important;
+            text-align: left !important;
+            font-size: 10px !important;
+        }
+        .rich-text-content table th {
+            background-color: #f3f4f6 !important;
+            font-weight: bold !important;
+            color: #111 !important;
+        }
+        .rich-text-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            margin: 15px 0 !important;
+            border-radius: 4px !important;
+        }
     </style>
 </head>
 

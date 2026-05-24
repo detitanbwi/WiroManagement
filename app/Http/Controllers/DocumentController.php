@@ -64,6 +64,25 @@ class DocumentController extends Controller
 
         $filename = str_replace('/', '-', $quotation->quotation_number);
         $pdf = Pdf::loadView('documents.pdf.quotation', $data)->setPaper('a4', 'portrait');
+        
+        if ($quotation->attachment_pdf) {
+            $attachmentPath = storage_path('app/public/' . $quotation->attachment_pdf);
+            if (file_exists($attachmentPath)) {
+                try {
+                    $merger = new \iio\libmergepdf\Merger;
+                    $merger->addRaw($pdf->output());
+                    $merger->addFile($attachmentPath);
+                    $mergedPdf = $merger->merge();
+                    
+                    return response($mergedPdf)
+                        ->header('Content-Type', 'application/pdf')
+                        ->header('Content-Disposition', 'inline; filename="Quotation-'.$filename.'.pdf"');
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to merge PDF: " . $e->getMessage());
+                }
+            }
+        }
+
         return $pdf->stream("Quotation-{$filename}.pdf");
     }
 

@@ -12,6 +12,28 @@
     .rich-text-content h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; }
     .rich-text-content h2 { font-size: 1.25rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.5rem; }
     .rich-text-content h3 { font-size: 1.125rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; }
+    .rich-text-content table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 1.5rem 0 !important;
+    }
+    .rich-text-content table td, .rich-text-content table th {
+        border: 1px solid #e2e8f0 !important;
+        padding: 0.75rem 1rem !important;
+        text-align: left !important;
+    }
+    .rich-text-content table th {
+        background-color: #f8fafc !important;
+        font-weight: 800 !important;
+        color: #1e293b !important;
+    }
+    .rich-text-content img {
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 0.375rem !important;
+        margin: 1.5rem 0 !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+    }
 </style>
 
 @section('content')

@@ -40,11 +40,8 @@
                 <div class="col-span-2">
                     <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Deskripsi Pekerjaan / Fitur</label>
                     <div class="bg-white">
-                        <div id="editor-description" style="height: 200px;">
-                            {!! old('description', $quotation->description) !!}
-                        </div>
+                        <textarea name="description" id="editor-description" style="height: 250px;">{!! old('description', $quotation->description) !!}</textarea>
                     </div>
-                    <textarea name="description" id="description_hidden" class="hidden"></textarea>
                     @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -123,26 +120,23 @@
     </div>
 </div>
 
-<!-- Quill Styles & Scripts -->
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<!-- TinyMCE Styles & Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js"></script>
 <script>
-    var quill = new Quill('#editor-description', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                ['clean']
-            ]
+    tinymce.init({
+        selector: '#editor-description',
+        plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',
+        toolbar: 'undo redo | blocks | ' +
+        'bold italic underline | alignleft aligncenter ' +
+        'alignright alignjustify | bullist numlist outdent indent | ' +
+        'table image charmap | removeformat | help',
+        menubar: false,
+        height: 300,
+        setup: function (editor) {
+            editor.on('change', function () {
+                tinymce.triggerSave();
+            });
         }
     });
-
-    var form = document.getElementById('quotation-form');
-    form.onsubmit = function() {
-        document.querySelector('#description_hidden').value = quill.root.innerHTML;
-        return true;
-    };
 </script>
 @endsection

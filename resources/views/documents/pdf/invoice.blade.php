@@ -36,8 +36,11 @@
         .rich-text-content h3 { font-size: 10px; }
         .rich-text-content p { margin-bottom: 6px; }
         .rich-text-content ul, .rich-text-content ol { margin-left: 15px; margin-bottom: 6px; }
-        .rich-text-content li { margin-bottom: 2px; }
         .rich-text-content strong { color: #111; }
+        .rich-text-content table { width: 100% !important; border-collapse: collapse !important; margin: 15px 0 !important; }
+        .rich-text-content table td, .rich-text-content table th { border: 1px solid #ddd !important; padding: 6px 8px !important; text-align: left !important; font-size: 10px !important; }
+        .rich-text-content table th { background-color: #f3f4f6 !important; font-weight: bold !important; color: #111 !important; }
+        .rich-text-content img { max-width: 100% !important; height: auto !important; margin: 15px 0 !important; border-radius: 4px !important; }
     </style>
 </head>
 <body>

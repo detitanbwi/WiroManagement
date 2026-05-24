@@ -16,8 +16,17 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 
+Route::get('/test-pdf', function () {
+    return response()->file(storage_path("app/public/attachments/quotations/q929Xw1DPMUZI5VThfMhnFg5lRXReJ9owRHyQz7J.pdf"));
+});
+
+Route::get('/dump-path/{path}', function ($path) {
+    return 'Path is: ' . request()->path();
+})->where('path', '.*');
+
 // Route to bypass broken symlinks on shared hosting
 Route::get('/storage/{path}', function ($path) {
+    info("Storage route hit with path: " . $path);
     // Only allow attachments directory
     if (str_starts_with($path, 'attachments/')) {
         $fullPath = storage_path("app/public/{$path}");
@@ -72,4 +81,8 @@ Route::middleware('auth')->group(function () {
         
         Route::get('/transactions', [\App\Http\Controllers\FinanceController::class, 'transactions'])->name('transactions');
     });
+});
+
+Route::fallback(function () {
+    return 'Fallback route hit with path: ' . request()->path();
 });
