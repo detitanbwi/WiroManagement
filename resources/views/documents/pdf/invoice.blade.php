@@ -135,7 +135,7 @@
             </div>
 
             <div style="float: right; width: 250px; text-align: center;">
-                <p style="font-size: 12px; margin-bottom: 60px;">Banyuwangi, {{ $invoice->issued_date->format('d F Y') }}</p>
+                <p style="font-size: 12px; margin-bottom: 60px;">Banyuwangi, {{ $invoice->issued_date->locale('id')->translatedFormat('d F Y') }}</p>
                 <p style="font-weight: bold; text-decoration: underline; margin-bottom: 0;">Wirodev Administration</p>
                 <p style="font-size: 10px; color: #666; margin-top: 2px;">Finance Department</p>
             </div>

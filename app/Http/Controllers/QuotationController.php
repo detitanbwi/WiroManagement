@@ -21,6 +21,7 @@ class QuotationController extends Controller
             'description' => 'nullable|string',
             'warranty_days' => 'required|integer|min:0',
             'working_duration' => 'required|string|max:255',
+            'due_date' => 'required|date',
             'total_amount' => 'required|numeric|min:0',
             'status' => 'required|in:draft,issued,approved',
             'attachment_pdf' => 'nullable|file|mimes:pdf|max:10240'
@@ -49,6 +50,7 @@ class QuotationController extends Controller
             'description' => 'nullable|string',
             'warranty_days' => 'required|integer|min:0',
             'working_duration' => 'required|string|max:255',
+            'due_date' => 'required|date',
             'total_amount' => 'required|numeric|min:0',
             'status' => 'required|in:draft,issued,approved',
             'attachment_pdf' => 'nullable|file|mimes:pdf|max:10240'

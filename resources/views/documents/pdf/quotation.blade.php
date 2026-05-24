@@ -257,14 +257,14 @@
                             <td style="font-weight: bold; color: #6b7280; padding: 3px 0; vertical-align: top;">Tanggal
                             </td>
                             <td style="padding: 3px 5px; vertical-align: top;">:
-                                {{ $quotation->created_at->format('d F Y') }}
+                                {{ $quotation->created_at->locale('id')->translatedFormat('d F Y') }}
                             </td>
                         </tr>
                         <tr>
                             <td style="font-weight: bold; color: #6b7280; padding: 3px 0; vertical-align: top;">Berlaku
                                 Sampai</td>
                             <td style="padding: 3px 5px; color: #dc2626; vertical-align: top;">:
-                                {{ $quotation->created_at->addDays(14)->format('d F Y') }}
+                                {{ $quotation->due_date ? \Carbon\Carbon::parse($quotation->due_date)->locale('id')->translatedFormat('d F Y') : $quotation->created_at->addDays(14)->locale('id')->translatedFormat('d F Y') }}
                             </td>
                         </tr>
                     </table>
@@ -331,7 +331,7 @@
 
         <div class="footer">
             <div class="signature-box">
-                <p style="margin-bottom: 65px;">Banyuwangi, {{ date('d F Y') }}</p>
+                <p style="margin-bottom: 65px;">Banyuwangi, {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}</p>
                 <p style="font-weight: bold; text-decoration: underline; margin-bottom: 2px; font-size: 12px;">WIRODEV
                     ADMINISTRATION</p>
                 <p style="font-size: 9px; color: #6b7280; text-transform: uppercase; font-weight: bold;">Authorized
