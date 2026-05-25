@@ -65,6 +65,12 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        $hasUnpaidInvoices = $project->invoices()->whereIn('status', ['issued', 'partial'])->exists();
+
+        if ($hasUnpaidInvoices) {
+            return redirect()->back()->with('error', 'Proyek tidak dapat dihapus karena masih ada invoice yang belum lunas.');
+        }
+
         $project->delete();
         return redirect()->route('projects.index')->with('success', 'Project deleted successfully.');
     }

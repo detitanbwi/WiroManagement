@@ -188,7 +188,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-6 relative">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-blue-50/80 via-slate-50 to-indigo-50/80 p-4 md:p-6 relative">
                 <!-- Notification Toast (Auto-dismiss) -->
                 @if(session('success') || session('error'))
                     <div x-data="{ show: true }" 
