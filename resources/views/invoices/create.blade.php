@@ -116,10 +116,12 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">No. Invoice</label>
                             @php
-                                $today = date('Ymd');
-                                $count = \App\Models\Invoice::whereDate('created_at', date('Y-m-d'))->count() + 1;
-                                $serial = str_pad($count, 2, '0', STR_PAD_LEFT);
-                                $defaultInvoiceNumber = "INV/WIRODEV/{$today}/{$serial}";
+                                $projectYear = $project->created_at ? $project->created_at->format('Y') : date('Y');
+                                $projectSeq = \App\Models\Project::whereYear('created_at', $projectYear)->where('id', '<=', $project->id)->count();
+                                $projectRef = str_pad($projectSeq, 3, '0', STR_PAD_LEFT);
+                                $invSeq = \App\Models\Invoice::where('project_id', $project->id)->count() + 1;
+                                $invRef = str_pad($invSeq, 2, '0', STR_PAD_LEFT);
+                                $defaultInvoiceNumber = "INV/WIRODEV/" . $projectYear . "/" . $projectRef . "/" . $invRef;
                             @endphp
                             <input type="text" name="invoice_number" required value="{{ $defaultInvoiceNumber }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
                         </div>

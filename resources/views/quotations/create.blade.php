@@ -21,9 +21,12 @@
                 <div class="col-span-1">
                     <label for="quotation_number" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">No. Quotation</label>
                     @php
-                        $count = \App\Models\Quotation::count() + 1;
-                        $ref = str_pad($count, 3, '0', STR_PAD_LEFT);
-                        $defaultNo = "QUO/WIRODEV/" . date('Y') . "/" . $ref;
+                        $projectYear = $project->created_at ? $project->created_at->format('Y') : date('Y');
+                        $projectSeq = \App\Models\Project::whereYear('created_at', $projectYear)->where('id', '<=', $project->id)->count();
+                        $projectRef = str_pad($projectSeq, 3, '0', STR_PAD_LEFT);
+                        $quoSeq = \App\Models\Quotation::where('project_id', $project->id)->count() + 1;
+                        $quoRef = str_pad($quoSeq, 2, '0', STR_PAD_LEFT);
+                        $defaultNo = "QUO/WIRODEV/" . $projectYear . "/" . $projectRef . "/" . $quoRef;
                     @endphp
                     <input type="text" name="quotation_number" id="quotation_number" value="{{ old('quotation_number', $defaultNo) }}" required
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
