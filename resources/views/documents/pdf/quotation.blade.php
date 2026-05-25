@@ -118,7 +118,8 @@
         }
 
         .footer {
-            margin-top: 40px;
+            margin-top: 25px;
+            page-break-inside: avoid;
         }
 
         .signature-box {
@@ -324,9 +325,14 @@
             </div>
         </div>
 
-        <div style="font-size: 9px; color: #6b7280; font-style: italic; margin-bottom: 35px;">
+        <div style="font-size: 9px; color: #6b7280; font-style: italic; margin-bottom: 15px;">
             <span style="font-weight: bold; color: #4b5563;">Terbilang:</span>
             {{ App\Http\Controllers\ProjectController::formatTerbilang($quotation->total_amount) }} Rupiah.
+        </div>
+
+        <div style="border: 1.5px solid #dc2626; background-color: #fef2f2; padding: 8px 12px; margin-bottom: 20px; border-radius: 4px; display: inline-block;">
+            <div style="color: #dc2626; font-weight: 900; font-size: 11px; margin-bottom: 2px;">PERHATIAN !</div>
+            <div style="color: #dc2626; font-weight: bold; font-size: 10px;">TRANSFER DP BERARTI SETUJU SYARAT DAN KETENTUAN</div>
         </div>
 
         <div class="footer">
