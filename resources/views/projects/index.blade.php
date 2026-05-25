@@ -14,12 +14,12 @@
     <div class="bg-white/80 backdrop-blur-sm overflow-hidden shadow-sm sm:rounded-xl border border-gray-100">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-100">
-                <thead class="bg-gray-50/50">
+                <thead class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white">
                     <tr>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Judul Proyek / Client</th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Financial</th>
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Judul Proyek / Client</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Financial</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-indigo-50 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-transparent divide-y divide-gray-100">

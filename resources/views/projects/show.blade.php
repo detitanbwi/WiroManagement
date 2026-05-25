@@ -79,34 +79,34 @@
 
     <!-- Financial Cards -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Kontrak</p>
-            <p class="text-xl font-bold text-gray-900 mt-1 uppercase">Rp {{ number_format($project->contract_value, 0, ',', '.') }}</p>
-            <p class="text-[10px] text-gray-400 mt-2 italic line-clamp-1">Quotation / Invoice Utama</p>
+        <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+            <p class="text-[10px] text-blue-100 font-bold uppercase tracking-wider">Total Kontrak</p>
+            <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->contract_value, 0, ',', '.') }}</p>
+            <p class="text-[10px] text-blue-100 mt-2 italic line-clamp-1">Quotation / Invoice Utama</p>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Extra (CR)</p>
-            <p class="text-xl font-bold text-indigo-600 mt-1 uppercase">Rp {{ number_format($project->total_cr_value, 0, ',', '.') }}</p>
-            <p class="text-[10px] text-gray-400 mt-2 italic">{{ $project->changeRequests()->count() }} CR Items</p>
+        <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-purple-600 to-fuchsia-500 text-white">
+            <p class="text-[10px] text-purple-100 font-bold uppercase tracking-wider">Extra (CR)</p>
+            <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->total_cr_value, 0, ',', '.') }}</p>
+            <p class="text-[10px] text-purple-100 mt-2 italic">{{ $project->changeRequests()->count() }} CR Items</p>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Terbayar</p>
-            <p class="text-xl font-bold text-green-600 mt-1 uppercase">Rp {{ number_format($project->paid_amount, 0, ',', '.') }}</p>
-            <div class="w-full bg-gray-100 rounded-full h-1 mt-3">
-                <div class="bg-green-500 h-1 rounded-full" style="width: {{ $project->grand_total > 0 ? ($project->paid_amount / $project->grand_total) * 100 : 0 }}%"></div>
+        <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-teal-500 to-emerald-500 text-white">
+            <p class="text-[10px] text-teal-100 font-bold uppercase tracking-wider">Terbayar</p>
+            <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->paid_amount, 0, ',', '.') }}</p>
+            <div class="w-full bg-white/20 rounded-full h-1 mt-3">
+                <div class="bg-white h-1 rounded-full" style="width: {{ $project->grand_total > 0 ? ($project->paid_amount / $project->grand_total) * 100 : 0 }}%"></div>
             </div>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Tagihan Sisa</p>
-            <p class="text-xl font-bold {{ $project->balance_due > 0 ? 'text-red-600' : 'text-green-600' }} mt-1 uppercase">Rp {{ number_format($project->balance_due, 0, ',', '.') }}</p>
-            <p class="text-[10px] font-bold mt-2 uppercase {{ $project->balance_due > 0 ? 'text-red-500' : 'text-green-500' }}">
+        <div class="p-4 rounded-lg shadow-md bg-gradient-to-br {{ $project->balance_due > 0 ? 'from-rose-500 to-red-500' : 'from-emerald-500 to-teal-500' }} text-white">
+            <p class="text-[10px] text-white/80 font-bold uppercase tracking-wider">Tagihan Sisa</p>
+            <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->balance_due, 0, ',', '.') }}</p>
+            <p class="text-[10px] font-bold mt-2 uppercase text-white/90">
                 {{ $project->balance_due > 0 ? 'Belum lunas' : 'Lunas' }}
             </p>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pengeluaran</p>
-            <p class="text-xl font-bold text-amber-600 mt-1 uppercase">Rp {{ number_format($project->total_expenses, 0, ',', '.') }}</p>
-            <p class="text-[10px] text-gray-400 mt-2 italic">Total biaya operasional</p>
+        <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-amber-500 to-orange-400 text-white">
+            <p class="text-[10px] text-amber-100 font-bold uppercase tracking-wider">Pengeluaran</p>
+            <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->total_expenses, 0, ',', '.') }}</p>
+            <p class="text-[10px] text-amber-100 mt-2 italic">Total biaya operasional</p>
         </div>
     </div>
 
@@ -116,9 +116,9 @@
         <div class="lg:col-span-2 space-y-8">
             <!-- Section: Invoices -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <h3 class="text-lg font-bold text-gray-800">Tagihan (Invoices)</h3>
-                    <a href="{{ route('projects.invoices.create', $project) }}" class="text-sm font-bold text-primary hover:text-blue-700">+ Buat Invoice</a>
+                <div class="px-6 py-4 border-b border-blue-600 flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-500 text-white">
+                    <h3 class="text-lg font-bold text-white shadow-sm">Tagihan (Invoices)</h3>
+                    <a href="{{ route('projects.invoices.create', $project) }}" class="text-sm font-bold text-blue-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">+ Buat Invoice</a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -165,9 +165,9 @@
 
             <!-- Section: Quotations -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <h3 class="text-lg font-bold text-gray-800">Penawaran (Quotations)</h3>
-                    <a href="{{ route('projects.quotations.create', $project) }}" class="text-sm font-bold text-primary hover:text-blue-700">+ Buat Quotation</a>
+                <div class="px-6 py-4 border-b border-teal-600 flex justify-between items-center bg-gradient-to-r from-teal-600 to-emerald-500 text-white">
+                    <h3 class="text-lg font-bold text-white shadow-sm">Penawaran (Quotations)</h3>
+                    <a href="{{ route('projects.quotations.create', $project) }}" class="text-sm font-bold text-teal-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">+ Buat Quotation</a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -230,9 +230,9 @@
                     this.rawAmount = 0;
                 }
             }">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <h3 class="text-lg font-bold text-gray-800">Pengeluaran Proyek</h3>
-                    <button @click="resetForm(); openAddExpense = true" class="text-sm font-bold text-primary hover:text-blue-700 uppercase tracking-widest text-xs">+ Tambah Pengeluaran</button>
+                <div class="px-6 py-4 border-b border-amber-500 flex justify-between items-center bg-gradient-to-r from-amber-500 to-orange-400 text-white">
+                    <h3 class="text-lg font-bold text-white shadow-sm">Pengeluaran Proyek</h3>
+                    <button @click="resetForm(); openAddExpense = true" class="text-xs font-bold text-amber-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm uppercase tracking-widest transition-colors">+ Tambah Pengeluaran</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -331,9 +331,11 @@
         <!-- Sidebar Info -->
         <div class="space-y-8">
             <!-- Client Card -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Informasi Client</h3>
-                <div class="space-y-4">
+            <div class="bg-white rounded-lg shadow-sm border border-indigo-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-blue-500 px-6 py-4 border-b border-indigo-600 text-white">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider shadow-sm">Informasi Client</h3>
+                </div>
+                <div class="p-6 space-y-4">
                     <div>
                         <p class="text-xs text-gray-500">Nama PIC</p>
                         <p class="font-bold text-gray-800">{{ $project->client->name }}</p>
@@ -354,9 +356,11 @@
             </div>
 
             <!-- Timeline/Notes -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Catatan Operasional</h3>
-                <div class="space-y-4">
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-slate-600 to-gray-500 px-6 py-4 border-b border-slate-600 text-white">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider shadow-sm">Catatan Operasional</h3>
+                </div>
+                <div class="p-6 space-y-4">
                     <div class="text-sm text-gray-600 italic">
                         "Pastikan semua deployment melalui approval engineer sebelum status diubah ke Completed."
                     </div>

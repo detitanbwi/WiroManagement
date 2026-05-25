@@ -18,6 +18,10 @@ class Quotation extends Model
         'attachment_pdf'
     ];
 
+    protected $casts = [
+        'due_date' => 'date',
+    ];
+
     public function project()
     {
         return $this->belongsTo(Project::class);

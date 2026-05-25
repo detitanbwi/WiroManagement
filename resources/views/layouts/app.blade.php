@@ -59,11 +59,11 @@
             </div>
 
             <nav class="flex-1 overflow-y-auto py-4">
-                <ul class="space-y-1 px-2">
+                <ul class="space-y-1 px-3">
                     <li>
                         <a href="{{ route('dashboard') }}"
-                            class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-primary rounded-md group {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-primary font-medium' : '' }}">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                             </svg>
                             Dashboard
@@ -71,8 +71,8 @@
                     </li>
                     <li>
                         <a href="{{ route('clients.index') }}"
-                            class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-primary rounded-md group {{ request()->routeIs('clients.*') ? 'bg-blue-50 text-primary font-medium' : '' }}">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('clients.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('clients.*') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                             </svg>
                             Clients
@@ -80,8 +80,8 @@
                     </li>
                     <li>
                         <a href="{{ route('projects.index') }}"
-                            class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-primary rounded-md group {{ request()->routeIs('projects.*') ? 'bg-blue-50 text-primary font-medium' : '' }}">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('projects.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('projects.*') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
                             </svg>
                             Projects
@@ -89,35 +89,35 @@
                     </li>
                     <li x-data="{ open: {{ request()->routeIs('finance.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open" 
-                                class="w-full flex items-center justify-between px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-primary rounded-md group {{ request()->routeIs('finance.*') ? 'bg-blue-50 text-primary font-medium' : '' }}">
+                                class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('finance.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
                             <div class="flex items-center">
-                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 mr-3 {{ request()->routeIs('finance.*') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                                 Finance
                             </div>
-                            <svg class="w-4 h-4 transform transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 transform transition-transform {{ request()->routeIs('finance.*') ? 'text-white' : 'text-gray-400' }}" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <ul x-show="open" x-cloak x-transition class="mt-1 space-y-1 pl-12 pr-2 pb-2">
+                        <ul x-show="open" x-cloak x-transition class="mt-2 space-y-1 pl-11 pr-2 pb-2 border-l-2 border-blue-100 ml-6">
                             <li>
-                                <a href="{{ route('finance.overview') }}" class="block px-2 py-1.5 text-xs rounded-md {{ request()->routeIs('finance.overview') ? 'text-primary font-bold bg-blue-50' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                                <a href="{{ route('finance.overview') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.overview') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Overview
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('finance.bank-accounts') }}" class="block px-2 py-1.5 text-xs rounded-md {{ request()->routeIs('finance.bank-accounts') ? 'text-primary font-bold bg-blue-50' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                                <a href="{{ route('finance.bank-accounts') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.bank-accounts') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Bank Account
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('finance.transactions') }}" class="block px-2 py-1.5 text-xs rounded-md {{ request()->routeIs('finance.transactions') ? 'text-primary font-bold bg-blue-50' : 'text-gray-600 hover:text-primary hover:bg-gray-50' }}">
+                                <a href="{{ route('finance.transactions') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.transactions') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Transaksi
                                 </a>
                             </li>
                             <li>
-                                <span class="block px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed italic">
+                                <span class="block px-3 py-2 text-sm text-gray-400 cursor-not-allowed italic">
                                     Account (Soon)
                                 </span>
                             </li>
@@ -125,8 +125,8 @@
                     </li>
                     <li>
                         <a href="{{ route('settings.index') }}"
-                            class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-primary rounded-md group {{ request()->routeIs('settings.*') ? 'bg-blue-50 text-primary font-medium' : '' }}">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('settings.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('settings.*') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
@@ -136,8 +136,8 @@
                     @if(auth()->user()->role == 'superadmin')
                     <li>
                         <a href="{{ route('users.index') }}"
-                            class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-primary rounded-md group {{ request()->routeIs('users.*') ? 'bg-blue-50 text-primary font-medium' : '' }}">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('users.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('users.*') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                             User Management
@@ -177,9 +177,9 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Top Header (Mobile mostly) -->
-            <header class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 md:hidden">
-                <span class="text-xl font-bold text-primary">WIRO APP</span>
-                <button @click="mobileMenuOpen = true" class="text-gray-500 focus:outline-none">
+            <header class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-primary to-teal-600 text-white shadow-md md:hidden">
+                <span class="text-xl font-bold tracking-wide">WIRO APP</span>
+                <button @click="mobileMenuOpen = true" class="text-white/80 hover:text-white focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16"></path>
@@ -188,7 +188,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-blue-50/80 via-slate-50 to-indigo-50/80 p-4 md:p-6 relative">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-indigo-50/90 via-blue-50/60 to-teal-50/70 p-4 md:p-6 relative">
                 <!-- Notification Toast (Auto-dismiss) -->
                 @if(session('success') || session('error'))
                     <div x-data="{ show: true }" 
