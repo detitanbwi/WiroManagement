@@ -3,7 +3,7 @@
 @section('title', 'Buat Invoice Baru')
 
 @section('content')
-<div class="max-w-5xl mx-auto">
+<div class="max-w-7xl mx-auto">
     <div class="mb-6">
         <a href="{{ route('projects.show', $project) }}" class="text-sm text-gray-500 hover:text-primary flex items-center">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -26,9 +26,9 @@
                             <thead class="hidden md:table-header-group bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                                    <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Qty</th>
-                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-48">Harga (Rp)</th>
-                                    <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider w-40">Total</th>
+                                    <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-16">Qty</th>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-40">Harga (Rp)</th>
+                                    <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider w-32">Total</th>
                                     <th class="px-2 py-3 w-10"></th>
                                 </tr>
                             </thead>
@@ -38,14 +38,14 @@
                                         <!-- Deskripsi -->
                                         <td class="px-2 md:py-3 block md:table-cell">
                                             <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Deskripsi Pekerjaan</label>
-                                            <input type="text" :name="'items['+index+'][description]'" x-model="item.description" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
+                                            <textarea :name="'items['+index+'][description]'" x-model="item.description" rows="2" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border resize-y"></textarea>
                                         </td>
                                         
                                         <div class="flex md:contents space-x-3">
                                             <!-- Qty -->
                                             <td class="px-2 md:py-3 block md:table-cell flex-1 md:flex-none">
                                                 <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Qty</label>
-                                                <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" @input="calculateTotal()" required class="block w-full md:w-20 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm text-center p-3 border">
+                                                <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" @input="calculateTotal()" required class="block w-full md:w-16 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm text-center p-3 border">
                                             </td>
                                             
                                             <!-- Harga -->

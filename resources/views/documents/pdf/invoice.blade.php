@@ -132,6 +132,15 @@
                     <div style="font-size: 15px; font-weight: 900; color: #2563eb; margin: 2px 0;">000701072933500</div>
                     <div style="font-size: 11px; font-weight: bold; color: #333;">a.n TITAN ANGGARAKSA</div>
                 </div>
+                
+                @if($invoice->notes)
+                <div style="margin-top: 15px;">
+                    <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #111;">Catatan:</div>
+                    <div style="font-size: 11px; color: #444; white-space: pre-line;">
+                        {{ $invoice->notes }}
+                    </div>
+                </div>
+                @endif
             </div>
 
             <div style="float: right; width: 250px; text-align: center;">

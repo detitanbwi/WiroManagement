@@ -76,8 +76,8 @@
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-lg border border-gray-100">
                             <div class="col-span-1 md:col-span-6">
                                 <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Deskripsi Pekerjaan</label>
-                                <input type="text" :name="'items['+index+'][description]'" x-model="item.description" required
-                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
+                                <textarea :name="'items['+index+'][description]'" x-model="item.description" rows="2" required
+                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border resize-y"></textarea>
                             </div>
                             <div class="flex md:contents space-x-3">
                                 <div class="flex-1 md:col-span-1">
