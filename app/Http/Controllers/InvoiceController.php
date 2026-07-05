@@ -27,7 +27,7 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'invoice_number' => 'required|unique:invoices,invoice_number',
-            'due_date' => 'required|date',
+            'due_date' => 'nullable|date',
             'issued_date' => 'required|date',
             'tax' => 'required|numeric|min:0',
             'discount' => 'required|numeric|min:0',
@@ -52,7 +52,7 @@ class InvoiceController extends Controller
                 'discount' => $request->discount,
                 'tax' => $request->tax,
                 'total_amount' => $total_amount,
-                'due_date' => $request->due_date,
+                'due_date' => $request->has('has_due_date') ? $request->due_date : null,
                 'issued_date' => $request->issued_date,
                 'status' => 'issued',
                 'notes' => $request->notes,
@@ -97,7 +97,66 @@ class InvoiceController extends Controller
         if ($invoice->status !== 'draft') {
             return back()->with('error', 'Only draft invoices can be updated.');
         }
-        // ... update logic similar to store but with existing IDs if needed
+
+        $validated = $request->validate([
+            'invoice_number' => 'required|unique:invoices,invoice_number,' . $invoice->id,
+            'due_date' => 'nullable|date',
+            'issued_date' => 'required|date',
+            'status' => 'required|in:draft,issued,paid,partial',
+            'tax' => 'required|numeric|min:0',
+            'discount' => 'required|numeric|min:0',
+            'items' => 'required|array|min:1',
+            'items.*.description' => 'required|string',
+            'items.*.qty' => 'required|numeric|min:1',
+            'items.*.price' => 'required|numeric|min:0',
+            'notes' => 'nullable|string',
+            'attachment_pdf' => 'nullable|file|mimes:pdf|max:10240'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $subtotal = collect($request->items)->sum(fn($item) => $item['qty'] * $item['price']);
+            $total_amount = $subtotal + $request->tax - $request->discount;
+
+            $updateData = [
+                'invoice_number' => $request->invoice_number,
+                'subtotal' => $subtotal,
+                'discount' => $request->discount,
+                'tax' => $request->tax,
+                'total_amount' => $total_amount,
+                'due_date' => $request->has('has_due_date') ? $request->due_date : null,
+                'issued_date' => $request->issued_date,
+                'status' => $request->status,
+                'notes' => $request->notes,
+            ];
+
+            if ($request->hasFile('attachment_pdf')) {
+                if ($invoice->attachment_pdf) {
+                    Storage::disk('public')->delete($invoice->attachment_pdf);
+                }
+                $updateData['attachment_pdf'] = $request->file('attachment_pdf')->store('attachments/invoices', 'public');
+            }
+
+            $invoice->update($updateData);
+
+            // Sync items (delete existing and recreate)
+            $invoice->items()->delete();
+            foreach ($request->items as $item) {
+                $invoice->items()->create([
+                    'description' => $item['description'],
+                    'qty' => $item['qty'],
+                    'price' => $item['price'],
+                    'subtotal' => $item['qty'] * $item['price']
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('invoices.show', $invoice)->with('success', 'Invoice updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Failed to update invoice: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Invoice $invoice)

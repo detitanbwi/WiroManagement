@@ -130,8 +130,19 @@
                             <input type="date" name="issued_date" required value="{{ date('Y-m-d') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Jatuh Tempo</label>
-                            <input type="date" name="due_date" required value="{{ date('Y-m-d', strtotime('+7 days')) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Jatuh Tempo</label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="has_due_date" value="1" x-model="hasDueDate" class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4">
+                                    <span class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Aktif</span>
+                                </label>
+                            </div>
+                            <div x-show="hasDueDate" x-transition>
+                                <input type="date" name="due_date" :required="hasDueDate" :disabled="!hasDueDate" value="{{ date('Y-m-d', strtotime('+7 days')) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
+                            </div>
+                            <div x-show="!hasDueDate" class="text-xs text-gray-400 italic p-3 border border-dashed rounded bg-gray-50">
+                                Tanpa Tanggal Jatuh Tempo
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -194,6 +205,7 @@
 <script>
     function invoiceForm() {
         return {
+            hasDueDate: true,
             items: [{
                 description: 'Layanan Pengembangan Software',
                 qty: 1,

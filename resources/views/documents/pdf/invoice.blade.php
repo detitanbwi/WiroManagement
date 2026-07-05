@@ -76,10 +76,12 @@
                             <td style="font-weight: bold; padding: 2px 0;">Invoice No.</td>
                             <td style="padding: 2px 5px;">: {{ $invoice->invoice_number }}</td>
                         </tr>
+                        @if($invoice->due_date)
                         <tr>
                             <td style="font-weight: bold; padding: 2px 0;">Due Date</td>
                             <td style="padding: 2px 5px; color: #dc2626;">: {{ $invoice->due_date->format('d/m/Y') }}</td>
                         </tr>
+                        @endif
                     </table>
                 </td>
             </tr>

@@ -50,10 +50,12 @@
                             <p class="text-gray-600">{{ $invoice->project->client->company_name }}</p>
                             <p class="text-gray-600 whitespace-pre-line">{{ $invoice->project->client->address }}</p>
                         </div>
+                        @if($invoice->due_date)
                         <div class="text-right">
                             <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Jatuh Tempo:</p>
                             <p class="font-bold text-red-600 text-lg">{{ $invoice->due_date->format('d M Y') }}</p>
                         </div>
+                        @endif
                     </div>
 
                     <table class="min-w-full divide-y divide-gray-200 mb-8">

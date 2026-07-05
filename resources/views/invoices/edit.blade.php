@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto" x-data="{ 
+    hasDueDate: {{ $invoice->due_date ? 'true' : 'false' }},
     items: {{ json_encode($invoice->items) }},
     tax: {{ $invoice->tax ?? 0 }},
     discount: {{ $invoice->discount ?? 0 }},
@@ -55,9 +56,21 @@
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Jatuh Tempo (Due Date)</label>
-                    <input type="date" name="due_date" value="{{ old('due_date', $invoice->due_date->format('Y-m-d')) }}" required
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tanggal Jatuh Tempo (Due Date)</label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="has_due_date" value="1" x-model="hasDueDate" class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4">
+                            <span class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Aktif</span>
+                        </label>
+                    </div>
+                    <div x-show="hasDueDate" x-transition>
+                        <input type="date" name="due_date" :required="hasDueDate" :disabled="!hasDueDate" 
+                            value="{{ old('due_date', $invoice->due_date ? $invoice->due_date->format('Y-m-d') : date('Y-m-d', strtotime('+7 days'))) }}" 
+                            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
+                    </div>
+                    <div x-show="!hasDueDate" class="text-xs text-gray-400 italic p-3 border border-dashed rounded bg-gray-50">
+                        Tanpa Tanggal Jatuh Tempo
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Status</label>
