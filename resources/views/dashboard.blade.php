@@ -103,7 +103,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="text-sm font-bold text-red-600">Rp {{ number_format($inv->balance_due, 0, ',', '.') }}</div>
-                                <div class="text-[10px] text-gray-400 uppercase">Due: {{ $inv->due_date->format('d/m/Y') }}</div>
+                                <div class="text-[10px] text-gray-400 uppercase">Due: {{ $inv->due_date ? $inv->due_date->format('d/m/Y') : 'N/A' }}</div>
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <a href="{{ route('invoices.show', $inv) }}" class="text-xs font-bold text-gray-400 hover:text-primary">VIEW</a>
