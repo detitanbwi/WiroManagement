@@ -22,6 +22,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+        [x-cloak] {
+            display: none !important;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -85,6 +89,20 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
                             </svg>
                             Projects
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('ai-pricing.index') }}"
+                            class="flex items-center justify-between px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('ai-pricing.*') ? 'bg-gradient-to-r from-indigo-600 to-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600' }}">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-3 {{ request()->routeIs('ai-pricing.*') ? 'text-yellow-300' : 'text-indigo-500 group-hover:text-indigo-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                <span>AI Pricing</span>
+                            </div>
+                            <span class="text-[10px] uppercase font-black px-1.5 py-0.5 rounded {{ request()->routeIs('ai-pricing.*') ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700' }}">
+                                AI
+                            </span>
                         </a>
                     </li>
                     <li x-data="{ open: {{ request()->routeIs('finance.*') ? 'true' : 'false' }} }">

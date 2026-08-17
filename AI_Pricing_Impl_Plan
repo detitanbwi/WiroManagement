@@ -1,0 +1,105 @@
+# Rencana Implementasi: Fitur AI Pricing Interaktif (Gemini API + Dataset Excel)
+
+Rencana ini memuat langkah-langkah teknis untuk membuat fitur **AI Pricing Interaktif** pada aplikasi Laravel `autodocument` menggunakan **Gemini 2.0 Flash / 1.5 Flash API** yang terintegrasi langsung dengan dataset `AI_Pricing_Dataset.xlsx`.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Kunci API Gemini**: Diperlukan `GEMINI_API_KEY` di file `.env`. Anda bisa mendapatkan API Key gratis dari [Google AI Studio](https://aistudio.google.com/).
+> **Metode Arsitektur Hibrida**: AI digunakan untuk interogasi/klarifikasi kebutuhan & *extraction* kode modul (JSON), sedangkan kalkulasi angka pasti (Subtotal, Multiplier, DP 20%/30%) dihitung oleh *Engine Backend Laravel* agar 100% akurat tanpa *hallucination*.
+
+---
+
+## Proposed Changes
+
+### Component 1: Dataset Processing & Data Layer
+
+#### [NEW] `app/Services/PricingDatasetService.php`
+- Membaca dan mengelola data JSON acuan dari `AI_Pricing_Dataset.xlsx` (`Rate_Card_Modul`, `Integrasi_Hardware`, `Platform_Multiplier`, `Segmentasi_Aturan_Bisnis`, `AI_Training_Corpus`).
+- Menyediakan *helper methods* untuk mencari tarif modul berdasarkan kode (`MOD-01`, `AUTH-01`, dll) dan menghitung rekomendasi harga.
+
+#### [NEW] `storage/app/pricing_dataset.json`
+- Ekstrak terstruktur dari dataset `AI_Pricing_Dataset.xlsx` yang siap dipakai oleh `PricingDatasetService` dan dimasukkan secara efisien ke dalam System Instruction AI.
+
+#### [NEW] `database/migrations/2026_08_14_000001_create_ai_pricing_chats_table.php`
+- Tabel `ai_pricing_chats` (id, session_id, client_name, client_segment, status, detected_scope_json, calculated_result_json, timestamps).
+- Tabel `ai_pricing_messages` (id, chat_id, sender ['user', 'ai'], content, generated_json, timestamps).
+
+---
+
+### Component 2: Service & Logic Layer
+
+#### [NEW] `app/Services/PricingCalculatorEngine.php`
+- Menjalankan logika kalkulasi bisnis persis seperti sheet `Simulasi_Kalkulator`:
+  - Menghitung Subtotal Modul Dasar (Min, Max, Rekomendasi).
+  - Mengalikan dengan `Platform_Multiplier` (Web 1.0x, Android 1.6x, Hybrid 2.2x, Offline First base).
+  - Menambahkan biaya `Integrasi_Hardware` jika ada.
+  - Mengakumulasikan `Brief Risk Buffer` (0% - 20%) & `Rush Fee`.
+  - Menghitung Skema Termin DP (DP 30% jika Total < Rp 5Jt, DP 20% jika Total >= Rp 5Jt).
+  - Menyusun rincian garansi 30 hari & SLA maintenance dari `Segmentasi_Aturan_Bisnis`.
+
+#### [NEW] `app/Services/GeminiPricingService.php`
+- Mengelola percakapan *multi-turn chat* menggunakan Gemini API (`gemini-2.0-flash`).
+- Menyusun **System Prompt Interaktif** yang mengarahkan AI untuk:
+  1. Bertanya proaktif 1-3 pertanyaan jika ada ambiguitas/bias.
+  2. Mengidentifikasi kata kunci intent dari `AI_Training_Corpus`.
+  3. Mengeluarkan *Structured Output* (JSON) saat scope kebutuhan proyek sudah terkonfirmasi.
+
+---
+
+### Component 3: Controller & Routing Layer
+
+#### [NEW] `app/Http/Controllers/AiPricingController.php`
+- `index()`: Menampilkan antarmuka Halaman Chat AI Pricing.
+- `sendMessage(Request $request)`: Mengirim pesan pengguna ke Gemini, menyimpan riwayat obrolan, menjalankan `PricingCalculatorEngine` jika scope terdeteksi, dan mengembalikan respons AI beserta rincian harga.
+- `resetChat(Request $request)`: Berkelanjutan memulai sesi percakapan baru.
+- `createQuotation(Request $request)`: Menutup sesi chat dan langsung mengonversi estimasi harga AI menjadi **Surat Penawaran / Quotation resmi** di sistem Laravel ini.
+
+#### [MODIFY] `routes/web.php`
+- Menambahkan rute `/ai-pricing`, `/ai-pricing/chat`, `/ai-pricing/reset`, dan `/ai-pricing/create-quotation`.
+
+---
+
+### Component 4: Frontend UI Layer
+
+#### [NEW] `resources/views/ai-pricing/index.blade.php`
+- Tampilan chat modern & responsif:
+  - Sidebar riwayat modul yang terdeteksi secara *live*.
+  - Area percakapan interaktif dengan *typing indicator* dan animasi bubble.
+  - Kartu Rincian Kalkulasi Harga (Invoice Breakdown Card) yang muncul otomatis begitu AI mengesahkan estimasi harga.
+  - Tombol "Buat Penawaran Resmi" untuk langsung konversi ke Quotation.
+
+#### [MODIFY] `resources/views/layouts/app.blade.php` (atau navigasi utama)
+- Menambahkan menu navigasi **"AI Pricing Estimator"** di sidebar/navbar utama.
+
+---
+
+### Component 5: Configuration
+
+#### [MODIFY] `.env` & `.env.example`
+- Menambahkan variabel:
+  ```env
+  GEMINI_API_KEY=your_gemini_api_key_here
+  GEMINI_MODEL=gemini-2.0-flash
+  ```
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Menjalankan command `php artisan test` untuk memastikan rute dan controller terintegrasi dengan baik tanpa merusak fitur invoice/quotation yang sudah ada.
+- Menjalankan unit test khusus untuk `PricingCalculatorEngineTest` guna mencocokkan hasil perhitungan matematis backend dengan angka simulasi di sheet `Simulasi_Kalkulator`.
+
+### Manual Verification
+1. **Skenario Brief Blur / Minimal**:
+   - Pengguna memasukkan: *"Saya mau bikin sistem toko online."*
+   - Verifikasi: AI TIDAK langsung mengeluarkan harga, tetapi bertanya 2-3 pertanyaan seputar printer thermal, role user, dan platform Android/Web.
+2. **Skenario Terklarifikasi**:
+   - Pengguna menjawab pertanyaan AI.
+   - Verifikasi: AI menyimpulkan scope, merinci modul (`MOD-01`, `MOD-02`, dll), dan kartu rincian estimasi harga (Min, Max, Rekomendasi, DP 20%/30%) muncul dengan akurat.
+3. **Konversi ke Quotation**:
+   - Klik tombol "Buat Penawaran Resmi".
+   - Verifikasi: Data estimasi AI terisi otomatis ke form Penawaran/Quotation di aplikasi autodocument.

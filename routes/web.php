@@ -84,6 +84,17 @@ Route::middleware('auth')->group(function () {
         
         Route::get('/transactions', [\App\Http\Controllers\FinanceController::class, 'transactions'])->name('transactions');
     });
+
+    // AI Pricing Estimator Routes
+    Route::prefix('ai-pricing')->name('ai-pricing.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AiPricingController::class, 'index'])->name('index');
+        Route::post('/new', [\App\Http\Controllers\AiPricingController::class, 'newSession'])->name('new');
+        Route::get('/test-api', [\App\Http\Controllers\AiPricingController::class, 'testConnection'])->name('test-api');
+        Route::get('/{id}', [\App\Http\Controllers\AiPricingController::class, 'show'])->name('show');
+        Route::post('/{id}/chat', [\App\Http\Controllers\AiPricingController::class, 'chat'])->name('chat');
+        Route::post('/{id}/update-modules', [\App\Http\Controllers\AiPricingController::class, 'updateModules'])->name('update-modules');
+        Route::delete('/{id}', [\App\Http\Controllers\AiPricingController::class, 'deleteSession'])->name('delete');
+    });
 });
 
 Route::fallback(function () {
