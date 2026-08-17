@@ -53,6 +53,9 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('clients', ClientController::class);
     Route::resource('projects', ProjectController::class);
+    Route::get('projects/{project}/qc', function(\App\Models\Project $project) {
+        return 'Ini Halaman QC';
+    })->name('projects.qc');
 
     Route::resource('projects.invoices', InvoiceController::class)->shallow();
     Route::resource('projects.quotations', QuotationController::class)->shallow();
