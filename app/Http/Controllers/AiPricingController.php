@@ -94,16 +94,18 @@ class AiPricingController extends Controller
         }
 
         $rules = $this->calculator->getRules();
-        $selectedModules = $session->selected_modules ?: ['CR-001', 'CR-006'];
+        $selectedModules = $session->selected_modules ?: ['MOD-01', 'AUTH-01'];
         $unlistedFeatures = $session->unlisted_features ?: [];
+        $novelty = $session->novelty ?? ($session->calculation_result['novelty']['value'] ?? 'from_scratch');
         
         $calculation = $this->calculator->calculate(
             $selectedModules,
             $session->platform ?: 'web',
-            (int)$session->risk_buffer_percent,
-            (int)$session->rush_fee_percent,
+            (float)($session->risk_buffer_percent ?? 0),
+            (int)($session->rush_fee_percent ?? 0),
             $session->client_segment ?: 'umkm',
-            $unlistedFeatures
+            $unlistedFeatures,
+            $novelty
         );
 
         $isApiConfigured = $this->gemini->isConfigured();
@@ -154,10 +156,13 @@ class AiPricingController extends Controller
             ];
         }
 
+        $currentNovelty = $session->novelty ?? ($session->calculation_result['novelty']['value'] ?? 'from_scratch');
+
         $currentState = [
             'client_name' => $session->client_name,
             'client_segment' => $session->client_segment,
             'platform' => $session->platform,
+            'novelty' => $currentNovelty,
             'risk_buffer_percent' => $session->risk_buffer_percent,
             'rush_fee_percent' => $session->rush_fee_percent,
             'selected_modules' => $session->selected_modules ?: [],
@@ -181,22 +186,25 @@ class AiPricingController extends Controller
         $moduleMap = [];
         foreach ($currentModules as $k => $v) {
             if (is_array($v) && isset($v['code'])) {
+                $code = $this->calculator->resolveModuleCode($v['code']);
                 $subItems = isset($v['sub_items']) && is_array($v['sub_items']) ? array_values(array_filter($v['sub_items'])) : [];
                 $qty = !empty($subItems) ? count($subItems) : max(1, (int)($v['qty'] ?? 1));
                 $customPrice = isset($v['custom_price']) && $v['custom_price'] !== null ? (int)$v['custom_price'] : null;
-                $moduleMap[$v['code']] = [
+                $moduleMap[$code] = [
                     'qty' => $qty,
                     'sub_items' => $subItems,
                     'custom_price' => $customPrice,
                 ];
             } elseif (is_string($k)) {
-                $moduleMap[$k] = [
+                $code = $this->calculator->resolveModuleCode($k);
+                $moduleMap[$code] = [
                     'qty' => max(1, (int)$v),
                     'sub_items' => [],
                     'custom_price' => null,
                 ];
             } elseif (is_string($v)) {
-                $moduleMap[$v] = [
+                $code = $this->calculator->resolveModuleCode($v);
+                $moduleMap[$code] = [
                     'qty' => 1,
                     'sub_items' => [],
                     'custom_price' => null,
@@ -207,7 +215,7 @@ class AiPricingController extends Controller
         $newModules = $params['detected_modules'] ?? [];
         foreach ($newModules as $k => $v) {
             if (is_array($v) && isset($v['code'])) {
-                $code = $v['code'];
+                $code = $this->calculator->resolveModuleCode($v['code']);
                 $newSub = isset($v['sub_items']) && is_array($v['sub_items']) ? array_values(array_filter($v['sub_items'])) : [];
                 $existingSub = $moduleMap[$code]['sub_items'] ?? [];
                 $mergedSub = array_values(array_unique(array_merge($existingSub, $newSub)));
@@ -218,14 +226,16 @@ class AiPricingController extends Controller
                     'custom_price' => $moduleMap[$code]['custom_price'] ?? null,
                 ];
             } elseif (is_string($k)) {
-                $moduleMap[$k] = [
-                    'qty' => max($moduleMap[$k]['qty'] ?? 1, (int)$v),
-                    'sub_items' => $moduleMap[$k]['sub_items'] ?? [],
-                    'custom_price' => $moduleMap[$k]['custom_price'] ?? null,
+                $code = $this->calculator->resolveModuleCode($k);
+                $moduleMap[$code] = [
+                    'qty' => max($moduleMap[$code]['qty'] ?? 1, (int)$v),
+                    'sub_items' => $moduleMap[$code]['sub_items'] ?? [],
+                    'custom_price' => $moduleMap[$code]['custom_price'] ?? null,
                 ];
             } elseif (is_string($v)) {
-                if (!isset($moduleMap[$v])) {
-                    $moduleMap[$v] = [
+                $code = $this->calculator->resolveModuleCode($v);
+                if (!isset($moduleMap[$code])) {
+                    $moduleMap[$code] = [
                         'qty' => 1,
                         'sub_items' => [],
                         'custom_price' => null,
@@ -274,8 +284,11 @@ class AiPricingController extends Controller
         if (!empty($params['platform'])) {
             $session->platform = $params['platform'];
         }
+        if (!empty($params['novelty'])) {
+            $session->novelty = $params['novelty'];
+        }
         if (isset($params['risk_buffer_percent'])) {
-            $session->risk_buffer_percent = (int)$params['risk_buffer_percent'];
+            $session->risk_buffer_percent = (float)$params['risk_buffer_percent'];
         }
         if (isset($params['rush_fee_percent'])) {
             $session->rush_fee_percent = (int)$params['rush_fee_percent'];
@@ -283,14 +296,17 @@ class AiPricingController extends Controller
 
         $session->selected_modules = $mergedModules;
 
+        $noveltyToUse = $session->novelty ?? ($params['novelty'] ?? 'from_scratch');
+
         // Recalculate
         $calculation = $this->calculator->calculate(
             $mergedModules,
             $session->platform ?: 'web',
-            (int)$session->risk_buffer_percent,
+            (float)$session->risk_buffer_percent,
             (int)$session->rush_fee_percent,
             $session->client_segment ?: 'umkm',
-            $currentUnlisted
+            $currentUnlisted,
+            $noveltyToUse
         );
 
         $session->calculation_result = $calculation;
@@ -315,14 +331,16 @@ class AiPricingController extends Controller
         $selectedModules = $request->input('selected_modules', $session->selected_modules ?: []);
         $unlistedFeatures = $request->input('unlisted_features', $session->unlisted_features ?: []);
         $platform = $request->input('platform', $session->platform ?: 'web');
-        $riskBuffer = (int)$request->input('risk_buffer_percent', $session->risk_buffer_percent);
-        $rushFee = (int)$request->input('rush_fee_percent', $session->rush_fee_percent);
+        $novelty = $request->input('novelty', $session->novelty ?? 'from_scratch');
+        $riskBuffer = (float)$request->input('risk_buffer_percent', $session->risk_buffer_percent ?? 0);
+        $rushFee = (int)$request->input('rush_fee_percent', $session->rush_fee_percent ?? 0);
         $segment = $request->input('client_segment', $session->client_segment ?: 'umkm');
         $clientName = $request->input('client_name', $session->client_name);
 
         $session->selected_modules = is_array($selectedModules) ? array_values($selectedModules) : [];
         $session->unlisted_features = is_array($unlistedFeatures) ? array_values($unlistedFeatures) : [];
         $session->platform = $platform;
+        $session->novelty = $novelty;
         $session->risk_buffer_percent = $riskBuffer;
         $session->rush_fee_percent = $rushFee;
         $session->client_segment = $segment;
@@ -334,7 +352,8 @@ class AiPricingController extends Controller
             $riskBuffer,
             $rushFee,
             $segment,
-            $session->unlisted_features
+            $session->unlisted_features,
+            $novelty
         );
 
         $session->calculation_result = $calculation;
@@ -402,8 +421,8 @@ class AiPricingController extends Controller
         $sessionCount = AiPricingSession::where('user_id', $userId)->count();
         $title = 'Estimasi Proyek #' . ($sessionCount + 1);
 
-        $defaultModules = ['CR-001', 'CR-006']; // Basic CRUD & Static Auth
-        $calculation = $this->calculator->calculate($defaultModules, 'web', 0, 0, 'umkm');
+        $defaultModules = ['MOD-01', 'AUTH-01']; // Basic CRUD & Static Auth
+        $calculation = $this->calculator->calculate($defaultModules, 'web', 0, 0, 'umkm', [], 'from_scratch');
 
         return AiPricingSession::create([
             'user_id' => $userId,
@@ -411,6 +430,7 @@ class AiPricingController extends Controller
             'client_name' => null,
             'client_segment' => 'umkm',
             'platform' => 'web',
+            'novelty' => 'from_scratch',
             'risk_buffer_percent' => 0,
             'rush_fee_percent' => 0,
             'selected_modules' => $defaultModules,

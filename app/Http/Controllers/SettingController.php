@@ -68,6 +68,27 @@ class SettingController extends Controller
                 }
             }
 
+            // Update novelty options
+            if ($request->has('novelty_options') && isset($rules['novelty_options'])) {
+                $noveltyIn = $request->input('novelty_options', []);
+                foreach ($rules['novelty_options'] as &$nov) {
+                    $nCode = $nov['code'] ?? '';
+                    if (isset($noveltyIn[$nCode])) {
+                        $nov['multiplier'] = (float)$noveltyIn[$nCode];
+                    }
+                }
+            }
+
+            // Update segments floor price
+            if ($request->has('segments') && isset($rules['segments'])) {
+                $segmentsIn = $request->input('segments', []);
+                foreach ($rules['segments'] as $sKey => &$sVal) {
+                    if (isset($segmentsIn[$sKey]['floor_price_system'])) {
+                        $sVal['floor_price_system'] = (int)preg_replace('/[^\d]/', '', (string)$segmentsIn[$sKey]['floor_price_system']);
+                    }
+                }
+            }
+
             // Update DP rules
             if ($request->has('dp_rules') && isset($rules['dp_rules'])) {
                 $dpIn = $request->input('dp_rules');

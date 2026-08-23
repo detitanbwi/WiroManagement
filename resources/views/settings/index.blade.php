@@ -172,8 +172,8 @@
                 @endforeach
             </div>
 
-            <!-- Platform Multipliers & DP Rules Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Multipliers, Novelty & Segments Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Platform Multipliers -->
                 <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-4">
                     <div class="flex items-center space-x-2 border-b border-gray-100 pb-3">
@@ -182,7 +182,7 @@
                         </div>
                         <div>
                             <h4 class="text-sm font-bold text-gray-900">Platform Multipliers</h4>
-                            <p class="text-[11px] text-gray-500">Faktor pengali harga berdasarkan target platform</p>
+                            <p class="text-[11px] text-gray-500">Pengali berdasarkan arsitektur aplikasi</p>
                         </div>
                     </div>
 
@@ -208,6 +208,40 @@
                     </div>
                 </div>
 
+                <!-- Novelty Multipliers (Status Proyek) -->
+                <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-4">
+                    <div class="flex items-center space-x-2 border-b border-gray-100 pb-3">
+                        <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                            🏗️
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900">Status Proyek (Novelty)</h4>
+                            <p class="text-[11px] text-gray-500">Markup adaptasi & refactoring kode existing</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        @foreach(($rules['novelty_options'] ?? []) as $nov)
+                            <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-800">{{ $nov['name'] }}</span>
+                                    <p class="text-[10px] text-gray-400 uppercase font-mono">{{ $nov['code'] }}</p>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <input type="number" 
+                                           name="novelty_options[{{ $nov['code'] }}]" 
+                                           value="{{ $nov['multiplier'] }}" 
+                                           step="0.05" 
+                                           min="0.5" 
+                                           max="3.0"
+                                           class="w-20 bg-white border border-gray-300 focus:border-purple-500 rounded-lg px-2.5 py-1 text-xs font-bold text-right outline-none">
+                                    <span class="text-xs font-bold text-gray-500">x</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
                 <!-- DP & Termin Rules -->
                 <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-4">
                     <div class="flex items-center space-x-2 border-b border-gray-100 pb-3">
@@ -215,16 +249,16 @@
                             💳
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-gray-900">Ketentuan DP & Termin Pembayaran</h4>
-                            <p class="text-[11px] text-gray-500">Aturan persentase uang muka berdasarkan nilai proyek</p>
+                            <h4 class="text-sm font-bold text-gray-900">DP & Termin Pembayaran</h4>
+                            <p class="text-[11px] text-gray-500">Ketentuan DP berdasar nilai proyek</p>
                         </div>
                     </div>
 
                     <div class="space-y-3 text-xs">
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Ambang Batas Nilai Proyek (Threshold)</label>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Ambang Batas Nilai Proyek</label>
                             <div class="relative">
-                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400">Rp</span>
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 pointer-events-none">Rp</span>
                                 <input type="text" 
                                        name="dp_rules[threshold]" 
                                        value="{{ number_format($rules['dp_rules']['threshold'] ?? 5000000, 0, ',', '.') }}"
@@ -235,7 +269,7 @@
 
                         <div class="grid grid-cols-2 gap-3 pt-1">
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">DP di bawah Ambang Batas</label>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">&lt; Batas</label>
                                 <div class="flex items-center space-x-1">
                                     <input type="number" 
                                            name="dp_rules[below_threshold_dp_pct]" 
@@ -247,7 +281,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">DP di atas Ambang Batas</label>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">&ge; Batas</label>
                                 <div class="flex items-center space-x-1">
                                     <input type="number" 
                                            name="dp_rules[above_threshold_dp_pct]" 
@@ -257,6 +291,73 @@
                                     <span class="text-xs font-bold text-gray-500">%</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segments Floor Price & Operational SOP Card -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Segment Floor Prices -->
+                <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-4">
+                    <div class="flex items-center space-x-2 border-b border-gray-100 pb-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                            🏢
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900">Batas Floor Price per Segmen</h4>
+                            <p class="text-[11px] text-gray-500">Nilai penawaran minimal proyek sistem utuh</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        @foreach(($rules['segments'] ?? []) as $sKey => $sVal)
+                            <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-800">{{ $sVal['name'] }}</span>
+                                    <p class="text-[10px] text-gray-400">{{ $sVal['description'] ?? '' }}</p>
+                                </div>
+                                <div class="relative w-36">
+                                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 pointer-events-none">Rp</span>
+                                    <input type="text" 
+                                           name="segments[{{ $sKey }}][floor_price_system]" 
+                                           value="{{ number_format($sVal['floor_price_system'] ?? 0, 0, ',', '.') }}" 
+                                           @input="formatCurrency($event)"
+                                           class="w-full bg-white border border-gray-300 focus:border-emerald-500 rounded-lg pl-7 pr-2.5 py-1 text-xs font-bold text-right outline-none">
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Operational SOP Baseline -->
+                <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-5 shadow-xs space-y-4">
+                    <div class="flex items-center space-x-2 border-b border-white/10 pb-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                            SOP
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">Standar Operasional & SLA</h4>
+                            <p class="text-[11px] text-white/60">Ketentuan baku penawaran & kontrak WiroDev</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs text-white/80">
+                        <div class="flex justify-between border-b border-white/5 pb-2">
+                            <span>Man-day Reference Rate:</span>
+                            <span class="font-bold text-white">Rp 250.000 / man-day</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-2">
+                            <span>Masa Garansi Bug Standar:</span>
+                            <span class="font-bold text-emerald-300">30 Hari Kalender Pasca UAT</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-2">
+                            <span>Retainer Baseline (Opsional):</span>
+                            <span class="font-bold text-amber-300">Rp 500.000 / bulan (5 jam SLA 4-8 jam)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Domain & Hosting (Dewaweb):</span>
+                            <span class="font-bold text-indigo-200">At-Cost / Tagihan Terpisah</span>
                         </div>
                     </div>
                 </div>

@@ -1,0 +1,1004 @@
+{
+    "modules": [
+        {
+            "code": "MOD-01",
+            "name": "Modul CRUD Standar Tunggal",
+            "category": "Core System & Bisnis",
+            "spec": "Form input, list view, detail, edit, soft delete master data (Master Pelanggan, Kategori, Supplier)",
+            "price_min": 100000,
+            "price_max": 300000,
+            "price_recommended": 150000,
+            "unit": "Per Entitas",
+            "complexity": "Rendah",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "data barang",
+                "data pelanggan",
+                "master supplier",
+                "master kategori",
+                "CRUD simpel",
+                "master data tunggal"
+            ],
+            "guide": "Hitung per tabel\/entitas unik. Jika ada 3 master data = 3 x Rp 150rb = Rp 450rb",
+            "tech_notes": "Hanya operasi create, read, update, delete tanpa relasi bertingkat",
+            "default_qty": 1
+        },
+        {
+            "code": "MOD-02",
+            "name": "Modul Data Relasional \/ Multi-Level",
+            "category": "Core System & Bisnis",
+            "spec": "Relasi Parent-Child bertingkat (Order + Item detail, RAB 3-level, Struktur Organisasi)",
+            "price_min": 200000,
+            "price_max": 1000000,
+            "price_recommended": 300000,
+            "unit": "Per Modul",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "invoice order",
+                "keranjang belanja",
+                "rincian RAB",
+                "item pembelian",
+                "multi-item",
+                "parent-child"
+            ],
+            "guide": "Cocokkan jika ada 1 header memiliki banyak baris detail relasi",
+            "tech_notes": "Sudah mencakup kalkulasi subtotal dan sinkronisasi parent-child",
+            "default_qty": 1
+        },
+        {
+            "code": "MOD-03",
+            "name": "Modul State Machine & Approval",
+            "category": "Core System & Bisnis",
+            "spec": "Alur status berjenjang (Draft -> Review -> Approved -> Rejected), auto-lock data setelah disetujui",
+            "price_min": 800000,
+            "price_max": 1200000,
+            "price_recommended": 900000,
+            "unit": "Per Workflow",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "persetujuan bertingkat",
+                "verifikasi manager",
+                "tracking status",
+                "acc pimpinan",
+                "reject",
+                "state machine"
+            ],
+            "guide": "Cocokkan jika ada alur perpindahan status dan penguncian data otomatis",
+            "tech_notes": "Maksimal 4-5 tahapan status per dokumen",
+            "default_qty": 1
+        },
+        {
+            "code": "MOD-04",
+            "name": "Kalkulasi Finansial & Cashflow",
+            "category": "Core System & Bisnis",
+            "spec": "Running balance otomatis, rekonsiliasi kas fisik vs sistem, multi-rekening kas\/bank, selisih kas",
+            "price_min": 1000000,
+            "price_max": 4000000,
+            "price_recommended": 1500000,
+            "unit": "Per Paket",
+            "complexity": "Sangat Tinggi",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "mutasi kas",
+                "running balance",
+                "kas kecil",
+                "rekonsiliasi saldo",
+                "selisih uang",
+                "cashflow",
+                "rekening bank"
+            ],
+            "guide": "Wajib dimasukkan jika klien menyebut kontrol uang, pembukuan kas, rekonsiliasi",
+            "tech_notes": "Saldo dihitung otomatis dari (Awal + In - Out), bukan diinput manual",
+            "default_qty": 1
+        },
+        {
+            "code": "MOD-05",
+            "name": "Laba Rugi Sederhana",
+            "category": "Core System & Bisnis",
+            "spec": "Kalkulasi otomatis Omset - HPP - Biaya Operasional = Laba Bersih",
+            "price_min": 500000,
+            "price_max": 800000,
+            "price_recommended": 600000,
+            "unit": "Per Modul",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "laba kotor",
+                "laba bersih",
+                "profit",
+                "omset harian",
+                "HPP belanja",
+                "untung rugi",
+                "margin"
+            ],
+            "guide": "Cocokkan jika klien butuh ringkasan performa finansial simpel",
+            "tech_notes": "Rumus: Omset - HPP - Beban Operasional = Laba Bersih",
+            "default_qty": 1
+        },
+        {
+            "code": "AUTH-01",
+            "name": "Single Login \/ Static Role (3 Level)",
+            "category": "Keamanan & Hak Akses",
+            "spec": "Login\/Logout multi-user dengan hak akses terhardcode (Owner 100%, Manager operasional, Staff input only)",
+            "price_min": 600000,
+            "price_max": 600000,
+            "price_recommended": 600000,
+            "unit": "Per Sistem",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "login admin",
+                "3 role",
+                "owner manager staff",
+                "sembunyikan saldo dari staff",
+                "role hardcoded"
+            ],
+            "guide": "Gunakan jika klien butuh pembagian hak akses tanpa perlu UI centang-centang dinamis",
+            "tech_notes": "Hak akses terhardcode di kodingan (Owner full, Manager toko, Staff input)",
+            "default_qty": 1
+        },
+        {
+            "code": "AUTH-02",
+            "name": "Dynamic Granular RBAC",
+            "category": "Keamanan & Hak Akses",
+            "spec": "UI Khusus untuk manajemen Role & Centang matriks izin CRUD per menu\/fitur secara dinamis",
+            "price_min": 700000,
+            "price_max": 1000000,
+            "price_recommended": 800000,
+            "unit": "Per Sistem",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "matriks hak akses",
+                "atur izin user dari web",
+                "role dinamis",
+                "centang akses CRUD",
+                "RBAC granular"
+            ],
+            "guide": "Gunakan jika klien secara eksplisit minta menu manajemen role fleksibel",
+            "tech_notes": "Ada halaman UI khusus pengaturan permission per role",
+            "default_qty": 1
+        },
+        {
+            "code": "UI-01",
+            "name": "Tabel Web Data Standar",
+            "category": "Tampilan & Desain UI",
+            "spec": "Tampilan tabel data interaktif dengan pagination, sorting, search filter dasar (tanpa ekspor)",
+            "price_min": 200000,
+            "price_max": 200000,
+            "price_recommended": 200000,
+            "unit": "Per Tabel",
+            "complexity": "Rendah",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "tabel data",
+                "pagination",
+                "sorting data",
+                "filter pencarian web",
+                "tabel interaktif",
+                "list data"
+            ],
+            "guide": "Tampilan tabel data web interaktif standar (tanpa fitur export)",
+            "tech_notes": "Hanya mencakup UI tabel, pencarian, dan pagination dasar",
+            "default_qty": 1
+        },
+        {
+            "code": "EXP-01",
+            "name": "Export CSV Dasar",
+            "category": "Import, Export & Database",
+            "spec": "Ekspor data mentah format .csv ringan tanpa styling",
+            "price_min": 200000,
+            "price_max": 350000,
+            "price_recommended": 220000,
+            "unit": "Per Laporan",
+            "complexity": "Rendah",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "download csv",
+                "export mentah",
+                "text file data",
+                "csv sederhana",
+                "dump data csv"
+            ],
+            "guide": "Jika klien butuh unduh data mentah format .csv ringan tanpa format styling",
+            "tech_notes": "File .csv mentah tanpa border, kop, atau styling warna",
+            "default_qty": 1
+        },
+        {
+            "code": "EXP-02",
+            "name": "Export Excel Terformat (.xlsx)",
+            "category": "Import, Export & Database",
+            "spec": "Ekspor data Excel dengan header warna, border, format rupiah, dan total formula",
+            "price_min": 500000,
+            "price_max": 650000,
+            "price_recommended": 550000,
+            "unit": "Per Laporan",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "download excel",
+                "export .xlsx",
+                "laporan excel",
+                "arsip offline",
+                "file excel rapi"
+            ],
+            "guide": "Jika klien butuh unduh laporan dalam format Excel rapi (add-on khusus bisa Rp 200rb\/laporan)",
+            "tech_notes": "Format .xlsx rapi ber-kop, border, format Rupiah, dan formula total",
+            "default_qty": 1
+        },
+        {
+            "code": "EXP-03",
+            "name": "Export PDF Siap Cetak (.pdf)",
+            "category": "Import, Export & Database",
+            "spec": "Ekspor PDF dengan template kop surat resmi, penataan layout A4, tabel rapi, tanda tangan",
+            "price_min": 450000,
+            "price_max": 650000,
+            "price_recommended": 450000,
+            "unit": "Per Template",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "cetak pdf",
+                "cetak surat",
+                "invoice pdf",
+                "format cetak resmi",
+                "dokumen a4 pdf"
+            ],
+            "guide": "Jika klien butuh file dokumen siap cetak A4\/Letter dengan format resmi",
+            "tech_notes": "Layout HTML-to-PDF rapi dengan kop surat dan kolom tanda tangan",
+            "default_qty": 1
+        },
+        {
+            "code": "IMP-01",
+            "name": "Import Masal Excel\/CSV (Bulk Import)",
+            "category": "Import, Export & Database",
+            "spec": "Upload file Excel\/CSV ke database dengan validasi error per baris dan preview sebelum simpan",
+            "price_min": 650000,
+            "price_max": 650000,
+            "price_recommended": 650000,
+            "unit": "Per Entitas",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "upload excel",
+                "import data lama",
+                "migrasi data CSV",
+                "import masal",
+                "bulk insert"
+            ],
+            "guide": "Jika klien punya ribuan data di Excel dan ingin dimasukkan ke sistem",
+            "tech_notes": "Termasuk validasi error per baris dan deteksi duplikasi data",
+            "default_qty": 1
+        },
+        {
+            "code": "BND-01",
+            "name": "Paket Sepasang (1 Import + 1 Export)",
+            "category": "Import, Export & Database",
+            "spec": "Bundling fitur import dan export untuk satu entitas modul yang sama (Diskon khusus)",
+            "price_min": 800000,
+            "price_max": 1000000,
+            "price_recommended": 800000,
+            "unit": "Per Pasang",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "paket import export",
+                "import dan export",
+                "sepasang impor ekspor",
+                "kelola data bolak balik"
+            ],
+            "guide": "Diskon paket bundling jika ada 1 entitas modul yang butuh sekaligus Import & Export",
+            "tech_notes": "Mencakup 1 template upload Excel dan 1 template download Excel",
+            "default_qty": 1
+        },
+        {
+            "code": "SEC-01",
+            "name": "Audit Log & Activity Trail",
+            "category": "Keamanan & Hak Akses",
+            "spec": "Pencatatan riwayat aktivitas user (siapa, kapan, aksi apa, data sebelum & sesudah diubah)",
+            "price_min": 400000,
+            "price_max": 800000,
+            "price_recommended": 600000,
+            "unit": "Per Sistem",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "siapa yang ubah data",
+                "catat jam edit",
+                "log aktivitas",
+                "histori hapus",
+                "audit trail"
+            ],
+            "guide": "Jika klien ingin melacak jejak digital aksi stafnya (siapa, kapan, aksi apa)",
+            "tech_notes": "Pencatatan user_id, timestamp, IP, data sebelum & sesudah diubah",
+            "default_qty": 1
+        },
+        {
+            "code": "BCK-01",
+            "name": "Tombol Download Backup DB Mandiri",
+            "category": "Import, Export & Database",
+            "spec": "Tombol khusus akun Owner untuk mengunduh dump database .sql secara langsung",
+            "price_min": 300000,
+            "price_max": 500000,
+            "price_recommended": 400000,
+            "unit": "Per Sistem",
+            "complexity": "Rendah",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "download database sendiri",
+                "backup data manual",
+                "tombol backup",
+                "simpan file sql"
+            ],
+            "guide": "Jika Owner ingin mengunduh mandiri file database .sql kapan saja dari web",
+            "tech_notes": "Dibatasi khusus untuk hak akses role Owner saja",
+            "default_qty": 1
+        },
+        {
+            "code": "INT-PAY-01",
+            "name": "Integrasi Payment Gateway Otomatis",
+            "category": "Integrasi API & Gateway",
+            "spec": "Snap\/Redirect Checkout, Webhook callback, auto update status pembayaran (Midtrans \/ Xendit \/ Tripay)",
+            "vendor_examples": "Midtrans \/ Xendit \/ Tripay",
+            "price_min": 1500000,
+            "price_max": 2500000,
+            "price_recommended": 2000000,
+            "unit": "Per Integrasi",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "midtrans",
+                "xendit",
+                "qris otomatis",
+                "transfer va otomatis",
+                "payment gateway",
+                "tripay"
+            ],
+            "guide": "Wajib ditambahkan jika klien ingin pelanggan bayar langsung di web\/app secara otomatis",
+            "tech_notes": "Snap\/Redirect Checkout, Webhook callback, auto update status tagihan",
+            "default_qty": 1
+        },
+        {
+            "code": "INT-WA-01",
+            "name": "Notifikasi WhatsApp API Otomatis",
+            "category": "Integrasi API & Gateway",
+            "spec": "Notifikasi transaksi otomatis, alert selisih kas, blast pesan terstruktur (Fonnte \/ Wablas \/ Whacenter)",
+            "vendor_examples": "Fonnte \/ Wablas \/ Whacenter",
+            "price_min": 400000,
+            "price_max": 1000000,
+            "price_recommended": 600000,
+            "unit": "Per Integrasi",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "kirim wa otomatis",
+                "notif wa",
+                "wa reminder",
+                "blast wa",
+                "fonnte",
+                "wablas",
+                "whacenter"
+            ],
+            "guide": "Jika klien ingin notifikasi instan pesan WhatsApp terstruktur ke admin\/pelanggan",
+            "tech_notes": "Harga belum termasuk biaya langganan paket vendor WA Gateway",
+            "default_qty": 1
+        },
+        {
+            "code": "INT-API-01",
+            "name": "Integrasi API POS \/ Akuntansi Eksternal",
+            "category": "Integrasi API & Gateway",
+            "spec": "Tarik\/kirim data transaksi, sinkronisasi produk & omset (termasuk merapikan docs) (Olsera \/ Accurate \/ Jurnal \/ Moka)",
+            "vendor_examples": "Olsera \/ Accurate \/ Jurnal \/ Moka",
+            "price_min": 600000,
+            "price_max": 2000000,
+            "price_recommended": 1500000,
+            "unit": "Per Integrasi",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "integrasi olsera",
+                "tarik omset olsera",
+                "sinkronisasi pos",
+                "api accurate",
+                "jurnal pos"
+            ],
+            "guide": "Jika sistem harus mengambil\/mengirim data ke software POS\/ERP eksternal",
+            "tech_notes": "Tarik transaksi & produk (termasuk merapikan docs pihak ketiga)",
+            "default_qty": 1
+        },
+        {
+            "code": "INT-API-02",
+            "name": "Integrasi Webhook Custom Klien",
+            "category": "Integrasi API & Gateway",
+            "spec": "Menerima dan memproses payload JSON real-time dari sistem klien (SIAKAD \/ SIM Daerah \/ LMS)",
+            "vendor_examples": "SIAKAD \/ SIM Daerah \/ LMS",
+            "price_min": 600000,
+            "price_max": 1500000,
+            "price_recommended": 800000,
+            "unit": "Per Integrasi",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "webhook custom",
+                "json endpoint",
+                "kirim payload",
+                "terima callback sistem luar",
+                "siakad"
+            ],
+            "guide": "Menerima dan memproses payload JSON real-time dari sistem klien eksternal",
+            "tech_notes": "Mencakup validasi token & parsing payload JSON spesifik",
+            "default_qty": 1
+        },
+        {
+            "code": "INT-EML-01",
+            "name": "SMTP Email Transactional",
+            "category": "Integrasi API & Gateway",
+            "spec": "Kirim email invoice, reset password, notifikasi sistem (Mailgun \/ SendGrid \/ Google SMTP)",
+            "vendor_examples": "Mailgun \/ SendGrid \/ Google SMTP",
+            "price_min": 300000,
+            "price_max": 500000,
+            "price_recommended": 400000,
+            "unit": "Per Integrasi",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "kirim email otomatis",
+                "smtp email",
+                "email invoice",
+                "reset password email",
+                "mailgun"
+            ],
+            "guide": "Jika sistem perlu mengirimkan email notifikasi, invoice, dan reset password",
+            "tech_notes": "Integrasi SMTP Gmail \/ Mailgun \/ SendGrid standar",
+            "default_qty": 1
+        },
+        {
+            "code": "HDW-POS-01",
+            "name": "Integrasi Thermal Receipt Printer",
+            "category": "Hardware & POS",
+            "spec": "Cetak struk kasir, cetak bukti mutasi via direct ESC\/POS command (Bluetooth \/ USB Thermal ESC\/POS (58mm\/80mm))",
+            "vendor_examples": "Bluetooth \/ USB Thermal ESC\/POS (58mm\/80mm)",
+            "price_min": 800000,
+            "price_max": 1500000,
+            "price_recommended": 900000,
+            "unit": "Per Integrasi",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": true,
+            "keywords": [
+                "printer kasir",
+                "printer thermal",
+                "cetak struk bluetooth",
+                "pos printer",
+                "esc pos"
+            ],
+            "guide": "Jika aplikasi kasir\/toko butuh cetak fisik nota langsung ke printer mini POS",
+            "tech_notes": "Format direct command ESC\/POS thermal 58mm atau 80mm",
+            "default_qty": 1
+        },
+        {
+            "code": "HDW-BIO-01",
+            "name": "Integrasi Mesin Fingerprint \/ RFID",
+            "category": "Hardware & POS",
+            "spec": "Tarik log presensi karyawan via SDK \/ Local network endpoint (Solution \/ ZKTeco \/ Fingerspot)",
+            "vendor_examples": "Solution \/ ZKTeco \/ Fingerspot",
+            "price_min": 800000,
+            "price_max": 2500000,
+            "price_recommended": 1200000,
+            "unit": "Per Integrasi",
+            "complexity": "Tinggi",
+            "is_free": false,
+            "is_hardware": true,
+            "keywords": [
+                "mesin fingerprint",
+                "mesin absensi",
+                "rfid scanner",
+                "tarik log absensi",
+                "solution zkteco"
+            ],
+            "guide": "Jika aplikasi butuh menarik log tap presensi karyawan dari mesin fisik",
+            "tech_notes": "Integrasi SDK \/ IP Local network endpoint mesin presensi",
+            "default_qty": 1
+        },
+        {
+            "code": "HDW-CAM-01",
+            "name": "Barcode \/ QR Code Scanner via Kamera",
+            "category": "Hardware & POS",
+            "spec": "GRATIS \/ INCLUDED (Integrasi via JS library HTML5-QRCode) (Webcam Browser \/ Barcode Scanner USB)",
+            "vendor_examples": "Webcam Browser \/ Barcode Scanner USB",
+            "price_min": 0,
+            "price_max": 0,
+            "price_recommended": 0,
+            "unit": "Per Integrasi",
+            "complexity": "Tinggi",
+            "is_free": true,
+            "is_hardware": true,
+            "keywords": [
+                "scan barcode",
+                "scan qris",
+                "scan kamera",
+                "webcam scanner",
+                "kamera browser"
+            ],
+            "guide": "GRATIS \/ FREE. Tidak boleh dikenakan biaya tambahan",
+            "tech_notes": "Implementasi library JS HTML5-QRCode via webcam browser",
+            "default_qty": 1
+        },
+        {
+            "code": "DES-02",
+            "name": "Custom Tailored UI Design",
+            "category": "Tampilan & Desain",
+            "spec": "Desain kustom tailored eksklusif menyesuaikan identitas visual brand klien",
+            "price_min": 250000,
+            "price_max": 500000,
+            "price_recommended": 350000,
+            "unit": "Per Proyek",
+            "complexity": "Sedang",
+            "is_free": false,
+            "is_hardware": false,
+            "keywords": [
+                "desain custom",
+                "desain eksklusif",
+                "ui sesuai brand",
+                "figma custom",
+                "branding klien"
+            ],
+            "guide": "Tambahan biaya jika klien meminta desain UI\/UX eksklusif dari nol",
+            "tech_notes": "Menggunakan Tailwind kustom dengan palet warna dan komponen eksklusif",
+            "default_qty": 1
+        }
+    ],
+    "platforms": {
+        "web": {
+            "code": "web",
+            "name": "Web App Standar (Desktop & Responsive)",
+            "multiplier": 1,
+            "description": "Aplikasi berbasis web modern, responsif mobile, basis arsitektur Laravel & Tailwind."
+        },
+        "android": {
+            "code": "android",
+            "name": "Mobile Android (Flutter)",
+            "multiplier": 1.4,
+            "description": "Dedicated Flutter codebase, build APK \/ AAB siap rilis, integrasi hardware lokal."
+        },
+        "offline_first": {
+            "code": "offline_first",
+            "name": "Offline-First App (SQLite Sync)",
+            "multiplier": 2.2,
+            "description": "Local SQLite engine + 2-way sync queue ke cloud database saat koneksi tersambung."
+        }
+    },
+    "novelty_options": [
+        {
+            "code": "NVT-01",
+            "value": "from_scratch",
+            "name": "Bangun dari Nol (1.0x)",
+            "multiplier": 1,
+            "description": "Pengembangan sistem baru dari arsitektur bersih tanpa ketergantungan kode lama."
+        },
+        {
+            "code": "NVT-02",
+            "value": "existing_project",
+            "name": "Melanjutkan Proyek Existing (1.2x)",
+            "multiplier": 1.2,
+            "description": "Tambahan +20% untuk kompensasi risiko audit codebase lama dan adaptasi arsitektur existing."
+        }
+    ],
+    "risk_buffer_options": [
+        {
+            "code": "BRF-01",
+            "value": -7.5,
+            "label": "Brief Sangat Matang & Wireframe (-7.5%)",
+            "description": "Diskon efisiensi karena spesifikasi dan acuan alur sudah sangat presisi."
+        },
+        {
+            "code": "BRF-00",
+            "value": 0,
+            "label": "Brief Normal \/ Standar (0%)",
+            "description": "Spesifikasi kebutuhan umum telah dipahami dengan baik."
+        },
+        {
+            "code": "BRF-02",
+            "value": 7.5,
+            "label": "Brief Mentah \/ Scope Creep Risk (+7.5%)",
+            "description": "Risk buffer untuk mengantisipasi eksplorasi kebutuhan tambahan di jalan."
+        }
+    ],
+    "rush_fee_options": [
+        {
+            "code": "URG-01",
+            "value": 0,
+            "label": "Normal Timeline (0%)",
+            "description": "Jadwal pengerjaan standar (2 - 4 minggu)."
+        },
+        {
+            "code": "URG-02",
+            "value": 25,
+            "label": "Rush Project (+25%)",
+            "description": "Prioritas lembur developer, timeline dipersingkat 30%."
+        },
+        {
+            "code": "URG-03",
+            "value": 50,
+            "label": "Super Rush (+50%)",
+            "description": "Timeline dipangkas separuh (40-50%), alokasi resource penuh."
+        }
+    ],
+    "segments": {
+        "umkm": {
+            "code": "umkm",
+            "name": "UMKM \/ Solo Entrepreneur",
+            "floor_price_system": 1200000,
+            "floor_price_compro": 1200000,
+            "strategy": "Tawarkan opsi Lean MVP \/ Bertahap agar sesuai budget, jelaskan upgrade path",
+            "payment_scheme": "DP 30% | Pelunasan 70%",
+            "warranty": "30 Hari Garansi Bug Bebas Biaya",
+            "sla": "24-48 Jam Respon"
+        },
+        "organization": {
+            "code": "organization",
+            "name": "Sekolah \/ Yayasan \/ Organisasi",
+            "floor_price_system": 2500000,
+            "floor_price_compro": 1200000,
+            "strategy": "Tekankan kemudahan tata kelola data, rekap laporan, & kemudahan operator",
+            "payment_scheme": "DP 30% \/ 20% | Pelunasan",
+            "warranty": "30 Hari Garansi Bug + Pendampingan UAT",
+            "sla": "12-24 Jam Respon"
+        },
+        "sme": {
+            "code": "sme",
+            "name": "Perusahaan Swasta (PT \/ CV)",
+            "floor_price_system": 2500000,
+            "floor_price_compro": 1200000,
+            "strategy": "Tawarkan arsitektur scalable, multi-role RBAC, dan audit trail keamanan",
+            "payment_scheme": "DP 20% | Termin Progress | Pelunasan",
+            "warranty": "30 Hari Garansi Bug + SLA Prioritas",
+            "sla": "12-24 Jam Respon"
+        },
+        "enterprise": {
+            "code": "enterprise",
+            "name": "BUMN \/ Instansi \/ Tender",
+            "floor_price_system": 4000000,
+            "floor_price_compro": 1200000,
+            "strategy": "Paket lengkap formal, dokumentasi serah terima lengkap, garansi & SLA resmi",
+            "payment_scheme": "Sesuai SPK \/ Termin Resmi",
+            "warranty": "60 Hari Garansi Bug + SLA Prioritas Penuh",
+            "sla": "< 6 Jam Respon"
+        }
+    },
+    "dp_rules": {
+        "threshold": 5000000,
+        "below_threshold_dp_pct": 30,
+        "above_threshold_dp_pct": 20
+    },
+    "operational": {
+        "man_day_rate": "Rp 300.000 - Rp 500.000 \/ hari",
+        "ownership": "100% Full Ownership (Beli Putus Source Code & Database)",
+        "warranty_days": 30,
+        "uat_minor_revisions": "Maksimal 2x putaran (GRATIS)",
+        "major_revision": "Dihitung sebagai modul baru sesuai Rate Card",
+        "retainer_baseline": "Mulai Rp 200.000 \/ bulan (< 50 user aktif)",
+        "domain_hosting": "Dewaweb At-Cost (.com ~Rp195rb\/th, hosting ~Rp35rb\/bln), Setup GRATIS"
+    },
+    "ai_training_corpus": [
+        {
+            "id_rule": "CR-001",
+            "category": "Master Data",
+            "keywords": "data barang, data pelanggan, master supplier, master kategori, CRUD simpel, master data tunggal",
+            "mapped_feature": "Modul CRUD Standar (MOD-01)",
+            "price_min": 100000,
+            "price_max": 300000,
+            "price_default": 150000,
+            "matching_logic": "Hitung per tabel\/entitas unik. Jika ada 3 master data = 3 x Rp 150rb = Rp 450rb",
+            "scope_boundary": "Hanya operasi create, read, update, delete tanpa relasi bertingkat"
+        },
+        {
+            "id_rule": "CR-002",
+            "category": "Transaksi Relasional",
+            "keywords": "invoice order, keranjang belanja, rincian RAB, item pembelian, multi-item, parent-child",
+            "mapped_feature": "Modul Relasional Parent-Child (MOD-02)",
+            "price_min": 200000,
+            "price_max": 1000000,
+            "price_default": 300000,
+            "matching_logic": "Cocokkan jika ada 1 header memiliki banyak baris detail relasi",
+            "scope_boundary": "Sudah mencakup kalkulasi subtotal dan sinkronisasi parent-child"
+        },
+        {
+            "id_rule": "CR-003",
+            "category": "Approval \/ Alur",
+            "keywords": "persetujuan bertingkat, verifikasi manager, tracking status, acc pimpinan, reject, state machine",
+            "mapped_feature": "Modul State Machine Workflow (MOD-03)",
+            "price_min": 800000,
+            "price_max": 1200000,
+            "price_default": 900000,
+            "matching_logic": "Cocokkan jika ada alur perpindahan status dan penguncian data otomatis",
+            "scope_boundary": "Maksimal 4-5 tahapan status per dokumen"
+        },
+        {
+            "id_rule": "CR-004",
+            "category": "Keuangan \/ Arus Kas",
+            "keywords": "mutasi kas, running balance, kas kecil, rekonsiliasi saldo, selisih uang, cashflow, rekening bank",
+            "mapped_feature": "Kalkulasi Finansial & Kas (MOD-04)",
+            "price_min": 1000000,
+            "price_max": 4000000,
+            "price_default": 1500000,
+            "matching_logic": "Wajib dimasukkan jika klien menyebut kontrol uang, pembukuan kas, rekonsiliasi",
+            "scope_boundary": "Saldo dihitung otomatis dari (Awal + In - Out), bukan diinput manual"
+        },
+        {
+            "id_rule": "CR-005",
+            "category": "Laba Rugi",
+            "keywords": "laba kotor, laba bersih, profit, omset harian, HPP belanja, untung rugi, margin",
+            "mapped_feature": "Laba Rugi Sederhana (MOD-05)",
+            "price_min": 500000,
+            "price_max": 800000,
+            "price_default": 600000,
+            "matching_logic": "Cocokkan jika klien butuh ringkasan performa finansial simpel",
+            "scope_boundary": "Rumus: Omset - HPP - Beban Operasional = Laba Bersih"
+        },
+        {
+            "id_rule": "CR-006",
+            "category": "Hak Akses Statis",
+            "keywords": "login admin, 3 role, owner manager staff, sembunyikan saldo dari staff, role hardcoded",
+            "mapped_feature": "Static Role 3 Level (AUTH-01)",
+            "price_min": 600000,
+            "price_max": 600000,
+            "price_default": 600000,
+            "matching_logic": "Gunakan jika klien butuh pembagian hak akses tanpa perlu UI centang-centang dinamis",
+            "scope_boundary": "Hak akses terhardcode di kodingan (Owner full, Manager toko, Staff input)"
+        },
+        {
+            "id_rule": "CR-007",
+            "category": "Hak Akses Dinamis",
+            "keywords": "matriks hak akses, atur izin user dari web, role dinamis, centang akses CRUD, RBAC granular",
+            "mapped_feature": "Dynamic Granular RBAC (AUTH-02)",
+            "price_min": 700000,
+            "price_max": 1000000,
+            "price_default": 800000,
+            "matching_logic": "Gunakan jika klien secara eksplisit minta menu manajemen role fleksibel",
+            "scope_boundary": "Ada halaman UI khusus pengaturan permission per role"
+        },
+        {
+            "id_rule": "CR-008",
+            "category": "Tampilan Web",
+            "keywords": "tabel data, pagination, sorting data, filter pencarian web, tabel interaktif, list data",
+            "mapped_feature": "Tabel Web Data Standar (UI-01)",
+            "price_min": 200000,
+            "price_max": 200000,
+            "price_default": 200000,
+            "matching_logic": "Tampilan tabel data web interaktif standar (tanpa fitur export)",
+            "scope_boundary": "Hanya mencakup UI tabel, pencarian, dan pagination dasar"
+        },
+        {
+            "id_rule": "CR-009",
+            "category": "Export CSV",
+            "keywords": "download csv, export mentah, text file data, csv sederhana, dump data csv",
+            "mapped_feature": "Export CSV Dasar (EXP-01)",
+            "price_min": 200000,
+            "price_max": 350000,
+            "price_default": 220000,
+            "matching_logic": "Jika klien butuh unduh data mentah format .csv ringan tanpa format styling",
+            "scope_boundary": "File .csv mentah tanpa border, kop, atau styling warna"
+        },
+        {
+            "id_rule": "CR-010",
+            "category": "Export Excel",
+            "keywords": "download excel, export .xlsx, laporan excel, arsip offline, file excel rapi",
+            "mapped_feature": "Export Excel Terformat (EXP-02)",
+            "price_min": 500000,
+            "price_max": 650000,
+            "price_default": 550000,
+            "matching_logic": "Jika klien butuh unduh laporan dalam format Excel rapi (add-on khusus bisa Rp 200rb\/laporan)",
+            "scope_boundary": "Format .xlsx rapi ber-kop, border, format Rupiah, dan formula total"
+        },
+        {
+            "id_rule": "CR-011",
+            "category": "Export PDF",
+            "keywords": "cetak pdf, cetak surat, invoice pdf, format cetak resmi, dokumen a4 pdf",
+            "mapped_feature": "Export PDF Terformat (EXP-03)",
+            "price_min": 450000,
+            "price_max": 650000,
+            "price_default": 450000,
+            "matching_logic": "Jika klien butuh file dokumen siap cetak A4\/Letter dengan format resmi",
+            "scope_boundary": "Layout HTML-to-PDF rapi dengan kop surat dan kolom tanda tangan"
+        },
+        {
+            "id_rule": "CR-012",
+            "category": "Import Excel",
+            "keywords": "upload excel, import data lama, migrasi data CSV, import masal, bulk insert",
+            "mapped_feature": "Import Masal Excel\/CSV (IMP-01)",
+            "price_min": 650000,
+            "price_max": 650000,
+            "price_default": 650000,
+            "matching_logic": "Jika klien punya ribuan data di Excel dan ingin dimasukkan ke sistem",
+            "scope_boundary": "Termasuk validasi error per baris dan deteksi duplikasi data"
+        },
+        {
+            "id_rule": "CR-013",
+            "category": "Bundling Data",
+            "keywords": "paket import export, import dan export, sepasang impor ekspor, kelola data bolak balik",
+            "mapped_feature": "Paket Sepasang (1 Import + 1 Export) (BND-01)",
+            "price_min": 800000,
+            "price_max": 1000000,
+            "price_default": 800000,
+            "matching_logic": "Diskon paket bundling jika ada 1 entitas modul yang butuh sekaligus Import & Export",
+            "scope_boundary": "Mencakup 1 template upload Excel dan 1 template download Excel"
+        },
+        {
+            "id_rule": "CR-014",
+            "category": "Audit Log",
+            "keywords": "siapa yang ubah data, catat jam edit, log aktivitas, histori hapus, audit trail",
+            "mapped_feature": "Audit Log & Activity Trail (SEC-01)",
+            "price_min": 400000,
+            "price_max": 800000,
+            "price_default": 600000,
+            "matching_logic": "Jika klien ingin melacak jejak digital aksi stafnya (siapa, kapan, aksi apa)",
+            "scope_boundary": "Pencatatan user_id, timestamp, IP, data sebelum & sesudah diubah"
+        },
+        {
+            "id_rule": "CR-015",
+            "category": "Backup Database",
+            "keywords": "download database sendiri, backup data manual, tombol backup, simpan file sql",
+            "mapped_feature": "Tombol Download Backup DB (BCK-01)",
+            "price_min": 300000,
+            "price_max": 500000,
+            "price_default": 400000,
+            "matching_logic": "Jika Owner ingin mengunduh mandiri file database .sql kapan saja dari web",
+            "scope_boundary": "Dibatasi khusus untuk hak akses role Owner saja"
+        },
+        {
+            "id_rule": "CR-016",
+            "category": "Pembayaran Online",
+            "keywords": "midtrans, xendit, qris otomatis, transfer va otomatis, payment gateway, tripay",
+            "mapped_feature": "Integrasi Payment Gateway (INT-PAY-01)",
+            "price_min": 1500000,
+            "price_max": 2500000,
+            "price_default": 2000000,
+            "matching_logic": "Wajib ditambahkan jika klien ingin pelanggan bayar langsung di web\/app secara otomatis",
+            "scope_boundary": "Snap\/Redirect Checkout, Webhook callback, auto update status tagihan"
+        },
+        {
+            "id_rule": "CR-017",
+            "category": "Notifikasi WA",
+            "keywords": "kirim wa otomatis, notif wa, wa reminder, blast wa, fonnte, wablas, whacenter",
+            "mapped_feature": "WhatsApp Gateway API (INT-WA-01)",
+            "price_min": 400000,
+            "price_max": 1000000,
+            "price_default": 600000,
+            "matching_logic": "Jika klien ingin notifikasi instan pesan WhatsApp terstruktur ke admin\/pelanggan",
+            "scope_boundary": "Harga belum termasuk biaya langganan paket vendor WA Gateway"
+        },
+        {
+            "id_rule": "CR-018",
+            "category": "Tarik Data POS \/ API",
+            "keywords": "integrasi olsera, tarik omset olsera, sinkronisasi pos, api accurate, jurnal pos",
+            "mapped_feature": "Custom 3rd Party API (INT-API-01)",
+            "price_min": 600000,
+            "price_max": 2000000,
+            "price_default": 1500000,
+            "matching_logic": "Jika sistem harus mengambil\/mengirim data ke software POS\/ERP eksternal",
+            "scope_boundary": "Tarik transaksi & produk (termasuk merapikan docs pihak ketiga)"
+        },
+        {
+            "id_rule": "CR-019",
+            "category": "Custom Webhook",
+            "keywords": "webhook custom, json endpoint, kirim payload, terima callback sistem luar, siakad",
+            "mapped_feature": "Integrasi Webhook Custom Klien (INT-API-02)",
+            "price_min": 600000,
+            "price_max": 1500000,
+            "price_default": 800000,
+            "matching_logic": "Menerima dan memproses payload JSON real-time dari sistem klien eksternal",
+            "scope_boundary": "Mencakup validasi token & parsing payload JSON spesifik"
+        },
+        {
+            "id_rule": "CR-020",
+            "category": "Email Gateway",
+            "keywords": "kirim email otomatis, smtp email, email invoice, reset password email, mailgun",
+            "mapped_feature": "SMTP Email Transactional (INT-EML-01)",
+            "price_min": 300000,
+            "price_max": 500000,
+            "price_default": 400000,
+            "matching_logic": "Jika sistem perlu mengirimkan email notifikasi, invoice, dan reset password",
+            "scope_boundary": "Integrasi SMTP Gmail \/ Mailgun \/ SendGrid standar"
+        },
+        {
+            "id_rule": "CR-021",
+            "category": "Cetak Struk",
+            "keywords": "printer kasir, printer thermal, cetak struk bluetooth, pos printer, esc pos",
+            "mapped_feature": "Integrasi Thermal Receipt Printer (HDW-POS-01)",
+            "price_min": 800000,
+            "price_max": 1500000,
+            "price_default": 900000,
+            "matching_logic": "Jika aplikasi kasir\/toko butuh cetak fisik nota langsung ke printer mini POS",
+            "scope_boundary": "Format direct command ESC\/POS thermal 58mm atau 80mm"
+        },
+        {
+            "id_rule": "CR-022",
+            "category": "Mesin Presensi",
+            "keywords": "mesin fingerprint, mesin absensi, rfid scanner, tarik log absensi, solution zkteco",
+            "mapped_feature": "Integrasi Mesin Fingerprint \/ RFID (HDW-BIO-01)",
+            "price_min": 800000,
+            "price_max": 2500000,
+            "price_default": 1200000,
+            "matching_logic": "Jika aplikasi butuh menarik log tap presensi karyawan dari mesin fisik",
+            "scope_boundary": "Integrasi SDK \/ IP Local network endpoint mesin presensi"
+        },
+        {
+            "id_rule": "CR-023",
+            "category": "Scan Barcode\/QR",
+            "keywords": "scan barcode, scan qris, scan kamera, webcam scanner, kamera browser",
+            "mapped_feature": "Kamera \/ Barcode Scanner (HDW-CAM-01)",
+            "price_min": 0,
+            "price_max": 0,
+            "price_default": 0,
+            "matching_logic": "GRATIS \/ FREE. Tidak boleh dikenakan biaya tambahan",
+            "scope_boundary": "Implementasi library JS HTML5-QRCode via webcam browser"
+        },
+        {
+            "id_rule": "CR-024",
+            "category": "Aplikasi Android",
+            "keywords": "aplikasi hp, aplikasi android, flutter, download di playstore, apk android",
+            "mapped_feature": "Platform Android Flutter (PLT-03)",
+            "price_min": 4000000,
+            "price_max": 6000000,
+            "price_default": 5000000,
+            "matching_logic": "Gunakan basis harga mobile flutter (pengali ~1.4x dari web)",
+            "scope_boundary": "Dedicated Flutter codebase, build APK \/ AAB siap install"
+        },
+        {
+            "id_rule": "CR-025",
+            "category": "Aplikasi Offline",
+            "keywords": "bisa jalan tanpa internet, offline first, sqlite lokal, sync server, antrian offline",
+            "mapped_feature": "Platform Offline First (PLT-04)",
+            "price_min": 4500000,
+            "price_max": 8000000,
+            "price_default": 6000000,
+            "matching_logic": "Gunakan pengali offline database sync (~2.2x dari basis web)",
+            "scope_boundary": "Local SQLite engine + 2-way sync queue ke cloud database"
+        },
+        {
+            "id_rule": "CR-026",
+            "category": "Custom UI Design",
+            "keywords": "desain custom, desain eksklusif, ui sesuai brand, figma custom, branding klien",
+            "mapped_feature": "Custom Tailored UI Design (DES-02)",
+            "price_min": 250000,
+            "price_max": 500000,
+            "price_default": 350000,
+            "matching_logic": "Tambahan biaya jika klien meminta desain UI\/UX eksklusif dari nol",
+            "scope_boundary": "Desain kustom tailored menyesuaikan identitas visual brand klien"
+        },
+        {
+            "id_rule": "CR-027",
+            "category": "Proyek Existing",
+            "keywords": "lanjutin kodingan orang, fitur tambahan web lama, refactor sistem existing, kodingan lama",
+            "mapped_feature": "Melanjutkan Proyek Existing (NVT-02)",
+            "price_min": 0,
+            "price_max": 0,
+            "price_default": 0,
+            "matching_logic": "Gunakan faktor pengali 1.2x (Markup +20%) dari total hitungan modul",
+            "scope_boundary": "Kompensasi risiko audit codebase lama dan adaptasi arsitektur existing"
+        }
+    ]
+}

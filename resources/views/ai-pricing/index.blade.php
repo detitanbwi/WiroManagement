@@ -8,9 +8,10 @@
     clientName: '{{ addslashes($session->client_name ?? '') }}',
     clientSegment: '{{ $session->client_segment ?? 'umkm' }}',
     platform: '{{ $session->platform ?? 'web' }}',
-    riskBufferPercent: {{ (int)($session->risk_buffer_percent ?? 0) }},
+    novelty: '{{ $session->novelty ?? ($calculation['novelty']['value'] ?? 'from_scratch') }}',
+    riskBufferPercent: {{ (float)($session->risk_buffer_percent ?? 0) }},
     rushFeePercent: {{ (int)($session->rush_fee_percent ?? 0) }},
-    selectedModules: {{ json_encode($session->selected_modules ?? ['CR-001', 'CR-006']) }},
+    selectedModules: {{ json_encode($session->selected_modules ?? ['MOD-01', 'AUTH-01']) }},
     unlistedFeatures: {{ json_encode($session->unlisted_features ?? []) }},
     initialCalculation: {{ json_encode($calculation) }},
     rules: {{ json_encode($rules) }},
@@ -222,45 +223,57 @@
             
             <!-- Sticky Config Bar -->
             <div class="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-200 p-4 z-20 shadow-xs space-y-3">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nama Calon Klien / Proyek</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 items-end">
+                    <!-- Client Name (Cols 2 on LG) -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nama Klien / Proyek</label>
                         <input type="text" 
                                x-model="clientName" 
                                @change="syncUpdate()"
-                               placeholder="Misal: Toko Berkah / PT Maju Jaya" 
-                               class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-indigo-500 outline-none transition">
+                               placeholder="Misal: Toko Retail / PT Maju Jaya" 
+                               class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-indigo-500 outline-none transition">
+                    </div>
+
+                    <!-- Segment Selector -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Segmen Klien</label>
+                        <select x-model="clientSegment" @change="syncUpdate()" 
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
+                            <template x-for="(s, key) in rules.segments" :key="key">
+                                <option :value="key" x-text="s.name" :selected="key === clientSegment"></option>
+                            </template>
+                        </select>
                     </div>
 
                     <!-- Platform Selector -->
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Platform Utama</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Platform</label>
                         <select x-model="platform" @change="syncUpdate()" 
-                                class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
                             <template x-for="(p, key) in rules.platforms" :key="key">
                                 <option :value="key" x-text="p.name + ' (' + p.multiplier + 'x)'" :selected="key === platform"></option>
                             </template>
                         </select>
                     </div>
 
-                    <!-- Risk & Rush Badges -->
+                    <!-- Novelty (Status Proyek) Selector -->
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kesiapan Brief</label>
-                        <select x-model="riskBufferPercent" @change="syncUpdate()"
-                                class="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
-                            <option value="0">Jelas (0%)</option>
-                            <option value="10">Standar (+10%)</option>
-                            <option value="20">Blur (+20%)</option>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Proyek</label>
+                        <select x-model="novelty" @change="syncUpdate()"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
+                            <option value="from_scratch">Bangun Baru (1.0x)</option>
+                            <option value="existing_project">Lanjut Existing (1.2x)</option>
                         </select>
                     </div>
 
+                    <!-- Kesiapan Brief / Risk Buffer Selector -->
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Timeline</label>
-                        <select x-model="rushFeePercent" @change="syncUpdate()"
-                                class="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
-                            <option value="0">Normal</option>
-                            <option value="25">Cepat (+25%)</option>
-                            <option value="50">Rush (+50%)</option>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kesiapan Brief</label>
+                        <select x-model="riskBufferPercent" @change="syncUpdate()"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
+                            <option value="-7.5">Matang (-7.5%)</option>
+                            <option value="0">Normal (0%)</option>
+                            <option value="7.5">Mentah (+7.5%)</option>
                         </select>
                     </div>
                 </div>
@@ -458,21 +471,34 @@
                             <span class="font-semibold text-white" x-text="formatRupiah(calculation.subtotal_base)"></span>
                         </div>
                         <div class="flex justify-between text-white/70">
-                            <span>Penyesuaian Platform (<span x-text="calculation.platform.multiplier + 'x'"></span>):</span>
+                            <span>Platform (<span x-text="calculation.platform.name + ' ' + calculation.platform.multiplier + 'x'"></span>):</span>
                             <span class="font-semibold text-white" x-text="formatRupiah(calculation.subtotal_after_platform)"></span>
                         </div>
-                        
-                        <template x-if="calculation.risk_buffer.amount > 0">
+
+                        <template x-if="calculation.novelty && calculation.novelty.amount > 0">
                             <div class="flex justify-between text-amber-300">
-                                <span>Risk Buffer Brief (+<span x-text="calculation.risk_buffer.percent + '%'"></span>):</span>
-                                <span class="font-semibold" x-text="'+ ' + formatRupiah(calculation.risk_buffer.amount)"></span>
+                                <span>Faktor Proyek Existing (+20%):</span>
+                                <span class="font-semibold" x-text="'+ ' + formatRupiah(calculation.novelty.amount)"></span>
+                            </div>
+                        </template>
+                        
+                        <template x-if="calculation.risk_buffer && calculation.risk_buffer.amount !== 0">
+                            <div class="flex justify-between" :class="calculation.risk_buffer.amount < 0 ? 'text-emerald-300' : 'text-amber-300'">
+                                <span x-text="calculation.risk_buffer.label"></span>
+                                <span class="font-semibold" x-text="(calculation.risk_buffer.amount < 0 ? '- ' : '+ ') + formatRupiah(Math.abs(calculation.risk_buffer.amount))"></span>
                             </div>
                         </template>
 
-                        <template x-if="calculation.rush_fee.amount > 0">
+                        <template x-if="calculation.rush_fee && calculation.rush_fee.amount > 0">
                             <div class="flex justify-between text-amber-300">
                                 <span>Rush Fee (+<span x-text="calculation.rush_fee.percent + '%'"></span>):</span>
                                 <span class="font-semibold" x-text="'+ ' + formatRupiah(calculation.rush_fee.amount)"></span>
+                            </div>
+                        </template>
+
+                        <template x-if="calculation.is_floor_adjusted">
+                            <div class="p-2 rounded-lg bg-white/10 text-amber-200 text-[11px] leading-tight">
+                                ℹ️ <em>Penawaran disesuaikan dengan Floor Price minimal segmen <strong x-text="calculation.segment.name"></strong> (<span x-text="formatRupiah(calculation.floor_price)"></span>).</em>
                             </div>
                         </template>
                     </div>
@@ -512,90 +538,56 @@
                 <!-- Action Button -->
                 <div class="pt-2">
                     <button @click="openWaModal()" 
-                            class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-lg flex items-center justify-center transition-all">
+                            class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-lg flex items-center justify-center transition-all cursor-pointer">
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
                         </svg>
-                        Salin Ringkasan Penawaran WhatsApp
+                        Format Teks Penawaran WhatsApp
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- WhatsApp Format Preview Modal -->
-    <div x-show="waModalOpen" x-cloak 
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div @click.away="waModalOpen = false" 
-             class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+    <!-- WhatsApp Summary Modal -->
+    <div x-show="waModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-gray-800" @click.away="waModalOpen = false">
             <div class="flex justify-between items-center border-b border-gray-100 pb-3">
                 <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
-                        </svg>
-                    </div>
-                    <h3 class="font-bold text-gray-900 text-sm">Format Penawaran WhatsApp</h3>
+                    <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">💬</span>
+                    <h3 class="font-bold text-sm text-gray-900">Format Penawaran WhatsApp</h3>
                 </div>
-                <button @click="waModalOpen = false" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+                <button @click="waModalOpen = false" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
             </div>
 
-            <textarea x-model="waText" rows="12" readonly
-                      class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-mono leading-relaxed text-gray-800 outline-none select-all"></textarea>
+            <textarea x-model="waText" rows="12" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-mono outline-none resize-none leading-relaxed"></textarea>
 
-            <div class="flex justify-end space-x-2 pt-2">
-                <button @click="waModalOpen = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-200">
-                    Tutup
+            <div class="flex space-x-2 pt-1">
+                <button type="button" @click="copyWaText()" 
+                        class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center cursor-pointer">
+                    <span x-text="copyButtonText"></span>
                 </button>
-                <button @click="copyWaText()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center shadow-md">
-                    <span x-text="copyButtonText">Salin Teks WhatsApp</span>
+                <button type="button" @click="waModalOpen = false" 
+                        class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                    Tutup
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- History Drawer Modal -->
-    <div x-show="historyOpen" x-cloak 
-         class="fixed inset-0 z-50 overflow-hidden bg-black/50 backdrop-blur-xs flex justify-end">
-        <div @click.away="historyOpen = false" 
-             class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col z-50 transform transition-transform duration-300">
+    <!-- Drawer History Sessions -->
+    <div x-show="historyOpen" x-cloak class="fixed inset-0 z-50 overflow-hidden bg-black/50 backdrop-blur-xs flex justify-end">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col" @click.away="historyOpen = false">
             
             <!-- Drawer Header -->
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-sm">Riwayat Estimasi Proyek</h3>
-                        <p class="text-[10px] text-gray-500">Pilih sesi sebelumnya untuk dibuka kembali</p>
-                    </div>
-                </div>
-                <button @click="historyOpen = false" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                </button>
-            </div>
-
-            <!-- Drawer Action Bar -->
-            <div class="p-4 border-b border-gray-100 bg-white flex justify-between items-center">
-                <span class="text-xs font-semibold text-gray-500">{{ count($recentSessions) }} sesi tersimpan</span>
-                <form action="{{ route('ai-pricing.new') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="px-3 py-1.5 bg-primary hover:bg-blue-800 text-white rounded-lg text-xs font-bold shadow-xs flex items-center">
-                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        + Sesi Baru
-                    </button>
-                </form>
+                    <h3 class="font-bold text-sm text-gray-900">Riwayat Sesi Estimasi</h3>
+                </div>
+                <button @click="historyOpen = false" class="text-gray-400 hover:text-gray-600 text-lg font-bold">&times;</button>
             </div>
 
             <!-- Drawer Session List -->
@@ -622,7 +614,7 @@
                             <form action="{{ route('ai-pricing.delete', $item->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus riwayat sesi ini?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors" title="Hapus Sesi">
+                                <button type="submit" class="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer" title="Hapus Sesi">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
@@ -643,7 +635,7 @@
 
             <!-- Drawer Footer -->
             <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-                <button @click="historyOpen = false" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-bold transition-colors">
+                <button @click="historyOpen = false" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-bold transition-colors cursor-pointer">
                     Tutup
                 </button>
             </div>
@@ -659,6 +651,7 @@ function aiPricingWorkspace(config) {
         clientName: config.clientName,
         clientSegment: config.clientSegment,
         platform: config.platform,
+        novelty: config.novelty || 'from_scratch',
         riskBufferPercent: config.riskBufferPercent,
         rushFeePercent: config.rushFeePercent,
         selectedModules: config.selectedModules,
@@ -678,12 +671,12 @@ function aiPricingWorkspace(config) {
         copyButtonText: 'Salin Teks WhatsApp',
 
         moduleCategories: [
-            'Core System',
+            'Core System & Bisnis',
+            'Keamanan & Hak Akses',
+            'Tampilan & Desain UI',
+            'Import, Export & Database',
             'Integrasi API & Gateway',
-            'Hardware & POS',
-            'Import & Export',
-            'Keamanan & Backup',
-            'Platform Khusus'
+            'Hardware & POS'
         ],
 
         initComponent() {
@@ -820,16 +813,14 @@ function aiPricingWorkspace(config) {
 
         formatMessage(text) {
             if (!text) return '';
-            // Basic markdown escapes and formatting
             let escaped = text
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
             
-            // Bold **text**
             escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            // Italic *text*
             escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            escaped = escaped.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 bg-gray-100 text-indigo-700 rounded font-mono text-[11px]">$1</code>');
             
             return escaped;
         },
@@ -843,7 +834,6 @@ function aiPricingWorkspace(config) {
             const text = this.inputMessage.trim();
             if (!text || this.isThinking) return;
 
-            // Push user message locally
             this.messages.push({
                 role: 'user',
                 content: text
@@ -873,11 +863,11 @@ function aiPricingWorkspace(config) {
                         extracted_params: data.extracted_params
                     });
 
-                    // Update canvas state
                     if (data.session) {
                         this.clientName = data.session.client_name || this.clientName;
                         this.clientSegment = data.session.client_segment || this.clientSegment;
                         this.platform = data.session.platform || this.platform;
+                        this.novelty = data.session.novelty || this.novelty;
                         this.riskBufferPercent = data.session.risk_buffer_percent ?? this.riskBufferPercent;
                         this.rushFeePercent = data.session.rush_fee_percent ?? this.rushFeePercent;
                         this.selectedModules = data.session.selected_modules || this.selectedModules;
@@ -917,7 +907,8 @@ function aiPricingWorkspace(config) {
                         selected_modules: this.selectedModules,
                         unlisted_features: this.unlistedFeatures,
                         platform: this.platform,
-                        risk_buffer_percent: parseInt(this.riskBufferPercent),
+                        novelty: this.novelty,
+                        risk_buffer_percent: parseFloat(this.riskBufferPercent),
                         rush_fee_percent: parseInt(this.rushFeePercent),
                         client_segment: this.clientSegment,
                         client_name: this.clientName
@@ -961,9 +952,11 @@ function aiPricingWorkspace(config) {
             lines.push(`----------------------------------------`);
             lines.push(`*Proyek:* ${this.clientName || 'Pengembangan Sistem Informasi'}`);
             lines.push(`*Platform:* ${this.calculation.platform.name}`);
+            lines.push(`*Status Proyek:* ${this.calculation.novelty.name}`);
+            lines.push(`*Segmen:* ${this.calculation.segment.name}`);
             lines.push(`*Tanggal:* ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}`);
             lines.push(``);
-            lines.push(`*Rincian Modul & Fitur yang Disepakati:*`);
+            lines.push(`*Rincian Modul & Fitur:*`);
             
             (this.calculation.items || []).forEach((item, idx) => {
                 const subDetails = (item.sub_items && item.sub_items.length > 0) ? ` [${item.qty} item: ${item.sub_items.join(', ')}]` : (item.qty > 1 ? ` [${item.qty}x]` : '');
@@ -975,7 +968,7 @@ function aiPricingWorkspace(config) {
 
             if (this.unlistedFeatures && this.unlistedFeatures.length > 0) {
                 lines.push(``);
-                lines.push(`*Catatan Fitur Khusus (Di Luar Modul Standar):*`);
+                lines.push(`*Catatan Fitur Khusus:*`);
                 this.unlistedFeatures.forEach((feat, idx) => {
                     const fName = typeof feat === 'object' ? feat.name : feat;
                     const fDesc = typeof feat === 'object' && feat.description ? ` - ${feat.description}` : '';
@@ -985,28 +978,32 @@ function aiPricingWorkspace(config) {
 
             lines.push(``);
             lines.push(`----------------------------------------`);
-            lines.push(`*Subtotal Modul:* ${this.formatRupiah(this.calculation.subtotal_base)}`);
+            lines.push(`*Subtotal Modul Dasar:* ${this.formatRupiah(this.calculation.subtotal_base)}`);
             if (this.calculation.platform.multiplier !== 1) {
-                lines.push(`*Platform Multiplier (${this.calculation.platform.multiplier}x):* ${this.formatRupiah(this.calculation.subtotal_after_platform)}`);
+                lines.push(`*Penyesuaian Platform (${this.calculation.platform.multiplier}x):* ${this.formatRupiah(this.calculation.subtotal_after_platform)}`);
             }
-            if (this.calculation.risk_buffer.amount > 0) {
-                lines.push(`*Risk Buffer Brief (+${this.calculation.risk_buffer.percent}%):* ${this.formatRupiah(this.calculation.risk_buffer.amount)}`);
+            if (this.calculation.novelty && this.calculation.novelty.amount > 0) {
+                lines.push(`*Faktor Proyek Existing (+20%):* +${this.formatRupiah(this.calculation.novelty.amount)}`);
             }
-            if (this.calculation.rush_fee.amount > 0) {
-                lines.push(`*Rush Fee (+${this.calculation.rush_fee.percent}%):* ${this.formatRupiah(this.calculation.rush_fee.amount)}`);
+            if (this.calculation.risk_buffer && this.calculation.risk_buffer.amount !== 0) {
+                lines.push(`*${this.calculation.risk_buffer.label}:* ${this.calculation.risk_buffer.amount < 0 ? '-' : '+'}${this.formatRupiah(Math.abs(this.calculation.risk_buffer.amount))}`);
+            }
+            if (this.calculation.rush_fee && this.calculation.rush_fee.amount > 0) {
+                lines.push(`*Rush Fee (+${this.calculation.rush_fee.percent}%):* +${this.formatRupiah(this.calculation.rush_fee.amount)}`);
             }
 
             lines.push(`*TOTAL ESTIMASI INVESTASI:* ${this.formatRupiah(this.calculation.total_estimated)}`);
             lines.push(`----------------------------------------`);
             lines.push(``);
             lines.push(`*Skema Pembayaran (Termin):*`);
-            lines.push(`1. *Termin 1 (DP ${this.calculation.payment_terms.dp_percent}%):* ${this.formatRupiah(this.calculation.payment_terms.dp_amount)} (Sebelum pengerjaan)`);
+            lines.push(`1. *Termin 1 (DP ${this.calculation.payment_terms.dp_percent}%):* ${this.formatRupiah(this.calculation.payment_terms.dp_amount)} (Sebelum kick-off)`);
             lines.push(`2. *Termin 2 (Pelunasan ${this.calculation.payment_terms.pelunasan_percent}%):* ${this.formatRupiah(this.calculation.payment_terms.pelunasan_amount)} (Pasca UAT & Siap Pakai)`);
             lines.push(``);
             lines.push(`*Estimasi Waktu:* ${this.calculation.timeline.estimated_days_range}`);
             lines.push(`*Garansi:* ${this.calculation.warranty}`);
+            lines.push(`*SLA Respon:* ${this.calculation.sla}`);
             lines.push(``);
-            lines.push(`_Catatan: Penawaran ini dibuat secara transparan berdasarkan modul spesifikasi kebutuhan._`);
+            lines.push(`_Hak Kepemilikan: 100% Full Ownership (Source Code & Database Beli Putus)_`);
 
             this.waText = lines.join('\n');
             this.copyButtonText = 'Salin Teks WhatsApp';
