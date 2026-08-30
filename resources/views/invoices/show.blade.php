@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto">
-    <div class="mb-6 flex justify-between items-center">
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <a href="{{ route('projects.show', $invoice->project) }}" class="text-sm text-gray-500 hover:text-primary flex items-center">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -12,7 +12,7 @@
             </a>
             <h1 class="text-2xl font-bold text-gray-800 mt-2">Invoice - {{ $invoice->invoice_number }}</h1>
         </div>
-        <div class="flex space-x-2">
+        <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('documents.invoice.pdf', $invoice) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md font-bold text-xs uppercase hover:bg-indigo-700 shadow-sm">
                 Cetak PDF
             </a>
@@ -29,21 +29,21 @@
         <div class="lg:col-span-2 space-y-8">
             <!-- Invoice Details -->
             <div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-                <div class="p-8">
-                    <div class="flex justify-between items-start mb-12">
+                <div class="p-5 sm:p-8">
+                    <div class="flex justify-between items-start mb-8 sm:mb-12">
                         <div>
                             <h2 class="text-xl font-black text-primary">WIRODEV</h2>
-                            <p class="text-xs text-secondary">Software & Creative House</p>
+                            <p class="text-xs text-secondary">Software &amp; Creative House</p>
                         </div>
                         <div class="text-right">
-                            <h3 class="text-2xl font-bold uppercase {{ $invoice->status == 'paid' ? 'text-green-600' : 'text-gray-900' }}">
+                            <h3 class="text-xl sm:text-2xl font-bold uppercase {{ $invoice->status == 'paid' ? 'text-green-600' : 'text-gray-900' }}">
                                 {{ $invoice->status }}
                             </h3>
-                            <p class="text-sm text-gray-500">Invoice Date: {{ $invoice->issued_date->format('d M Y') }}</p>
+                            <p class="text-xs sm:text-sm text-gray-500">Invoice Date: {{ $invoice->issued_date->format('d M Y') }}</p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-8 mb-12">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
                         <div>
                             <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Ditagihkan Kepada:</p>
                             <p class="font-bold text-gray-900 text-lg">{{ $invoice->project->client->name }}</p>
@@ -51,14 +51,15 @@
                             <p class="text-gray-600 whitespace-pre-line">{{ $invoice->project->client->address }}</p>
                         </div>
                         @if($invoice->due_date)
-                        <div class="text-right">
+                        <div class="text-left sm:text-right">
                             <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Jatuh Tempo:</p>
                             <p class="font-bold text-red-600 text-lg">{{ $invoice->due_date->format('d M Y') }}</p>
                         </div>
                         @endif
                     </div>
 
-                    <table class="min-w-full divide-y divide-gray-200 mb-8">
+                    <div class="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
+                        <table class="min-w-full divide-y divide-gray-200 mb-8">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Deskripsi Pekerjaan</th>
@@ -78,6 +79,7 @@
                             @endforeach
                         </tbody>
                     </table>
+                    </div>
 
                     <div class="flex justify-end pt-8 border-t border-gray-100">
                         <div class="w-64 space-y-3">

@@ -38,7 +38,7 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto">
-    <div class="mb-6 flex justify-between items-end">
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <a href="{{ route('projects.show', $quotation->project) }}" class="text-sm text-gray-500 hover:text-primary flex items-center">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -46,7 +46,7 @@
             </a>
             <h1 class="text-2xl font-bold text-gray-800 mt-2">Quotation: {{ $quotation->quotation_number }}</h1>
         </div>
-        <div class="flex space-x-2">
+        <div class="flex flex-wrap items-center gap-2">
             @if($quotation->status == 'draft')
                 <a href="{{ route('quotations.edit', $quotation) }}" class="inline-flex items-center px-4 py-2 bg-amber-500 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-amber-600 transition shadow-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -70,11 +70,11 @@
         </div>
     </div>
 
-    <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-8">
-        <div class="flex justify-between items-start mb-8">
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-5 sm:p-8">
+        <div class="flex justify-between items-start mb-6 sm:mb-8">
             <div>
                 <h2 class="text-2xl font-bold text-primary italic tracking-tight">WIRODEV</h2>
-                <p class="text-xs text-gray-500">Software House & Digital Agency</p>
+                <p class="text-xs text-gray-500">Software House &amp; Digital Agency</p>
             </div>
             <div class="text-right">
                 <span class="px-3 py-1 rounded-full text-xs font-bold uppercase {{ $quotation->status == 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
@@ -83,13 +83,13 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-8 mb-8 border-t pt-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 border-t pt-6">
             <div>
                 <p class="text-xs font-bold text-gray-400 uppercase mb-1">Diterbitkan Untuk:</p>
                 <p class="font-bold text-gray-800">{{ $quotation->project->client->name }}</p>
                 <p class="text-sm text-gray-600">{{ $quotation->project->client->company_name }}</p>
             </div>
-            <div class="text-right">
+            <div class="text-left sm:text-right">
                 <p class="text-xs font-bold text-gray-400 uppercase mb-1">Detail Penawaran:</p>
                 <p class="text-sm text-gray-600">No: <span class="font-bold text-gray-800">{{ $quotation->quotation_number }}</span></p>
                 <p class="text-sm text-gray-600">Tanggal: <span class="font-bold text-gray-800">{{ $quotation->created_at->format('d F Y') }}</span></p>

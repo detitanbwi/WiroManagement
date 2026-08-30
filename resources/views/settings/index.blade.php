@@ -33,7 +33,7 @@
     @endif
 
     <!-- Tab Navigation -->
-    <div class="flex border-b border-gray-200 space-x-2">
+    <div class="flex border-b border-gray-200 space-x-2 overflow-x-auto whitespace-nowrap">
         <button type="button"
                 @click="activeTab = 'rate-card'"
                 :class="activeTab === 'rate-card' ? 'border-primary text-primary font-bold bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium'"
@@ -364,13 +364,13 @@
             </div>
 
             <!-- Sticky Save Bar -->
-            <div class="sticky bottom-4 bg-white/95 backdrop-blur border border-gray-200 rounded-2xl p-4 shadow-xl flex items-center justify-between z-10">
-                <div class="text-xs text-gray-500">
+            <div class="sticky bottom-4 bg-white/95 backdrop-blur border border-gray-200 rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 z-10">
+                <div class="text-xs text-gray-500 text-center sm:text-left">
                     Perubahan Rate Card akan langsung berlaku pada sesi kalkulasi estimasi baru maupun yang sedang dibuka.
                 </div>
 
                 <button type="submit" 
-                        class="px-6 py-2.5 bg-primary hover:bg-blue-800 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center">
+                        class="px-6 py-2.5 bg-primary hover:bg-blue-800 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>

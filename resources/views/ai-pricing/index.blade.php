@@ -46,7 +46,7 @@
                     :class="apiStatus === 'testing' ? 'opacity-75' : ''"
                     class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors {{ $isApiConfigured ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' }}">
                 <span class="w-2 h-2 rounded-full mr-2 {{ $isApiConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500' }}"></span>
-                <span x-text="apiStatusText">{{ $isApiConfigured ? 'Gemini AI Ready' : 'Mode Offline (Lokal)' }}</span>
+                <span x-text="apiStatusText">{{ $isApiConfigured ? 'Gemini AI Ready' : 'Lokal' }}</span>
             </button>
 
             <!-- Rate Card Settings Button -->
@@ -82,11 +82,31 @@
         </div>
     </div>
 
-    <!-- Main Workspace (Split-Screen) -->
-    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden bg-gray-100">
+    <!-- Mobile View Tab Switcher (Chat vs Modul & Estimasi) -->
+    <div class="lg:hidden bg-slate-100 p-1.5 border-b border-gray-200 flex items-center justify-center space-x-1.5 z-10 flex-shrink-0">
+        <button type="button" 
+                @click="mobileTab = 'chat'; scrollToBottom()" 
+                :class="mobileTab === 'chat' ? 'bg-primary text-white font-bold shadow-sm' : 'bg-white text-gray-600 font-semibold hover:bg-gray-50'"
+                class="flex-1 py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            <span>💬 Chat Brief AI</span>
+        </button>
+        <button type="button" 
+                @click="mobileTab = 'canvas'" 
+                :class="mobileTab === 'canvas' ? 'bg-primary text-white font-bold shadow-sm' : 'bg-white text-gray-600 font-semibold hover:bg-gray-50'"
+                class="flex-1 py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            <span>📋 Modul &amp; Estimasi</span>
+            <span class="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-indigo-100 text-indigo-700 font-bold" x-text="selectedModules.length"></span>
+        </button>
+    </div>
+
+    <!-- Main Workspace (Split-Screen on Desktop, Tabbed on Mobile) -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden bg-gray-100 min-h-0">
         
         <!-- LEFT PANEL: Chat Consultant (Cols 6 on LG) -->
-        <div class="lg:col-span-6 flex flex-col bg-white border-r border-gray-200 h-full overflow-hidden">
+        <div :class="mobileTab === 'chat' ? 'flex' : 'hidden lg:flex'" 
+             class="lg:col-span-6 flex-col bg-white border-b lg:border-b-0 lg:border-r border-gray-200 h-full overflow-hidden">
             
             <!-- Chat Header / Title Info -->
             <div class="p-3 bg-gradient-to-r from-gray-50 to-indigo-50/30 border-b border-gray-200 flex items-center justify-between">
@@ -219,13 +239,14 @@
         </div>
 
         <!-- RIGHT PANEL: Live Interactive Pricing Canvas (Cols 6 on LG) -->
-        <div class="lg:col-span-6 flex flex-col bg-gray-50 h-full overflow-y-auto">
+        <div :class="mobileTab === 'canvas' ? 'flex' : 'hidden lg:flex'" 
+             class="lg:col-span-6 flex-col bg-gray-50 h-full overflow-y-auto">
             
-            <!-- Sticky Config Bar -->
-            <div class="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-200 p-4 z-20 shadow-xs space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 items-end">
-                    <!-- Client Name (Cols 2 on LG) -->
-                    <div class="lg:col-span-2">
+            <!-- Config Bar (Static on mobile, Sticky on LG desktop) -->
+            <div class="static lg:sticky lg:top-0 bg-white/95 backdrop-blur border-b border-gray-200 p-3 sm:p-4 z-20 shadow-xs space-y-2.5">
+                <div class="grid grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-2.5 items-end">
+                    <!-- Client Name (Full width on mobile 2-col, cols 2 on LG) -->
+                    <div class="col-span-2 lg:col-span-2">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nama Klien / Proyek</label>
                         <input type="text" 
                                x-model="clientName" 
@@ -235,7 +256,7 @@
                     </div>
 
                     <!-- Segment Selector -->
-                    <div>
+                    <div class="col-span-1">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Segmen Klien</label>
                         <select x-model="clientSegment" @change="syncUpdate()" 
                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
@@ -246,7 +267,7 @@
                     </div>
 
                     <!-- Platform Selector -->
-                    <div>
+                    <div class="col-span-1">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Platform</label>
                         <select x-model="platform" @change="syncUpdate()" 
                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
@@ -257,7 +278,7 @@
                     </div>
 
                     <!-- Novelty (Status Proyek) Selector -->
-                    <div>
+                    <div class="col-span-1">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Proyek</label>
                         <select x-model="novelty" @change="syncUpdate()"
                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
@@ -267,7 +288,7 @@
                     </div>
 
                     <!-- Kesiapan Brief / Risk Buffer Selector -->
-                    <div>
+                    <div class="col-span-1">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kesiapan Brief</label>
                         <select x-model="riskBufferPercent" @change="syncUpdate()"
                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
@@ -663,7 +684,8 @@ function aiPricingWorkspace(config) {
         inputMessage: '',
         isThinking: false,
         apiStatus: 'ready',
-        apiStatusText: '{{ $isApiConfigured ? "Gemini AI Ready" : "Mode Offline (Lokal)" }}',
+        apiStatusText: '{{ $isApiConfigured ? "Gemini AI Ready" : "Lokal" }}',
+        mobileTab: 'canvas',
         sessionTitle: '{{ addslashes($session->title) }}',
         waModalOpen: false,
         historyOpen: false,
@@ -936,12 +958,12 @@ function aiPricingWorkspace(config) {
                     alert('✅ ' + data.message + '\n\nRespon Gemini:\n"' + data.response + '"');
                 } else {
                     this.apiStatus = 'offline';
-                    this.apiStatusText = 'Mode Lokal Aktif';
+                    this.apiStatusText = 'Lokal';
                     alert('ℹ️ ' + data.message);
                 }
             } catch (e) {
                 this.apiStatus = 'offline';
-                this.apiStatusText = 'Mode Lokal Aktif';
+                this.apiStatusText = 'Lokal';
                 alert('⚠️ Mode Offline: ' + e.message);
             }
         },

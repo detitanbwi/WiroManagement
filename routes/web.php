@@ -16,19 +16,10 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 
-Route::get('/test-pdf', function () {
-    return response()->file(storage_path("app/public/attachments/quotations/q929Xw1DPMUZI5VThfMhnFg5lRXReJ9owRHyQz7J.pdf"));
-});
-
-Route::get('/dump-path/{path}', function ($path) {
-    return 'Path is: ' . request()->path();
-})->where('path', '.*');
-
 // Route to bypass broken symlinks on shared hosting
 Route::get('/storage/{path}', function ($path) {
-    info("Storage route hit with path: " . $path);
-    // Only allow attachments directory
-    if (str_starts_with($path, 'attachments/')) {
+    // Allow attachments and clients directories
+    if (str_starts_with($path, 'attachments/') || str_starts_with($path, 'clients/')) {
         $fullPath = storage_path("app/public/{$path}");
         if (File::exists($fullPath)) {
             return response()->file($fullPath);
@@ -43,6 +34,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
 
     // Profile Routes
     Route::get('/profile', [UserController::class, 'profile'])->name('profile');
@@ -95,8 +87,4 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/update-modules', [\App\Http\Controllers\AiPricingController::class, 'updateModules'])->name('update-modules');
         Route::delete('/{id}', [\App\Http\Controllers\AiPricingController::class, 'deleteSession'])->name('delete');
     });
-});
-
-Route::fallback(function () {
-    return 'Fallback route hit with path: ' . request()->path();
 });

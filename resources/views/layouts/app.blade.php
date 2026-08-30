@@ -30,32 +30,36 @@
             font-family: 'Inter', sans-serif;
         }
     </style>
+
+    <!-- Alpine.js (Loaded in head with defer) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
 
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-50 text-gray-800 antialiased">
 
     <div class="flex h-screen overflow-hidden" x-data="{ mobileMenuOpen: false }">
         <!-- Sidebar Overlay (Mobile) -->
         <div x-show="mobileMenuOpen" 
+             x-cloak
              x-transition:enter="transition-opacity ease-linear duration-300"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
              x-transition:leave="transition-opacity ease-linear duration-300"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 md:hidden" 
+             class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs z-40 md:hidden" 
              @click="mobileMenuOpen = false"></div>
 
         <!-- Sidebar -->
         <aside :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'" 
-               class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col shadow-sm">
-            <div class="h-20 flex items-center justify-between border-b border-gray-200 px-6">
-                <div class="flex items-center space-x-2">
-                    <img src="{{ asset('logo.png') }}" alt="Wiro Logo" class="h-10 w-auto">
-                    <span class="text-lg font-bold text-primary tracking-wide">WIRO APP</span>
+               class="fixed inset-y-0 left-0 z-50 w-72 md:w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col shadow-xl md:shadow-none">
+            <div class="h-16 md:h-20 flex items-center justify-between border-b border-gray-200 px-5 md:px-6">
+                <div class="flex items-center space-x-2.5">
+                    <img src="{{ asset('logo.png') }}" alt="Wiro Logo" class="h-8 md:h-10 w-auto">
+                    <span class="text-base md:text-lg font-extrabold text-primary tracking-wide">WIRO APP</span>
                 </div>
                 <!-- Close button for mobile -->
-                <button @click="mobileMenuOpen = false" class="md:hidden text-gray-500">
+                <button @click="mobileMenuOpen = false" class="md:hidden text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -192,21 +196,29 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Top Header (Mobile mostly) -->
-            <header class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-primary to-teal-600 text-white shadow-md md:hidden">
-                <span class="text-xl font-bold tracking-wide">WIRO APP</span>
-                <button @click="mobileMenuOpen = true" class="text-white/80 hover:text-white focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+            <!-- Top Header (Mobile) -->
+            <header class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary to-blue-700 text-white shadow-md md:hidden z-30 flex-shrink-0">
+                <div class="flex items-center space-x-2">
+                    <button @click="mobileMenuOpen = true" class="text-white hover:text-blue-100 p-1 rounded-lg focus:outline-none transition-colors" aria-label="Open Sidebar Menu">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <span class="text-base font-extrabold tracking-wide">WIRO APP</span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <a href="{{ route('profile') }}" class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold text-white border border-white/30">
+                        {{ substr(auth()->user()->name ?? 'U', 0, 1) }}
+                    </a>
+                </div>
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-indigo-50/90 via-blue-50/60 to-teal-50/70 p-4 md:p-6 relative">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-indigo-50/90 via-blue-50/60 to-teal-50/70 p-3 sm:p-4 md:p-6 relative">
                 <!-- Notification Toast (Auto-dismiss) -->
                 @if(session('success') || session('error'))
                     <div x-data="{ show: true }" 
@@ -218,7 +230,7 @@
                          x-transition:leave="transition ease-in duration-300"
                          x-transition:leave-start="opacity-100 transform translate-x-0"
                          x-transition:leave-end="opacity-0 transform translate-x-8"
-                         class="fixed top-6 right-6 z-[60] min-w-[320px] max-w-md bg-white shadow-2xl rounded-xl border-l-4 {{ session('success') ? 'border-green-500' : 'border-red-500' }} p-4 pointer-events-auto"
+                         class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] min-w-[280px] sm:min-w-[320px] max-w-md bg-white shadow-2xl rounded-xl border-l-4 {{ session('success') ? 'border-green-500' : 'border-red-500' }} p-3 sm:p-4 pointer-events-auto"
                          style="display: none;">
                         <div class="flex items-start">
                             <div class="flex-shrink-0 pt-0.5">
@@ -229,14 +241,14 @@
                                 @endif
                             </div>
                             <div class="ml-3 flex-1">
-                                <p class="text-sm font-bold text-gray-900 leading-none">
+                                <p class="text-xs sm:text-sm font-bold text-gray-900 leading-none">
                                     {{ session('success') ? 'Sukses!' : 'Perhatian!' }}
                                 </p>
-                                <p class="mt-1 text-sm text-gray-500">
+                                <p class="mt-1 text-xs sm:text-sm text-gray-500">
                                     {{ session('success') ?? session('error') }}
                                 </p>
                             </div>
-                            <div class="ml-4 flex-shrink-0 flex">
+                            <div class="ml-3 flex-shrink-0 flex">
                                 <button @click="show = false" class="inline-flex text-gray-400 hover:text-gray-500 focus:outline-none transition duration-150 ease-in-out">
                                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -251,9 +263,6 @@
             </main>
         </div>
     </div>
-
-    <!-- Alpine.js for interactions -->
-    <script src="//unpkg.com/alpinejs" defer></script>
 </body>
 
 </html>

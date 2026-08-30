@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,12 +30,19 @@
 
                 @if(session('error'))
                 <div class="mb-6 p-4 bg-red-100 border border-red-200 text-red-600 rounded-2xl flex items-center shadow-sm">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span class="text-sm font-medium">{{ session('error') }}</span>
                 </div>
                 @endif
 
-                <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
+                @if(session('success'))
+                <div class="mb-6 p-4 bg-green-100 border border-green-200 text-green-700 rounded-2xl flex items-center shadow-sm">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span class="text-sm font-medium">{{ session('success') }}</span>
+                </div>
+                @endif
+
+                <form action="{{ route('login.post') }}" method="POST" class="space-y-6" id="loginForm">
                     @csrf
                     
                     <div>
@@ -46,14 +53,14 @@
                             </div>
                             <input type="email" name="email" id="email" required value="{{ old('email') }}"
                                 class="block w-full pl-12 pr-4 py-4 bg-white/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700 placeholder-gray-400 shadow-sm"
-                                placeholder="nama@email.com">
+                                placeholder="nama@email.com" autocomplete="username">
                         </div>
                         @error('email') <p class="mt-2 text-xs text-red-600 font-medium italic">* {{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <label for="password" class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Secret Key</label>
+                            <label for="password" class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Secret Key / Password</label>
                         </div>
                         <div class="relative group">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
@@ -61,7 +68,7 @@
                             </div>
                             <input type="password" name="password" id="password" required
                                 class="block w-full pl-12 pr-4 py-4 bg-white/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700 placeholder-gray-400 shadow-sm"
-                                placeholder="••••••••">
+                                placeholder="••••••••" autocomplete="current-password">
                         </div>
                     </div>
 
@@ -83,5 +90,18 @@
             &copy; 2026 Wirodayan Digital &bull; All Rights Reserved
         </p>
     </div>
+
+    <!-- Auto-refresh token if tab stays idle for over 45 minutes -->
+    <script>
+        const pageLoadTime = Date.now();
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // If page has been idle for more than 45 minutes, silently reload to get a fresh CSRF token
+                if (Date.now() - pageLoadTime > 45 * 60 * 1000) {
+                    window.location.reload();
+                }
+            }
+        });
+    </script>
 </body>
 </html>

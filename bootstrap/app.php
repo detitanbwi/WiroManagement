@@ -15,13 +15,37 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Handle CSRF Token Mismatch & Session Expired (HTTP 419)
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Sesi telah berakhir. Silakan login kembali.'], 419);
+            }
+
+            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir demi keamanan. Silakan login kembali.');
+        });
+
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+            if ($e->getStatusCode() === 419) {
+                if ($request->hasSession()) {
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                }
+
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Sesi telah berakhir. Silakan login kembali.'], 419);
+                }
+
+                return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir demi keamanan. Silakan login kembali.');
+            }
+
             if ($e->getStatusCode() === 403) {
                 info("403 thrown at: " . $e->getFile() . " line " . $e->getLine() . "\n" . $e->getTraceAsString());
                 return response('This is a custom 403 from Laravel!', 403);
             }
-        });
-        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
-            return redirect()->route('login')->with('error', 'Sesi anda telah berakhir demi keamanan. Silakan login kembali.');
         });
     })->create();
