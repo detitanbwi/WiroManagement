@@ -260,9 +260,9 @@
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Segmen Klien</label>
                         <select x-model="clientSegment" @change="syncUpdate()" 
                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
-                            <template x-for="(s, key) in rules.segments" :key="key">
-                                <option :value="key" x-text="s.name" :selected="key === clientSegment"></option>
-                            </template>
+                            @foreach($rules['segments'] ?? [] as $key => $s)
+                                <option value="{{ $key }}">{{ $s['name'] ?? $key }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -271,9 +271,9 @@
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Platform</label>
                         <select x-model="platform" @change="syncUpdate()" 
                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
-                            <template x-for="(p, key) in rules.platforms" :key="key">
-                                <option :value="key" x-text="p.name + ' (' + p.multiplier + 'x)'" :selected="key === platform"></option>
-                            </template>
+                            @foreach($rules['platforms'] ?? [] as $key => $p)
+                                <option value="{{ $key }}">{{ $p['name'] ?? $key }} ({{ $p['multiplier'] ?? 1 }}x)</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -282,8 +282,9 @@
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Proyek</label>
                         <select x-model="novelty" @change="syncUpdate()"
                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
-                            <option value="from_scratch">Bangun Baru (1.0x)</option>
-                            <option value="existing_project">Lanjut Existing (1.2x)</option>
+                            @foreach($rules['novelty_options'] ?? [] as $nov)
+                                <option value="{{ $nov['value'] ?? 'from_scratch' }}">{{ $nov['name'] ?? $nov['code'] }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -292,9 +293,9 @@
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kesiapan Brief</label>
                         <select x-model="riskBufferPercent" @change="syncUpdate()"
                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-800 focus:bg-white outline-none">
-                            <option value="-7.5">Matang (-7.5%)</option>
-                            <option value="0">Normal (0%)</option>
-                            <option value="7.5">Mentah (+7.5%)</option>
+                            @foreach($rules['risk_buffer_options'] ?? [] as $rb)
+                                <option value="{{ $rb['value'] }}">{{ $rb['label'] ?? $rb['code'] }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -692,14 +693,15 @@ function aiPricingWorkspace(config) {
         waText: '',
         copyButtonText: 'Salin Teks WhatsApp',
 
-        moduleCategories: [
-            'Core System & Bisnis',
-            'Keamanan & Hak Akses',
-            'Tampilan & Desain UI',
-            'Import, Export & Database',
-            'Integrasi API & Gateway',
-            'Hardware & POS'
-        ],
+        get moduleCategories() {
+            const cats = [];
+            (this.rules.modules || []).forEach(m => {
+                if (m.category && !cats.includes(m.category)) {
+                    cats.push(m.category);
+                }
+            });
+            return cats;
+        },
 
         initComponent() {
             this.scrollToBottom();
