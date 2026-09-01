@@ -185,8 +185,14 @@ class DocumentController extends Controller
         $tmpOut = null;
 
         try {
-            $tmpMain = tempnam(sys_get_temp_dir(), 'pdf_main_') . '.pdf';
-            $tmpOut = tempnam(sys_get_temp_dir(), 'pdf_merged_') . '.pdf';
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                @mkdir($tempDir, 0777, true);
+            }
+
+            $uniqueId = uniqid('pdf_', true);
+            $tmpMain = $tempDir . '/' . $uniqueId . '_main.pdf';
+            $tmpOut = $tempDir . '/' . $uniqueId . '_merged.pdf';
 
             file_put_contents($tmpMain, $mainPdfContent);
 
