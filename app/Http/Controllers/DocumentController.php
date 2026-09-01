@@ -138,6 +138,14 @@ class DocumentController extends Controller
 
         $attachmentPath = $this->resolveAttachmentPath($attachmentRelativePath);
 
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $downloadFilename . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0'
+        ];
+
         if ($attachmentPath) {
             // Try 1: libmergepdf (FPDI) — works for PDF ≤1.4
             try {
@@ -146,9 +154,7 @@ class DocumentController extends Controller
                 $merger->addFile($attachmentPath);
                 $mergedPdf = $merger->merge();
 
-                return response($mergedPdf)
-                    ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'inline; filename="' . $downloadFilename . '"');
+                return response($mergedPdf, 200, $headers);
             } catch (\Throwable $e) {
                 try { Log::info("FPDI merge failed, trying qpdf fallback: " . $e->getMessage()); } catch (\Throwable $_) {}
             }
@@ -156,16 +162,12 @@ class DocumentController extends Controller
             // Try 2: qpdf binary fallback — handles all PDF versions
             $mergedViaQpdf = $this->mergeWithQpdf($mainPdfOutput, $attachmentPath);
             if ($mergedViaQpdf !== null) {
-                return response($mergedViaQpdf)
-                    ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'inline; filename="' . $downloadFilename . '"');
+                return response($mergedViaQpdf, 200, $headers);
             }
         }
 
         // Final fallback: return main document PDF without attachment
-        return response($mainPdfOutput)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="' . $downloadFilename . '"');
+        return response($mainPdfOutput, 200, $headers);
     }
 
     /**
