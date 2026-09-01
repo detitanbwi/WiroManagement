@@ -156,13 +156,19 @@ class DocumentController extends Controller
 
                 return response($mergedPdf, 200, $headers);
             } catch (\Throwable $e) {
-                try { Log::info("FPDI merge failed, trying qpdf fallback: " . $e->getMessage()); } catch (\Throwable $_) {}
+                try { Log::info("FPDI merge failed, trying qpdf/ghostscript fallback: " . $e->getMessage()); } catch (\Throwable $_) {}
             }
 
             // Try 2: qpdf binary fallback — handles all PDF versions
             $mergedViaQpdf = $this->mergeWithQpdf($mainPdfOutput, $attachmentPath);
             if ($mergedViaQpdf !== null) {
                 return response($mergedViaQpdf, 200, $headers);
+            }
+
+            // Try 3: Ghostscript (gs) binary fallback — commonly preinstalled on shared hosting (cPanel/Linux)
+            $mergedViaGs = $this->mergeWithGhostscript($mainPdfOutput, $attachmentPath);
+            if ($mergedViaGs !== null) {
+                return response($mergedViaGs, 200, $headers);
             }
         }
 
@@ -177,7 +183,6 @@ class DocumentController extends Controller
     {
         $qpdfBin = $this->findQpdfBinary();
         if (!$qpdfBin) {
-            try { Log::warning('qpdf binary not found. Cannot merge PDF 1.5+ attachments.'); } catch (\Throwable $_) {}
             return null;
         }
 
@@ -221,11 +226,61 @@ class DocumentController extends Controller
     }
 
     /**
+     * Merge PDFs using Ghostscript (gs) command-line tool (preinstalled on cPanel/Linux).
+     */
+    private function mergeWithGhostscript(string $mainPdfContent, string $attachmentPath): ?string
+    {
+        $gsBin = $this->findGhostscriptBinary();
+        if (!$gsBin) {
+            return null;
+        }
+
+        $tmpMain = null;
+        $tmpOut = null;
+
+        try {
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                @mkdir($tempDir, 0777, true);
+            }
+
+            $uniqueId = uniqid('gs_', true);
+            $tmpMain = $tempDir . '/' . $uniqueId . '_main.pdf';
+            $tmpOut = $tempDir . '/' . $uniqueId . '_merged.pdf';
+
+            file_put_contents($tmpMain, $mainPdfContent);
+
+            $cmd = escapeshellarg($gsBin) . ' -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile='
+                . escapeshellarg($tmpOut) . ' '
+                . escapeshellarg($tmpMain) . ' '
+                . escapeshellarg($attachmentPath) . ' 2>&1';
+
+            exec($cmd, $output, $returnCode);
+
+            if ($returnCode === 0 && file_exists($tmpOut)) {
+                $mergedContent = file_get_contents($tmpOut);
+                try { Log::info("PDF merged successfully via Ghostscript ({$attachmentPath})"); } catch (\Throwable $_) {}
+                return $mergedContent;
+            }
+
+            try { Log::error("Ghostscript merge failed (code {$returnCode}): " . implode("\n", $output)); } catch (\Throwable $_) {}
+            return null;
+        } catch (\Throwable $e) {
+            try { Log::error("Ghostscript merge exception: " . $e->getMessage()); } catch (\Throwable $_) {}
+            return null;
+        } finally {
+            if ($tmpMain && file_exists($tmpMain)) @unlink($tmpMain);
+            if ($tmpOut && file_exists($tmpOut)) @unlink($tmpOut);
+        }
+    }
+
+    /**
      * Locate the qpdf binary on the system.
      */
     private function findQpdfBinary(): ?string
     {
         $paths = [
+            base_path('bin/qpdf'),
             '/opt/homebrew/bin/qpdf',
             '/usr/local/bin/qpdf',
             '/usr/bin/qpdf',
@@ -239,6 +294,33 @@ class DocumentController extends Controller
 
         // Try which
         $which = trim(shell_exec('which qpdf 2>/dev/null') ?? '');
+        if ($which && file_exists($which)) {
+            return $which;
+        }
+
+        return null;
+    }
+
+    /**
+     * Locate the Ghostscript (gs) binary on the system.
+     */
+    private function findGhostscriptBinary(): ?string
+    {
+        $paths = [
+            base_path('bin/gs'),
+            '/usr/bin/gs',
+            '/usr/local/bin/gs',
+            '/opt/homebrew/bin/gs',
+        ];
+
+        foreach ($paths as $path) {
+            if (file_exists($path) && is_executable($path)) {
+                return $path;
+            }
+        }
+
+        // Try which
+        $which = trim(shell_exec('which gs 2>/dev/null') ?? '');
         if ($which && file_exists($which)) {
             return $which;
         }
