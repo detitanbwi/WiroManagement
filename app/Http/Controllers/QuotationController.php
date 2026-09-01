@@ -30,6 +30,8 @@ class QuotationController extends Controller
         if ($request->hasFile('attachment_pdf')) {
             $path = $request->file('attachment_pdf')->store('attachments/quotations', 'public');
             $validated['attachment_pdf'] = $path;
+        } else {
+            $validated['attachment_pdf'] = null;
         }
 
         $project->quotations()->create($validated);
@@ -58,12 +60,19 @@ class QuotationController extends Controller
 
         if ($request->hasFile('attachment_pdf')) {
             // Delete old file if exists
-            if ($quotation->attachment_pdf) {
+            if ($quotation->attachment_pdf && $quotation->attachment_pdf !== '0' && Storage::disk('public')->exists($quotation->attachment_pdf)) {
                 Storage::disk('public')->delete($quotation->attachment_pdf);
             }
             
             $path = $request->file('attachment_pdf')->store('attachments/quotations', 'public');
             $validated['attachment_pdf'] = $path;
+        } else {
+            // Don't overwrite existing attachment, but sanitize dirty '0' values
+            if ($quotation->attachment_pdf === '0' || $quotation->attachment_pdf === '') {
+                $validated['attachment_pdf'] = null;
+            } else {
+                unset($validated['attachment_pdf']);
+            }
         }
 
         $quotation->update($validated);
@@ -113,7 +122,8 @@ class QuotationController extends Controller
                 'due_date' => now()->addDays(7),
                 'issued_date' => now(),
                 'status' => 'issued',
-                'notes' => 'Generated from Quotation ' . $quotation->quotation_number
+                'notes' => 'Generated from Quotation ' . $quotation->quotation_number,
+                'attachment_pdf' => $quotation->attachment_pdf
             ]);
 
             // Create Invoice Item
