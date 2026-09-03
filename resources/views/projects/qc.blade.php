@@ -67,6 +67,59 @@
         </div>
     </div>
 
+    <!-- Global Project Test Cases Box -->
+    <div class="px-6 pb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Project Test Cases (Global)
+                </h2>
+                <button @click="openNewTestCaseModal(null)" class="px-3 py-1.5 bg-white border border-gray-300 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 shadow-sm transition-colors">
+                    + Add Root Test Case
+                </button>
+            </div>
+            
+            <div class="p-0">
+                <template x-for="tc in flatTestCases" :key="tc.id">
+                    <div class="flex justify-between items-center p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
+                         :style="`padding-left: ${tc.level * 2 + 1}rem`">
+                        <div class="flex items-center gap-3">
+                            <button x-show="tc.children && tc.children.length > 0" 
+                                    @click="toggleTestCase(tc.id)"
+                                    class="text-gray-400 hover:text-gray-600 focus:outline-none transition-transform" 
+                                    :class="{'rotate-90': tc.is_expanded}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                            <span x-show="!tc.children || tc.children.length === 0" class="w-4 h-4 inline-block"></span>
+                            
+                            <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100" x-text="tc.code"></span>
+                            <span class="text-sm font-medium text-gray-800" x-text="tc.title"></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
+                                  :class="{
+                                    'bg-green-100 text-green-700 border border-green-200': tc.status === 'passed',
+                                    'bg-red-100 text-red-700 border border-red-200': tc.status === 'failed',
+                                    'bg-gray-100 text-gray-500 border border-gray-200': tc.status === 'pending'
+                                  }" x-text="tc.status"></span>
+                            <button @click.stop="openViewTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-800 p-1 rounded-md transition-opacity" title="View Details">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                            <button @click.stop="openNewTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-xs text-blue-600 hover:text-blue-800 font-medium transition-opacity" title="Add Sub Test">+ Sub Test</button>
+                        </div>
+                    </div>
+                </template>
+                
+                <template x-if="projectTestCases.length === 0">
+                    <div class="p-8 text-center text-gray-500 text-sm">
+                        No test cases found for this project.
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
     <!-- Modals Overlay View -->
     
     <!-- Task Detail & Manual QA Modal -->
@@ -531,6 +584,163 @@
             </div>
         </div>
     </div>
+
+    <!-- New Test Case Modal -->
+    <div x-show="isNewTestCaseModalOpen" 
+         class="fixed inset-0 z-[60] overflow-y-auto" 
+         aria-labelledby="modal-title" role="dialog" aria-modal="true" x-cloak>
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isNewTestCaseModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" 
+                 @click="closeNewTestCaseModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div x-show="isNewTestCaseModalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200">
+                
+                <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                        <span x-text="parentTestCase ? 'Add Sub Test Case' : 'Add Root Test Case'"></span>
+                    </h3>
+                    <button @click="closeNewTestCaseModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="px-6 py-4">
+                    <template x-if="parentTestCase">
+                        <div class="mb-4 p-3 bg-blue-50 border border-blue-100 rounded text-sm">
+                            <span class="text-gray-500 font-medium">Parent:</span> 
+                            <span class="font-bold text-blue-800" x-text="parentTestCase.code + ' - ' + parentTestCase.title"></span>
+                        </div>
+                    </template>
+                    <form @submit.prevent="submitNewTestCase">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Title <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="newTestCase.title" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Pre-conditions</label>
+                                <textarea rows="2" x-model="newTestCase.preconditions" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="Requirements before executing..."></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Expected Result</label>
+                                <textarea rows="2" x-model="newTestCase.expected" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="What is the expected outcome?"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" @click="closeNewTestCaseModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmittingTestCase" :class="{'opacity-50 cursor-not-allowed': isSubmittingTestCase}">
+                                <span x-show="!isSubmittingTestCase">Save Test Case</span>
+                                <span x-show="isSubmittingTestCase">Saving...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Test Case Details Modal -->
+    <div x-show="isViewTestCaseModalOpen" 
+         class="fixed inset-0 z-[60] overflow-y-auto" 
+         aria-labelledby="modal-title" role="dialog" aria-modal="true" x-cloak>
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isViewTestCaseModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" 
+                 @click="closeViewTestCaseModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div x-show="isViewTestCaseModalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full border border-gray-200">
+                
+                <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100" x-text="viewingTestCase?.code"></span>
+                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
+                                  :class="{
+                                    'bg-green-100 text-green-700 border border-green-200': viewingTestCase?.status === 'passed',
+                                    'bg-red-100 text-red-700 border border-red-200': viewingTestCase?.status === 'failed',
+                                    'bg-gray-100 text-gray-500 border border-gray-200': viewingTestCase?.status === 'pending'
+                                  }" x-text="viewingTestCase?.status"></span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mt-1" x-text="viewingTestCase?.title"></h3>
+                    </div>
+                    <button @click="closeViewTestCaseModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none mt-1">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="px-6 py-6 space-y-6">
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                            Pre-conditions
+                        </h4>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap" x-text="viewingTestCase?.preconditions || 'No pre-conditions specified.'"></div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Expected Result
+                        </h4>
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-900 whitespace-pre-wrap" x-text="viewingTestCase?.expected || 'No expected result specified.'"></div>
+                    </div>
+
+                    <div x-show="viewingTestCase?.steps && viewingTestCase.steps.length > 0">
+                        <h4 class="text-sm font-semibold text-gray-800 mb-2">Test Steps</h4>
+                        <ol class="list-decimal pl-5 text-sm text-gray-600 space-y-2">
+                            <template x-for="(step, index) in viewingTestCase?.steps" :key="index">
+                                <li x-text="step" class="pl-1"></li>
+                            </template>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
+                    <button @click="closeViewTestCaseModal()" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -569,8 +779,23 @@ function qcDashboard() {
             column_id: 'todo'
         },
 
+        // Test Case Modal State
+        isNewTestCaseModalOpen: false,
+        isSubmittingTestCase: false,
+        parentTestCase: null,
+        newTestCase: {
+            title: '',
+            preconditions: '',
+            expected: ''
+        },
+
+        // View Test Case State
+        isViewTestCaseModalOpen: false,
+        viewingTestCase: null,
+
         init() {
             this.fetchTasks();
+            this.fetchProjectTestCases();
         },
 
         async fetchTasks() {
@@ -582,6 +807,157 @@ function qcDashboard() {
             } catch (error) {
                 console.error("Error fetching tasks:", error);
             }
+        },
+
+        projectTestCases: [],
+        
+        get flatTestCases() {
+            return this.flattenTestCases(this.projectTestCases, 0);
+        },
+
+        flattenTestCases(cases, level = 0) {
+            let flat = [];
+            cases.forEach(tc => {
+                tc.level = level;
+                flat.push(tc);
+                if (tc.is_expanded && tc.children && tc.children.length > 0) {
+                    flat = flat.concat(this.flattenTestCases(tc.children, level + 1));
+                }
+            });
+            return flat;
+        },
+
+        toggleTestCase(id) {
+            const toggleInTree = (cases) => {
+                for (let tc of cases) {
+                    if (tc.id === id) {
+                        tc.is_expanded = !tc.is_expanded;
+                        return true;
+                    }
+                    if (tc.children && tc.children.length > 0) {
+                        if (toggleInTree(tc.children)) return true;
+                    }
+                }
+                return false;
+            };
+            toggleInTree(this.projectTestCases);
+        },
+
+        async fetchProjectTestCases() {
+            try {
+                const response = await fetch(`/api/projects/${this.projectId}/qc/test-cases`);
+                if (response.ok) {
+                    // Retain expanded state if possible
+                    const prevExpandedIds = new Set(this.getExpandedIds(this.projectTestCases));
+                    const newCases = await response.json();
+                    this.restoreExpandedState(newCases, prevExpandedIds);
+                    this.projectTestCases = newCases;
+                }
+            } catch (error) {
+                console.error("Error fetching project test cases:", error);
+            }
+        },
+
+        getExpandedIds(cases) {
+            let ids = [];
+            for (let tc of cases) {
+                if (tc.is_expanded) ids.push(tc.id);
+                if (tc.children && tc.children.length > 0) {
+                    ids = ids.concat(this.getExpandedIds(tc.children));
+                }
+            }
+            return ids;
+        },
+
+        restoreExpandedState(cases, expandedIds) {
+            for (let tc of cases) {
+                if (expandedIds.has(tc.id)) {
+                    tc.is_expanded = true;
+                }
+                if (tc.children && tc.children.length > 0) {
+                    this.restoreExpandedState(tc.children, expandedIds);
+                }
+            }
+        },
+
+        openViewTestCaseModal(tc) {
+            this.viewingTestCase = tc;
+            this.isViewTestCaseModalOpen = true;
+        },
+
+        closeViewTestCaseModal() {
+            this.isViewTestCaseModalOpen = false;
+            setTimeout(() => {
+                this.viewingTestCase = null;
+            }, 300);
+        },
+
+        openNewTestCaseModal(parentTC = null) {
+            this.parentTestCase = parentTC;
+            this.newTestCase = {
+                title: '',
+                preconditions: '',
+                expected: ''
+            };
+            this.isNewTestCaseModalOpen = true;
+        },
+
+        closeNewTestCaseModal() {
+            this.isNewTestCaseModalOpen = false;
+        },
+
+        async submitNewTestCase() {
+            if (this.isSubmittingTestCase) return;
+            this.isSubmittingTestCase = true;
+
+            const payload = {
+                title: this.newTestCase.title,
+                preconditions: this.newTestCase.preconditions,
+                expected: this.newTestCase.expected,
+                parent_id: this.parentTestCase ? this.parentTestCase.id : null
+            };
+
+            try {
+                const response = await fetch(`/api/projects/${this.projectId}/qc/test-cases`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    // Expand parent automatically so the user sees the newly added child
+                    if (this.parentTestCase) {
+                        this.expandTestCase(this.projectTestCases, this.parentTestCase.id);
+                    }
+                    await this.fetchProjectTestCases();
+                    this.closeNewTestCaseModal();
+                } else {
+                    alert('Gagal menyimpan test case.');
+                }
+            } catch (error) {
+                console.error('Error submitting new test case:', error);
+            } finally {
+                this.isSubmittingTestCase = false;
+            }
+        },
+
+        expandTestCase(cases, id) {
+            for (let tc of cases) {
+                if (tc.id === id) {
+                    tc.is_expanded = true;
+                    return true;
+                }
+                if (tc.children && tc.children.length > 0) {
+                    if (this.expandTestCase(tc.children, id)) {
+                        tc.is_expanded = true; // also expand parents along the path
+                        return true;
+                    }
+                }
+            }
+            return false;
         },
 
         getTasksByColumn(columnId) {

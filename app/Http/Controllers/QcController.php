@@ -104,4 +104,65 @@ class QcController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function getProjectTestCases(Project $project)
+    {
+        // Fetch all test cases for the project
+        // Note: For older test cases that might not have project_id, they won't show up unless migrated properly.
+        $testCases = TestCase::where('project_id', $project->id)->get();
+        
+        $tree = $this->buildTestCaseTree($testCases, null);
+        
+        return response()->json($tree);
+    }
+
+    private function buildTestCaseTree($testCases, $parentId = null)
+    {
+        $branch = [];
+
+        foreach ($testCases as $testCase) {
+            if ($testCase->parent_id == $parentId) {
+                $children = $this->buildTestCaseTree($testCases, $testCase->id);
+                
+                $formatted = [
+                    'id' => $testCase->id,
+                    'code' => $testCase->code,
+                    'title' => $testCase->title,
+                    'preconditions' => $testCase->preconditions,
+                    'expected' => $testCase->expected,
+                    'status' => $testCase->status,
+                    'steps' => $testCase->steps ?? [],
+                    'is_expanded' => false // For frontend Alpine state
+                ];
+
+                $formatted['children'] = $children;
+                $branch[] = $formatted;
+            }
+        }
+
+        return $branch;
+    }
+
+    public function storeProjectTestCase(Request $request, Project $project)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'preconditions' => 'nullable|string',
+            'expected' => 'nullable|string',
+            'parent_id' => 'nullable|exists:test_cases,id'
+        ]);
+
+        $testCase = TestCase::create([
+            'project_id' => $project->id,
+            'parent_id' => $request->parent_id,
+            'code' => 'TC-' . strtoupper(substr(uniqid(), -5)),
+            'title' => $request->title,
+            'preconditions' => $request->preconditions,
+            'expected' => $request->expected,
+            'status' => 'pending',
+            'steps' => []
+        ]);
+
+        return response()->json(['success' => true, 'testCase' => $testCase]);
+    }
 }

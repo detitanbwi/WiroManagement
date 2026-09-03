@@ -50,6 +50,8 @@ Route::middleware('auth')->group(function () {
     
     // QA/QC API routes
     Route::get('api/projects/{project}/qc/tasks', [QcController::class, 'getTasks'])->name('api.qc.tasks');
+    Route::get('api/projects/{project}/qc/test-cases', [QcController::class, 'getProjectTestCases'])->name('api.qc.project.test-cases');
+    Route::post('api/projects/{project}/qc/test-cases', [QcController::class, 'storeProjectTestCase'])->name('api.qc.project.test-cases.store');
     Route::post('api/projects/{project}/qc/tasks', [QcController::class, 'storeTask'])->name('api.qc.tasks.store');
     Route::post('api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])->name('api.qc.tasks.move');
     Route::post('api/qc/test-cases/{testCase}/result', [QcController::class, 'submitTestResult'])->name('api.qc.test-cases.result');
