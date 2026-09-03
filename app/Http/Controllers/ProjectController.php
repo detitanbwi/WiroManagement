@@ -42,6 +42,12 @@ class ProjectController extends Controller
         return view('projects.show', compact('project'));
     }
 
+    public function qc(Project $project)
+    {
+        $users = \App\Models\User::all();
+        return view('projects.qc', compact('project', 'users'));
+    }
+
     public function edit(Project $project)
     {
         $clients = Client::all();

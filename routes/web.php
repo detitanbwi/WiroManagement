@@ -9,6 +9,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ProjectExpenseController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\QcController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
@@ -45,9 +46,13 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('clients', ClientController::class);
     Route::resource('projects', ProjectController::class);
-    Route::get('projects/{project}/qc', function(\App\Models\Project $project) {
-        return 'Ini Halaman QC';
-    })->name('projects.qc');
+    Route::get('projects/{project}/qc', [ProjectController::class, 'qc'])->name('projects.qc');
+    
+    // QA/QC API routes
+    Route::get('api/projects/{project}/qc/tasks', [QcController::class, 'getTasks'])->name('api.qc.tasks');
+    Route::post('api/projects/{project}/qc/tasks', [QcController::class, 'storeTask'])->name('api.qc.tasks.store');
+    Route::post('api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])->name('api.qc.tasks.move');
+    Route::post('api/qc/test-cases/{testCase}/result', [QcController::class, 'submitTestResult'])->name('api.qc.test-cases.result');
 
     Route::resource('projects.invoices', InvoiceController::class)->shallow();
     Route::resource('projects.quotations', QuotationController::class)->shallow();

@@ -47,6 +47,11 @@ class Project extends Model
         return $this->hasMany(ProjectExpense::class);
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(ProjectTask::class);
+    }
+
     // Ledger Logic
     public function getContractValueAttribute()
     {
