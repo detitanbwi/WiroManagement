@@ -52,12 +52,7 @@
                                     <div class="flex -space-x-1 overflow-hidden">
                                         <div class="inline-block h-6 w-6 rounded-full bg-blue-100 text-blue-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold uppercase" x-text="task.assignee.substring(0,2)"></div>
                                     </div>
-                                    <template x-if="task.testCasesCount > 0">
-                                        <div class="flex items-center text-xs text-gray-500" title="Test Cases">
-                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                                            <span x-text="task.passedTests + '/' + task.testCasesCount"></span>
-                                        </div>
-                                    </template>
+
                                 </div>
                             </div>
                         </template>
@@ -105,6 +100,12 @@
                                   }" x-text="tc.status"></span>
                             <button @click.stop="openViewTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-800 p-1 rounded-md transition-opacity" title="View Details">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                            <button @click.stop="openEditTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-blue-500 hover:text-blue-700 p-1 rounded-md transition-opacity" title="Edit Test Case">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button @click.stop="openRunTestModal(tc)" class="opacity-0 group-hover:opacity-100 text-green-600 hover:text-green-800 p-1 rounded-md transition-opacity" title="Run Test">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </button>
                             <button @click.stop="openNewTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-xs text-blue-600 hover:text-blue-800 font-medium transition-opacity" title="Add Sub Test">+ Sub Test</button>
                         </div>
@@ -230,152 +231,21 @@
                         </button>
                     </div>
 
-                    <!-- Tabs Navigation -->
-                    <div class="bg-gray-50 border-b border-gray-200 shrink-0 px-6">
-                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                            <button @click="activeTab = 'details'"
-                                    :class="activeTab === 'details' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                                Task Details
-                            </button>
-                            <button @click="activeTab = 'test_cases'"
-                                    :class="activeTab === 'test_cases' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
-                                Test Cases
-                                <span class="bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs font-semibold" x-text="activeTask?.testCasesCount"></span>
-                            </button>
-                            <button @click="activeTab = 'bugs'"
-                                    :class="activeTab === 'bugs' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
-                                Bugs
-                                <span x-show="activeTask?.hasActiveBug" class="bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs font-semibold">1+</span>
-                            </button>
-                        </nav>
-                    </div>
-
                     <!-- Modal Body (Scrollable) -->
                     <div class="px-6 py-6 overflow-y-auto flex-1 bg-white">
-                        
-                        <!-- Tab Content: Details -->
-                        <div x-show="activeTab === 'details'">
-                            <div class="prose prose-sm max-w-none text-gray-600">
-                                <h4 class="text-gray-800 font-semibold mb-2">Description</h4>
-                                <p x-text="activeTask?.description || 'No description provided.'"></p>
-                            </div>
-                        </div>
-
-                        <!-- Tab Content: Test Cases -->
-                        <div x-show="activeTab === 'test_cases'">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-sm font-semibold text-gray-800">Manual QA Executions</h3>
-                                <button class="text-sm text-primary hover:text-blue-800 font-medium">+ Add Test Case</button>
-                            </div>
+                        <div class="prose prose-sm max-w-none text-gray-600">
+                            <h4 class="text-gray-800 font-semibold mb-2">Description</h4>
+                            <p x-text="activeTask?.description || 'No description provided.'"></p>
                             
-                            <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">ID</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Title</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Pre-conditions</th>
-                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expected Result</th>
-                                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        <template x-for="tc in activeTask?.testCases" :key="tc.id">
-                                            <tr class="hover:bg-gray-50 transition-colors">
-                                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900" x-text="tc.code"></td>
-                                                <td class="px-4 py-3 text-sm text-gray-700 font-medium" x-text="tc.title"></td>
-                                                <td class="px-4 py-3 text-sm text-gray-600" x-text="tc.preconditions"></td>
-                                                <td class="px-4 py-3 text-sm text-gray-600" x-text="tc.expected"></td>
-                                                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                                    <template x-if="tc.status === 'passed'">
-                                                        <div class="flex items-center justify-end gap-2">
-                                                            <span class="inline-flex items-center text-green-600 bg-green-50 px-2.5 py-1 rounded-md text-xs font-semibold border border-green-200">
-                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                                Passed
-                                                            </span>
-                                                            <template x-if="activeTask?.column_id === 'qc_in_progress'">
-                                                                <button @click="openRunTestModal(tc)" title="Retest / Change Status" class="text-gray-400 hover:text-primary transition-colors p-1 rounded hover:bg-gray-100">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                    </template>
-                                                    <template x-if="tc.status === 'failed'">
-                                                        <div class="flex items-center justify-end gap-2">
-                                                            <span class="inline-flex items-center text-red-600 bg-red-50 px-2.5 py-1 rounded-md text-xs font-semibold border border-red-200">
-                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                                Failed
-                                                            </span>
-                                                            <template x-if="activeTask?.column_id === 'qc_in_progress'">
-                                                                <button @click="openRunTestModal(tc)" title="Retest / Change Status" class="text-gray-400 hover:text-primary transition-colors p-1 rounded hover:bg-gray-100">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                    </template>
-                                                    <template x-if="tc.status === 'pending'">
-                                                        <button @click="openRunTestModal(tc)" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 hover:text-primary focus:outline-none shadow-sm transition-colors">
-                                                            <svg class="w-3 h-3 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                            Run Test
-                                                        </button>
-                                                    </template>
-                                                </td>
-                                            </tr>
-                                        </template>
-                                        <template x-if="!activeTask?.testCases || activeTask.testCases.length === 0">
-                                            <tr>
-                                                <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500">
-                                                    No test cases defined for this task.
-                                                </td>
-                                            </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Tab Content: Bugs -->
-                        <div x-show="activeTab === 'bugs'">
-                             <template x-if="activeTask?.hasActiveBug">
-                                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-md mb-6 shadow-sm">
-                                    <div class="flex">
-                                        <div class="flex-shrink-0">
-                                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                            </svg>
-                                        </div>
-                                        <div class="ml-3">
-                                            <h3 class="text-sm font-medium text-red-800">Active Blocker</h3>
-                                            <div class="mt-2 text-sm text-red-700">
-                                                <p>A recent test failed. The development team has been notified.</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <template x-if="activeTask?.attachment_path">
+                                <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                                    <h4 class="text-gray-800 font-semibold mb-2 text-xs uppercase">Attachment</h4>
+                                    <a :href="'/storage/' + activeTask.attachment_path" target="_blank" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                        View Attachment
+                                    </a>
                                 </div>
                             </template>
-                            <div class="space-y-4">
-                                <!-- Dummy bugs list based on status -->
-                                <template x-if="!activeTask?.hasActiveBug">
-                                    <div class="text-center py-10">
-                                        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <h3 class="mt-2 text-sm font-medium text-gray-900">No Bugs Found</h3>
-                                        <p class="mt-1 text-sm text-gray-500">All tests have passed or no bugs have been reported yet.</p>
-                                    </div>
-                                </template>
-                                <template x-if="activeTask?.hasActiveBug">
-                                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">BUG-101</span>
-                                            <span class="text-xs text-gray-500">Reported recently</span>
-                                        </div>
-                                        <h4 class="text-sm font-semibold text-gray-800 mb-1">Failed Test Execution</h4>
-                                        <p class="text-sm text-gray-600 mb-3">A manual QA test case failed its expected output. Details are logged in the test run history.</p>
-                                    </div>
-                                </template>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -463,28 +333,63 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Bug Description <span class="text-red-500">*</span></label>
                                 <input type="text" x-model="bugDescription" required placeholder="E.g. Validation message is missing on empty submit" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
                             </div>
+                            
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Steps to Reproduce (Optional)</label>
-                                <textarea rows="3" x-model="stepsToReproduce" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="If different from test steps..."></textarea>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Actual Result</label>
+                                <textarea rows="2" x-model="bugActualResult" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="What actually happened?"></textarea>
                             </div>
+
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Attachment (Screenshot/Video)</label>
-                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
-                                    <div class="space-y-1 text-center">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
-                                        <div class="flex text-sm text-gray-600 justify-center">
-                                            <span class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-blue-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
-                                                <span>Upload a file</span>
-                                            </span>
-                                            <p class="pl-1">or drag and drop</p>
-                                        </div>
-                                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                                    </div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Steps to Reproduce</label>
+                                <textarea rows="3" x-model="stepsToReproduce" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono text-xs"></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Pre-filled with test steps. Edit if necessary.</p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                                    <select x-model="bugSeverity" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Environment</label>
+                                    <input type="text" x-model="bugEnvironment" placeholder="E.g. Chrome, Windows, Staging" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
                                 </div>
                             </div>
+                            
+                            <div class="bg-gray-50 p-4 border border-gray-200 rounded-lg mt-4">
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <div class="flex items-center h-5">
+                                        <input type="checkbox" x-model="createKanbanTask" class="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded">
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-gray-800">Create a Kanban Task for this Bug</span>
+                                        <span class="text-xs text-gray-500">Automatically creates a new task in the 'To Do' column.</span>
+                                    </div>
+                                </label>
+                                
+                                <div x-show="createKanbanTask" class="mt-4" x-collapse>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Assign To (Optional)</label>
+                                    <select x-model="bugAssigneeId" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                        <option value="">-- Unassigned --</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Attachment (Optional)</label>
+                                <input type="file" id="bug_attachment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md shadow-sm outline-none cursor-pointer">
+                                <p class="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOCX up to 10MB</p>
+                            </div>
                         </div>
+                        
                         <div class="mt-6 flex justify-end space-x-3">
                             <button type="button" @click="isReportingBug = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                                 Cancel
@@ -568,6 +473,12 @@
                                     <option value="done">Done</option>
                                 </select>
                             </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Attachment (Optional)</label>
+                                <input type="file" id="task_attachment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md shadow-sm outline-none cursor-pointer">
+                                <p class="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOCX up to 10MB</p>
+                            </div>
                         </div>
 
                         <div class="mt-6 flex justify-end space-x-3">
@@ -609,11 +520,12 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200">
+                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full border border-gray-200">
                 
                 <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        <span x-text="parentTestCase ? 'Add Sub Test Case' : 'Add Root Test Case'"></span>
+                        <span x-show="editingTestCaseId">Edit Test Case</span>
+                        <span x-show="!editingTestCaseId" x-text="parentTestCase ? 'Add Sub Test Case' : 'Add Root Test Case'"></span>
                     </h3>
                     <button @click="closeNewTestCaseModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
                         <span class="sr-only">Close</span>
@@ -629,20 +541,91 @@
                         </div>
                     </template>
                     <form @submit.prevent="submitNewTestCase">
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Title <span class="text-red-500">*</span></label>
-                                <input type="text" x-model="newTestCase.title" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Pre-conditions</label>
-                                <textarea rows="2" x-model="newTestCase.preconditions" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="Requirements before executing..."></textarea>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Left Column -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Title <span class="text-red-500">*</span></label>
+                                    <input type="text" x-model="newTestCase.title" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Pre-conditions</label>
+                                    <textarea rows="3" x-model="newTestCase.preconditions" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="Requirements before executing..."></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Expected Result</label>
+                                    <textarea rows="3" x-model="newTestCase.expected" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="What is the expected outcome?"></textarea>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Payload</label>
+                                    <textarea rows="4" x-model="newTestCase.payload" class="w-full font-mono border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="JSON or specific data needed for test..."></textarea>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Expected Result</label>
-                                <textarea rows="2" x-model="newTestCase.expected" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" placeholder="What is the expected outcome?"></textarea>
+                            <!-- Right Column -->
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Complexity</label>
+                                        <select x-model="newTestCase.complexity" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                            <option value="Low">Low</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="High">High</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                        <select x-model="newTestCase.priority" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                            <option value="Low">Low</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="High">High</option>
+                                            <option value="Critical">Critical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Test Type</label>
+                                        <select x-model="newTestCase.test_type" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                            <option value="Functional">Functional</option>
+                                            <option value="UI/UX">UI/UX</option>
+                                            <option value="API">API</option>
+                                            <option value="Security">Security</option>
+                                            <option value="Performance">Performance</option>
+                                            <option value="Edge Case">Edge Case</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Automation Status</label>
+                                        <select x-model="newTestCase.automation_status" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                            <option value="Manual">Manual</option>
+                                            <option value="Automated">Automated</option>
+                                            <option value="Not Automatable">Not Automatable</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <label class="block text-sm font-medium text-gray-700">Test Steps</label>
+                                        <button type="button" @click="newTestCase.steps.push('')" class="text-xs text-primary hover:text-blue-800 font-bold px-2 py-1 bg-white border border-gray-300 rounded shadow-sm">+ Add Step</button>
+                                    </div>
+                                    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                        <template x-for="(step, index) in newTestCase.steps" :key="index">
+                                            <div class="flex items-start gap-2 group">
+                                                <span class="text-xs font-bold text-gray-400 mt-2 w-4 shrink-0 text-right" x-text="(index + 1) + '.'"></span>
+                                                <input type="text" x-model="newTestCase.steps[index]" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-1.5 border outline-none" placeholder="Describe step...">
+                                                <button type="button" @click="newTestCase.steps.splice(index, 1)" class="text-red-400 hover:text-red-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" x-show="newTestCase.steps.length > 1" title="Remove Step">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -651,7 +634,7 @@
                                 Cancel
                             </button>
                             <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmittingTestCase" :class="{'opacity-50 cursor-not-allowed': isSubmittingTestCase}">
-                                <span x-show="!isSubmittingTestCase">Save Test Case</span>
+                                <span x-show="!isSubmittingTestCase" x-text="editingTestCaseId ? 'Update Test Case' : 'Save Test Case'"></span>
                                 <span x-show="isSubmittingTestCase">Saving...</span>
                             </button>
                         </div>
@@ -707,29 +690,64 @@
                 </div>
 
                 <div class="px-6 py-6 space-y-6">
-                    <div>
-                        <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                            Pre-conditions
-                        </h4>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap" x-text="viewingTestCase?.preconditions || 'No pre-conditions specified.'"></div>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-gray-100 text-gray-700" x-show="viewingTestCase?.test_type">
+                            <span class="mr-1 font-normal text-gray-500">Type:</span> <span x-text="viewingTestCase?.test_type"></span>
+                        </span>
+                        <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded" 
+                              :class="{
+                                'bg-red-50 text-red-700 border-red-200 border': viewingTestCase?.priority === 'Critical',
+                                'bg-orange-50 text-orange-700 border-orange-200 border': viewingTestCase?.priority === 'High',
+                                'bg-yellow-50 text-yellow-700 border-yellow-200 border': viewingTestCase?.priority === 'Medium',
+                                'bg-green-50 text-green-700 border-green-200 border': viewingTestCase?.priority === 'Low'
+                              }"
+                              x-show="viewingTestCase?.priority">
+                            <span class="mr-1 opacity-75">Priority:</span> <span x-text="viewingTestCase?.priority"></span>
+                        </span>
+                        <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-blue-50 text-blue-700 border-blue-200 border" x-show="viewingTestCase?.complexity">
+                            <span class="mr-1 opacity-75">Complexity:</span> <span x-text="viewingTestCase?.complexity"></span>
+                        </span>
+                        <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-purple-50 text-purple-700 border-purple-200 border" x-show="viewingTestCase?.automation_status">
+                            <span class="mr-1 opacity-75">Automation:</span> <span x-text="viewingTestCase?.automation_status"></span>
+                        </span>
                     </div>
 
-                    <div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                                Pre-conditions
+                            </h4>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap" x-text="viewingTestCase?.preconditions || 'No pre-conditions specified.'"></div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Expected Result
+                            </h4>
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-900 whitespace-pre-wrap" x-text="viewingTestCase?.expected || 'No expected result specified.'"></div>
+                        </div>
+                    </div>
+
+                    <div x-show="viewingTestCase?.payload">
                         <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Expected Result
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                            Data Payload
                         </h4>
-                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-900 whitespace-pre-wrap" x-text="viewingTestCase?.expected || 'No expected result specified.'"></div>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-sm text-green-400 font-mono whitespace-pre-wrap overflow-x-auto" x-text="viewingTestCase?.payload"></div>
                     </div>
 
                     <div x-show="viewingTestCase?.steps && viewingTestCase.steps.length > 0">
-                        <h4 class="text-sm font-semibold text-gray-800 mb-2">Test Steps</h4>
-                        <ol class="list-decimal pl-5 text-sm text-gray-600 space-y-2">
+                        <h4 class="text-sm font-semibold text-gray-800 mb-3">Test Steps</h4>
+                        <div class="space-y-3">
                             <template x-for="(step, index) in viewingTestCase?.steps" :key="index">
-                                <li x-text="step" class="pl-1"></li>
+                                <div class="flex items-start gap-3 bg-white p-3 border border-gray-100 rounded-lg shadow-sm">
+                                    <div class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold text-xs shrink-0" x-text="index + 1"></div>
+                                    <div class="text-sm text-gray-700 mt-0.5" x-text="step"></div>
+                                </div>
                             </template>
-                        </ol>
+                        </div>
                     </div>
                 </div>
                 
@@ -765,6 +783,11 @@ function qcDashboard() {
         
         bugDescription: '',
         stepsToReproduce: '',
+        bugSeverity: 'Medium',
+        bugActualResult: '',
+        bugEnvironment: '',
+        createKanbanTask: false,
+        bugAssigneeId: '',
 
         projectId: '{{ $project->id }}',
 
@@ -782,11 +805,18 @@ function qcDashboard() {
         // Test Case Modal State
         isNewTestCaseModalOpen: false,
         isSubmittingTestCase: false,
+        editingTestCaseId: null,
         parentTestCase: null,
         newTestCase: {
             title: '',
             preconditions: '',
-            expected: ''
+            expected: '',
+            steps: [''],
+            payload: '',
+            complexity: 'Low',
+            priority: 'Medium',
+            test_type: 'Functional',
+            automation_status: 'Manual'
         },
 
         // View Test Case State
@@ -894,16 +924,43 @@ function qcDashboard() {
 
         openNewTestCaseModal(parentTC = null) {
             this.parentTestCase = parentTC;
+            this.editingTestCaseId = null;
             this.newTestCase = {
                 title: '',
                 preconditions: '',
-                expected: ''
+                expected: '',
+                steps: [''],
+                payload: '',
+                complexity: 'Low',
+                priority: 'Medium',
+                test_type: 'Functional',
+                automation_status: 'Manual'
+            };
+            this.isNewTestCaseModalOpen = true;
+        },
+
+        openEditTestCaseModal(tc) {
+            this.editingTestCaseId = tc.id;
+            this.parentTestCase = null;
+            this.newTestCase = {
+                title: tc.title || '',
+                preconditions: tc.preconditions || '',
+                expected: tc.expected || '',
+                steps: (tc.steps && tc.steps.length > 0) ? [...tc.steps] : [''],
+                payload: tc.payload || '',
+                complexity: tc.complexity || 'Low',
+                priority: tc.priority || 'Medium',
+                test_type: tc.test_type || 'Functional',
+                automation_status: tc.automation_status || 'Manual'
             };
             this.isNewTestCaseModalOpen = true;
         },
 
         closeNewTestCaseModal() {
             this.isNewTestCaseModalOpen = false;
+            setTimeout(() => {
+                this.editingTestCaseId = null;
+            }, 300);
         },
 
         async submitNewTestCase() {
@@ -914,22 +971,40 @@ function qcDashboard() {
                 title: this.newTestCase.title,
                 preconditions: this.newTestCase.preconditions,
                 expected: this.newTestCase.expected,
+                steps: this.newTestCase.steps.filter(s => s.trim() !== ''),
+                payload: this.newTestCase.payload,
+                complexity: this.newTestCase.complexity,
+                priority: this.newTestCase.priority,
+                test_type: this.newTestCase.test_type,
+                automation_status: this.newTestCase.automation_status,
                 parent_id: this.parentTestCase ? this.parentTestCase.id : null
             };
 
             try {
-                const response = await fetch(`/api/projects/${this.projectId}/qc/test-cases`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(payload)
-                });
+                let response;
+                if (this.editingTestCaseId) {
+                    response = await fetch(`/api/qc/test-cases/${this.editingTestCaseId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    response = await fetch(`/api/projects/${this.projectId}/qc/test-cases`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                }
 
                 if (response.ok) {
-                    // Expand parent automatically so the user sees the newly added child
-                    if (this.parentTestCase) {
+                    // Expand parent automatically so the user sees the newly added child (only if new)
+                    if (!this.editingTestCaseId && this.parentTestCase) {
                         this.expandTestCase(this.projectTestCases, this.parentTestCase.id);
                     }
                     await this.fetchProjectTestCases();
@@ -997,7 +1072,20 @@ function qcDashboard() {
             this.activeTest = testCase;
             this.isReportingBug = false;
             this.bugDescription = '';
-            this.stepsToReproduce = '';
+            
+            // Pre-fill steps to reproduce if test case has steps
+            if (testCase.steps && testCase.steps.length > 0) {
+                this.stepsToReproduce = testCase.steps.map((step, i) => `${i + 1}. ${step}`).join('\n');
+            } else {
+                this.stepsToReproduce = '';
+            }
+            
+            this.bugSeverity = 'Medium';
+            this.bugActualResult = '';
+            this.bugEnvironment = '';
+            this.createKanbanTask = false;
+            this.bugAssigneeId = '';
+            
             this.isRunTestOpen = true;
         },
 
@@ -1010,50 +1098,40 @@ function qcDashboard() {
         },
 
         async submitTestResult(result) {
-            if (this.activeTest && this.activeTask) {
+            if (this.activeTest) {
                 
                 try {
+                    const formData = new FormData();
+                    formData.append('status', result);
+                    formData.append('bug_description', this.bugDescription);
+                    formData.append('steps_to_reproduce', this.stepsToReproduce);
+                    formData.append('severity', this.bugSeverity);
+                    formData.append('actual_result', this.bugActualResult);
+                    formData.append('environment', this.bugEnvironment);
+                    formData.append('create_task', this.createKanbanTask);
+                    formData.append('assignee_id', this.bugAssigneeId);
+                    
+                    const fileInput = document.getElementById('bug_attachment');
+                    if (fileInput && fileInput.files[0]) {
+                        formData.append('attachment', fileInput.files[0]);
+                    }
+
                     const response = await fetch(`/api/qc/test-cases/${this.activeTest.id}/result`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
-                        body: JSON.stringify({
-                            status: result,
-                            bug_description: this.bugDescription,
-                            steps_to_reproduce: this.stepsToReproduce
-                        })
+                        body: formData
                     });
 
                     if (response.ok) {
                         this.activeTest.status = result;
+                        this.updateTestCaseStatusInTree(this.projectTestCases, this.activeTest.id, result);
                         
-                        let passed = 0;
-                        let hasBug = false;
-                        
-                        this.activeTask.testCases.forEach(tc => {
-                            if (tc.status === 'passed') passed++;
-                            if (tc.status === 'failed') hasBug = true;
-                        });
-                        
-                        this.activeTask.passedTests = passed;
-                        this.activeTask.hasActiveBug = hasBug;
-                        
-                        let newColumn = this.activeTask.column_id;
-                        if (hasBug) {
-                            newColumn = 'qc_in_progress';
-                        } else if (passed === this.activeTask.testCasesCount && passed > 0) {
-                            newColumn = 'done';
-                        } else {
-                            newColumn = 'qc_in_progress';
+                        if (result === 'failed' && this.createKanbanTask) {
+                            this.fetchTasks();
                         }
                         
-                        if (newColumn !== this.activeTask.column_id) {
-                            await this.updateTaskColumn(this.activeTask.id, newColumn);
-                            this.activeTask.column_id = newColumn;
-                        }
-
                         this.closeRunTestModal();
                     } else {
                         alert('Gagal memperbarui status test case.');
@@ -1062,6 +1140,19 @@ function qcDashboard() {
                     console.error('Error submitting test result:', error);
                 }
             }
+        },
+
+        updateTestCaseStatusInTree(cases, id, status) {
+            for (let tc of cases) {
+                if (tc.id === id) {
+                    tc.status = status;
+                    return true;
+                }
+                if (tc.children && tc.children.length > 0) {
+                    if (this.updateTestCaseStatusInTree(tc.children, id, status)) return true;
+                }
+            }
+            return false;
         },
 
         openNewTaskModal() {
@@ -1083,13 +1174,23 @@ function qcDashboard() {
             this.isSubmitting = true;
 
             try {
+                const formData = new FormData();
+                formData.append('title', this.newTask.title);
+                formData.append('description', this.newTask.description);
+                formData.append('assignee_id', this.newTask.assignee_id);
+                formData.append('column_id', this.newTask.column_id);
+                
+                const taskFileInput = document.getElementById('task_attachment');
+                if (taskFileInput && taskFileInput.files[0]) {
+                    formData.append('attachment', taskFileInput.files[0]);
+                }
+
                 const response = await fetch(`/api/projects/${this.projectId}/qc/tasks`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify(this.newTask)
+                    body: formData
                 });
 
                 if (response.ok) {

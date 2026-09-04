@@ -17,4 +17,9 @@ class TaskBug extends Model
     {
         return $this->belongsTo(TestCase::class);
     }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
 }

@@ -25,6 +25,7 @@ class QcController extends Controller
                 'description' => $task->description,
                 'assignee' => $task->assignee ? $task->assignee->name : 'Unassigned',
                 'column_id' => $task->column_id,
+                'attachment_path' => $task->attachment_path,
                 'hasActiveBug' => $hasActiveBug,
                 'testCasesCount' => $task->testCases->count(),
                 'passedTests' => $passedTests,
@@ -51,8 +52,14 @@ class QcController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'assignee_id' => 'nullable|exists:users,id',
-            'column_id' => 'required|in:todo,in_progress,ready_for_qc,qc_in_progress,done'
+            'column_id' => 'required|in:todo,in_progress,ready_for_qc,qc_in_progress,done',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240' // 10MB max
         ]);
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('attachments/tasks', 'public');
+        }
 
         $task = ProjectTask::create([
             'project_id' => $project->id,
@@ -60,7 +67,8 @@ class QcController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'assignee_id' => $request->assignee_id,
-            'column_id' => $request->column_id
+            'column_id' => $request->column_id,
+            'attachment_path' => $attachmentPath
         ]);
 
         return response()->json(['success' => true, 'task' => $task]);
@@ -84,7 +92,13 @@ class QcController extends Controller
         $request->validate([
             'status' => 'required|in:passed,failed',
             'bug_description' => 'required_if:status,failed|string',
-            'steps_to_reproduce' => 'nullable|string'
+            'steps_to_reproduce' => 'nullable|string',
+            'severity' => 'nullable|string|in:Low,Medium,High,Critical',
+            'actual_result' => 'nullable|string',
+            'environment' => 'nullable|string',
+            'create_task' => 'nullable|in:true,false,1,0', // FormData sends strings
+            'assignee_id' => 'nullable|exists:users,id',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240'
         ]);
 
         $testCase->update([
@@ -92,12 +106,41 @@ class QcController extends Controller
         ]);
 
         if ($request->status === 'failed') {
+            $projectTaskId = $testCase->project_task_id;
+            
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $attachmentPath = $request->file('attachment')->store('attachments/bugs', 'public');
+            }
+            
+            // Convert to boolean since FormData sends it as a string
+            $createTask = filter_var($request->create_task, FILTER_VALIDATE_BOOLEAN);
+
+            // If the user wants to auto-create a Kanban task
+            if ($createTask) {
+                $newTask = \App\Models\ProjectTask::create([
+                    'project_id' => $testCase->project_id,
+                    'code' => 'TSK-' . strtoupper(substr(uniqid(), -5)),
+                    'title' => 'Bug: ' . substr($request->bug_description, 0, 50) . (strlen($request->bug_description) > 50 ? '...' : ''),
+                    'description' => "Auto-generated bug report from Test Case: " . $testCase->code . "\n\n" . $request->bug_description,
+                    'assignee_id' => $request->assignee_id,
+                    'column_id' => 'todo',
+                    'attachment_path' => $attachmentPath
+                ]);
+                $projectTaskId = $newTask->id;
+            }
+
             TaskBug::create([
-                'project_task_id' => $testCase->project_task_id,
+                'project_id' => $testCase->project_id,
+                'project_task_id' => $projectTaskId, // Can be the newly created task or the test case's existing linked task (or null)
                 'test_case_id' => $testCase->id,
-                'code' => 'BUG-' . strtoupper(uniqid()),
+                'code' => 'BUG-' . strtoupper(substr(uniqid(), -5)),
                 'description' => $request->bug_description,
                 'steps_to_reproduce' => $request->steps_to_reproduce,
+                'severity' => $request->severity,
+                'actual_result' => $request->actual_result,
+                'environment' => $request->environment,
+                'attachment_path' => $attachmentPath,
                 'status' => 'open'
             ]);
         }
@@ -132,6 +175,11 @@ class QcController extends Controller
                     'expected' => $testCase->expected,
                     'status' => $testCase->status,
                     'steps' => $testCase->steps ?? [],
+                    'payload' => $testCase->payload,
+                    'complexity' => $testCase->complexity,
+                    'priority' => $testCase->priority,
+                    'test_type' => $testCase->test_type,
+                    'automation_status' => $testCase->automation_status,
                     'is_expanded' => false // For frontend Alpine state
                 ];
 
@@ -149,7 +197,13 @@ class QcController extends Controller
             'title' => 'required|string|max:255',
             'preconditions' => 'nullable|string',
             'expected' => 'nullable|string',
-            'parent_id' => 'nullable|exists:test_cases,id'
+            'parent_id' => 'nullable|exists:test_cases,id',
+            'steps' => 'nullable|array',
+            'payload' => 'nullable|string',
+            'complexity' => 'nullable|string|in:Low,Medium,High',
+            'priority' => 'nullable|string|in:Low,Medium,High,Critical',
+            'test_type' => 'nullable|string|in:Functional,UI/UX,API,Security,Performance,Edge Case',
+            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable'
         ]);
 
         $testCase = TestCase::create([
@@ -159,8 +213,42 @@ class QcController extends Controller
             'title' => $request->title,
             'preconditions' => $request->preconditions,
             'expected' => $request->expected,
-            'status' => 'pending',
-            'steps' => []
+            'steps' => $request->steps ?? [],
+            'payload' => $request->payload,
+            'complexity' => $request->complexity,
+            'priority' => $request->priority,
+            'test_type' => $request->test_type,
+            'automation_status' => $request->automation_status,
+            'status' => 'pending'
+        ]);
+
+        return response()->json(['success' => true, 'testCase' => $testCase]);
+    }
+
+    public function updateProjectTestCase(Request $request, TestCase $testCase)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'preconditions' => 'nullable|string',
+            'expected' => 'nullable|string',
+            'steps' => 'nullable|array',
+            'payload' => 'nullable|string',
+            'complexity' => 'nullable|string|in:Low,Medium,High',
+            'priority' => 'nullable|string|in:Low,Medium,High,Critical',
+            'test_type' => 'nullable|string|in:Functional,UI/UX,API,Security,Performance,Edge Case',
+            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable'
+        ]);
+
+        $testCase->update([
+            'title' => $request->title,
+            'preconditions' => $request->preconditions,
+            'expected' => $request->expected,
+            'steps' => $request->steps ?? [],
+            'payload' => $request->payload,
+            'complexity' => $request->complexity,
+            'priority' => $request->priority,
+            'test_type' => $request->test_type,
+            'automation_status' => $request->automation_status
         ]);
 
         return response()->json(['success' => true, 'testCase' => $testCase]);
