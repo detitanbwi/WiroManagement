@@ -94,22 +94,31 @@
             <div class="p-0" x-show="isTestCasesExpanded" x-collapse>
 
                 <template x-for="tc in flatTestCases" :key="tc.id">
-                    <div class="flex justify-between items-center p-3 transition-all group border-b"
-                         :class="{
-                             'border-gray-100': dragOverTarget !== tc.id,
-                             'border-t-2 !border-t-blue-500': dragOverTarget === tc.id && dragOverPosition === 'before',
-                             'border-b-2 !border-b-blue-500': dragOverTarget === tc.id && dragOverPosition === 'after',
-                             'hover:bg-gray-50': dragOverTarget !== tc.id,
-                             'bg-blue-50 ring-2 ring-inset ring-blue-400': dragOverTarget === tc.id && dragOverPosition === 'inside',
-                             'opacity-50': draggedTestCase?.id === tc.id
-                         }"
-                         :style="`padding-left: ${tc.level * 2 + 1}rem`"
-                         draggable="true"
-                         @dragstart="startDragging(tc, $event)"
+                    <div class="transition-all"
                          @dragover.prevent="handleDragOver(tc, $event)"
-                         @dragleave="if (dragOverTarget === tc.id) { dragOverTarget = null; dragOverPosition = null; }"
+                         @dragleave="handleDragLeave(tc, $event)"
                          @drop="dropTestCase(tc.id)"
                          @dragend="draggedTestCase = null; dragOverTarget = null; dragOverPosition = null;">
+                         
+                        <!-- Before Spacer -->
+                        <div class="drop-spacer overflow-hidden transition-all duration-200 ease-in-out flex items-end"
+                             :class="(dragOverTarget === tc.id && dragOverPosition === 'before') ? 'h-14 opacity-100' : 'h-0 opacity-0'"
+                             :style="`padding-left: ${tc.level * 2 + 1}rem`">
+                            <div class="w-full h-12 mb-2 bg-blue-50 border-2 border-blue-400 border-dashed rounded-lg flex items-center justify-center text-blue-500 font-bold shadow-inner">
+                                Pindahkan ke sini
+                            </div>
+                        </div>
+
+                        <!-- Item Row -->
+                        <div class="test-case-row flex justify-between items-center p-3 transition-all group border-b border-gray-100 bg-white relative z-10"
+                             :class="{
+                                 'hover:bg-gray-50': dragOverTarget !== tc.id || dragOverPosition !== 'inside',
+                                 'bg-blue-50 ring-2 ring-inset ring-blue-400': dragOverTarget === tc.id && dragOverPosition === 'inside',
+                                 'opacity-50': draggedTestCase?.id === tc.id
+                             }"
+                             :style="`padding-left: ${tc.level * 2 + 1}rem`"
+                             draggable="true"
+                             @dragstart="startDragging(tc, $event)">
                         <div class="flex items-center gap-2">
                             <!-- Drag Handle -->
                             <div class="cursor-grab text-gray-300 hover:text-gray-500 mr-1" title="Drag to move">
@@ -145,6 +154,16 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </button>
                             <button @click.stop="openNewTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-xs text-blue-600 hover:text-blue-800 font-medium transition-opacity" title="Add Sub Test">+ Sub Test</button>
+                        </div>
+                    </div>
+
+                        <!-- After Spacer -->
+                        <div class="drop-spacer overflow-hidden transition-all duration-200 ease-in-out flex items-start"
+                             :class="(dragOverTarget === tc.id && dragOverPosition === 'after') ? 'h-14 opacity-100' : 'h-0 opacity-0'"
+                             :style="`padding-left: ${tc.level * 2 + 1}rem`">
+                            <div class="w-full h-12 mt-2 bg-blue-50 border-2 border-blue-400 border-dashed rounded-lg flex items-center justify-center text-blue-500 font-bold shadow-inner">
+                                Pindahkan ke sini
+                            </div>
                         </div>
                     </div>
                 </template>
@@ -418,11 +437,16 @@
                     <div class="border-t border-gray-200 pt-6">
                         <h4 class="text-center text-sm font-semibold text-gray-600 mb-4 uppercase tracking-wide">Did the actual result match the expected result?</h4>
                         <div class="flex justify-center space-x-6">
-                            <button @click="submitTestResult('passed')" class="w-36 h-14 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                PASS
+                            <button @click="submitTestResult('passed')" :disabled="isSubmittingTest" class="w-36 h-14 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                                <svg x-show="!isSubmittingTest" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                <svg x-show="isSubmittingTest" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-show="!isSubmittingTest">PASS</span>
+                                <span x-show="isSubmittingTest">SAVING...</span>
                             </button>
-                            <button @click="isReportingBug = true" class="w-36 h-14 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5">
+                            <button @click="isReportingBug = true" :disabled="isSubmittingTest" class="w-36 h-14 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 FAIL
                             </button>
@@ -504,8 +528,12 @@
                             <button type="button" @click="isReportingBug = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                                 Cancel
                             </button>
-                            <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
-                                Submit Bug & Fail Test
+                            <button type="submit" :disabled="isSubmittingTest" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                <svg x-show="isSubmittingTest" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-text="isSubmittingTest ? 'Submitting...' : 'Submit Bug & Fail Test'"></span>
                             </button>
                         </div>
                     </form>
@@ -900,6 +928,7 @@ function qcDashboard() {
         bugActualResult: '',
         bugEnvironment: '',
         createKanbanTask: false,
+        isSubmittingTest: false,
         bugAssigneeId: '',
 
         projectId: '{{ $project->id }}',
@@ -954,7 +983,10 @@ function qcDashboard() {
         handleDragOver(tc, event) {
             this.dragOverTarget = tc.id;
             
-            const rect = event.currentTarget.getBoundingClientRect();
+            const itemRow = event.currentTarget.querySelector('.test-case-row');
+            if (!itemRow) return;
+
+            const rect = itemRow.getBoundingClientRect();
             const y = event.clientY - rect.top;
             
             if (y < rect.height * 0.25) {
@@ -963,6 +995,15 @@ function qcDashboard() {
                 this.dragOverPosition = 'after';
             } else {
                 this.dragOverPosition = 'inside';
+            }
+        },
+
+        handleDragLeave(tc, event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                if (this.dragOverTarget === tc.id) {
+                    this.dragOverTarget = null;
+                    this.dragOverPosition = null;
+                }
             }
         },
 
@@ -1287,7 +1328,7 @@ function qcDashboard() {
 
         async submitTestResult(result) {
             if (this.activeTest) {
-                
+                this.isSubmittingTest = true;
                 try {
                     const formData = new FormData();
                     formData.append('status', result);
@@ -1326,6 +1367,8 @@ function qcDashboard() {
                     }
                 } catch (error) {
                     console.error('Error submitting test result:', error);
+                } finally {
+                    this.isSubmittingTest = false;
                 }
             }
         },
