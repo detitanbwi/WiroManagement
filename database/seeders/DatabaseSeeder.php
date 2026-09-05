@@ -26,7 +26,6 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             ClientProfileSeeder::class,
             ProjectSeeder::class,
-            
         ]);
     }
 }

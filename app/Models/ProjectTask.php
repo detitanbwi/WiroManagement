@@ -27,4 +27,9 @@ class ProjectTask extends Model
     {
         return $this->hasMany(TaskBug::class);
     }
+
+    public function comments()
+    {
+        return $this->hasMany(TaskComment::class)->orderBy('created_at', 'asc');
+    }
 }

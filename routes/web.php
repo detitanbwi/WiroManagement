@@ -55,13 +55,18 @@ Route::middleware('auth')->group(function () {
     Route::put('api/qc/test-cases/{testCase}', [QcController::class, 'updateProjectTestCase'])->name('api.qc.project.test-cases.update');
     Route::post('api/projects/{project}/qc/tasks', [QcController::class, 'storeTask'])->name('api.qc.tasks.store');
     Route::post('api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])->name('api.qc.tasks.move');
+    Route::post('api/qc/tasks/{task}/pass-test-cases', [QcController::class, 'passTaskTestCases'])->name('api.qc.tasks.pass-test-cases');
     Route::post('api/qc/test-cases/{testCase}/move', [QcController::class, 'moveProjectTestCase'])->name('api.qc.test-cases.move');
     Route::post('api/qc/test-cases/{testCase}/result', [QcController::class, 'submitTestResult'])->name('api.qc.test-cases.result');
     Route::delete('api/qc/test-cases/{testCase}', [QcController::class, 'destroyTestCase'])->name('api.qc.test-cases.destroy');
     Route::delete('api/qc/tasks/{task}', [QcController::class, 'destroyTask'])->name('api.qc.tasks.destroy');
     Route::get('api/projects/{project}/qc/bugs', [QcController::class, 'getProjectBugs'])->name('api.qc.project.bugs');
     Route::post('api/qc/bugs/{bug}/convert', [QcController::class, 'convertBugToTask'])->name('api.qc.bugs.convert');
+    Route::post('api/projects/{project}/qc/bugs/bulk-convert', [QcController::class, 'bulkConvertBugsToTask'])->name('api.qc.bugs.bulk-convert');
     Route::delete('api/qc/bugs/{bug}', [QcController::class, 'destroyBug'])->name('api.qc.bugs.destroy');
+    Route::get('api/qc/tasks/{task}/comments', [QcController::class, 'getTaskComments'])->name('api.qc.tasks.comments');
+    Route::post('api/qc/tasks/{task}/comments', [QcController::class, 'storeTaskComment'])->name('api.qc.tasks.comments.store');
+    Route::delete('api/qc/comments/{comment}', [QcController::class, 'destroyTaskComment'])->name('api.qc.comments.destroy');
 
     Route::resource('projects.invoices', InvoiceController::class)->shallow();
     Route::resource('projects.quotations', QuotationController::class)->shallow();

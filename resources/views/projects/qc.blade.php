@@ -49,8 +49,8 @@
                                 @click="openTaskModal(task)"
                                 class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:border-gray-300 hover:shadow transition-all group cursor-pointer"
                             >
-                                <div class="flex justify-between items-start mb-2">
-                                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider" x-text="task.code"></span>
+                                <div class="flex justify-between items-start mb-1.5">
+                                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider font-mono" x-text="task.code"></span>
                                     <template x-if="task.hasActiveBug">
                                         <span class="inline-flex items-center gap-1 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded border border-red-200">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -58,6 +58,7 @@
                                         </span>
                                     </template>
                                 </div>
+                                <h4 class="text-sm font-semibold text-gray-900 mb-2 leading-snug line-clamp-2" x-text="task.title"></h4>
                                 <template x-if="task.source_test_case">
                                     <div class="mb-2">
                                         <span class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200" title="Bug ditemukan pada Test Case ini">
@@ -66,11 +67,19 @@
                                         </span>
                                     </div>
                                 </template>
-                                <div class="flex justify-between items-center mt-auto">
-                                    <div class="flex -space-x-1 overflow-hidden">
-                                        <div class="inline-block h-6 w-6 rounded-full bg-blue-100 text-blue-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold uppercase" x-text="task.assignee.substring(0,2)"></div>
+                                <div class="flex justify-between items-center mt-3 pt-2.5 border-t border-gray-100">
+                                    <div class="flex items-center gap-2">
+                                        <div class="inline-block h-6 w-6 rounded-full bg-blue-100 text-blue-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold uppercase shrink-0" x-text="task.assignee ? task.assignee.substring(0,2) : 'UN'" :title="task.assignee"></div>
+                                        <span class="text-xs text-gray-500 font-medium truncate max-w-[110px]" x-text="task.assignee"></span>
                                     </div>
 
+                                    <!-- Comment Counter Badge -->
+                                    <template x-if="task.comments_count > 0">
+                                        <div class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" title="Komentar / Percakapan">
+                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                            <span x-text="task.comments_count"></span>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                         </template>
@@ -145,6 +154,17 @@
                             <span class="text-sm font-medium text-gray-800" x-text="tc.title"></span>
                         </div>
                         <div class="flex items-center gap-3">
+                            <template x-if="tc.bug">
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border font-mono tracking-wide" 
+                                      :class="tc.bug.status === 'resolved' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'"
+                                      :title="'Bug: ' + tc.bug.code + ' (' + tc.bug.status + ')'">
+                                    <svg class="w-3 h-3 shrink-0" :class="tc.bug.status === 'resolved' ? 'text-green-600' : 'text-red-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path x-show="tc.bug.status === 'resolved'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        <path x-show="tc.bug.status !== 'resolved'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <span x-text="tc.bug.code"></span>
+                                </span>
+                            </template>
                             <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
                                   :class="{
                                     'bg-green-100 text-green-700 border border-green-200': tc.status === 'passed',
@@ -205,10 +225,59 @@
             </div>
             
             <div class="p-0 bg-white" x-show="isBugsExpanded" x-collapse>
+                <!-- Bug Tracker Tabs -->
+                <div class="border-b border-gray-200 bg-gray-50/75 px-6 pt-2">
+                    <nav class="-mb-px flex space-x-6">
+                        <button @click="bugFilterTab = 'all'" 
+                                :class="{'border-red-600 text-red-700 font-bold': bugFilterTab === 'all', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'all'}"
+                                class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
+                            Semua Bug
+                            <span class="bg-gray-100 text-gray-700 py-0.5 px-2 rounded-full text-xs font-semibold" x-text="projectBugs.length"></span>
+                        </button>
+                        <button @click="bugFilterTab = 'active'" 
+                                :class="{'border-amber-500 text-amber-800 font-bold': bugFilterTab === 'active', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'active'}"
+                                class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
+                            Bug Aktif (Open)
+                            <span class="bg-amber-100 text-amber-800 py-0.5 px-2 rounded-full text-xs font-bold" x-text="projectBugs.filter(b => b.status !== 'resolved').length"></span>
+                        </button>
+                        <button @click="bugFilterTab = 'solved'" 
+                                :class="{'border-green-600 text-green-700 font-bold': bugFilterTab === 'solved', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'solved'}"
+                                class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
+                            Bug Solved / Resolved
+                            <span class="bg-green-100 text-green-800 py-0.5 px-2 rounded-full text-xs font-bold" x-text="projectBugs.filter(b => b.status === 'resolved').length"></span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Selection Action Toolbar -->
+                <div x-show="selectedBugIds.length > 0" x-cloak class="px-6 py-2.5 bg-blue-50 border-b border-blue-200 flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="inline-flex items-center justify-center bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full" x-text="selectedBugIds.length + ' Bug Terpilih'"></span>
+                        <span class="text-xs text-blue-900 font-medium">Pilih beberapa bug untuk digabungkan menjadi satu Kanban Task baru.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="openBulkConvertModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold shadow-xs transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            <span>Buat 1 Task Kanban (<span x-text="selectedBugIds.length"></span> Bug)</span>
+                        </button>
+                        <button type="button" @click="selectedBugIds = []" class="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md text-xs font-medium transition-colors">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th scope="col" class="px-4 py-3 text-center w-10">
+                                    <input type="checkbox" 
+                                           @change="toggleSelectAllBugs($event)" 
+                                           :checked="isAllBugsSelected" 
+                                           x-effect="$el.indeterminate = isSomeBugsSelected"
+                                           title="Pilih Semua Bug"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer">
+                                </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bug Details</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity / Status</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Case</th>
@@ -217,13 +286,39 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <template x-for="bug in projectBugs" :key="bug.id">
-                                <tr class="hover:bg-gray-50 transition-colors">
+                            <template x-for="bug in filteredProjectBugs" :key="bug.id">
+                                <tr class="hover:bg-gray-50 transition-colors"
+                                    :class="{
+                                        'bg-blue-50/60': isBugSelected(bug.id),
+                                        'bg-green-50/20': bug.status === 'resolved' && !isBugSelected(bug.id)
+                                    }">
+                                    <td class="px-4 py-4 text-center whitespace-nowrap">
+                                        <input type="checkbox" 
+                                               :checked="isBugSelected(bug.id)" 
+                                               @change="toggleBugSelection(bug.id)" 
+                                               @click.stop 
+                                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer">
+                                    </td>
                                     <td class="px-6 py-4">
                                         <div class="flex flex-col">
-                                            <span class="text-xs font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-100 w-max mb-1" x-text="bug.code"></span>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-xs font-bold px-2 py-0.5 rounded border w-max font-mono"
+                                                      :class="bug.status === 'resolved' ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-100'"
+                                                      x-text="bug.code"></span>
+                                                <template x-if="bug.status === 'resolved'">
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded border border-green-200">
+                                                        <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                        SOLVED
+                                                    </span>
+                                                </template>
+                                            </div>
                                             <span class="text-sm font-medium text-gray-900" x-text="bug.description"></span>
-                                            <span class="text-xs text-gray-500 mt-1" x-text="'Reported: ' + bug.created_at"></span>
+                                            <div class="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                                                <span x-text="'Dilaporkan: ' + (bug.created_at_human || bug.created_at)"></span>
+                                                <template x-if="bug.status === 'resolved' && bug.updated_at">
+                                                    <span class="text-green-700 font-medium" x-text="'Diselesaikan: ' + bug.updated_at"></span>
+                                                </template>
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -234,14 +329,26 @@
                                                     'bg-yellow-100 text-yellow-700 border border-yellow-200': bug.severity === 'Medium',
                                                     'bg-green-100 text-green-700 border border-green-200': bug.severity === 'Low'
                                                   }" x-text="bug.severity || 'Unknown'"></span>
-                                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200 w-max" x-text="bug.status"></span>
+                                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border w-max"
+                                                  :class="{
+                                                    'bg-green-100 text-green-700 border border-green-200': bug.status === 'resolved',
+                                                    'bg-red-100 text-red-700 border border-red-200': bug.status === 'open',
+                                                    'bg-amber-100 text-amber-700 border border-amber-200': bug.status === 'in_progress',
+                                                    'bg-gray-100 text-gray-600 border border-gray-200': bug.status !== 'resolved' && bug.status !== 'open' && bug.status !== 'in_progress'
+                                                  }"
+                                                  x-text="bug.status"></span>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
                                         <template x-if="bug.test_case">
                                             <div class="text-sm text-gray-600">
-                                                <span class="font-mono text-xs text-blue-600" x-text="bug.test_case.code"></span><br>
-                                                <span class="text-xs" x-text="bug.test_case.title"></span>
+                                                <div class="flex items-center gap-1.5 mb-0.5">
+                                                    <span class="font-mono text-xs text-blue-600 font-bold" x-text="bug.test_case.code"></span>
+                                                    <span class="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded border"
+                                                          :class="bug.test_case.status === 'passed' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'"
+                                                          x-text="bug.test_case.status"></span>
+                                                </div>
+                                                <span class="text-xs text-gray-700" x-text="bug.test_case.title"></span>
                                             </div>
                                         </template>
                                         <template x-if="!bug.test_case">
@@ -251,7 +358,7 @@
                                     <td class="px-6 py-4">
                                         <template x-if="bug.project_task">
                                             <div class="flex items-center gap-2 cursor-pointer group" @click="openTaskModalById(bug.project_task.id)">
-                                                <span class="text-xs font-medium text-blue-600 group-hover:text-blue-800 underline decoration-blue-300 decoration-dotted" x-text="bug.project_task.code"></span>
+                                                <span class="text-xs font-medium text-blue-600 group-hover:text-blue-800 underline decoration-blue-300 decoration-dotted font-mono" x-text="bug.project_task.code"></span>
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
                                                       :class="getColumnBadgeClass(bug.project_task.column_id)"
                                                       x-text="getColumnTitle(bug.project_task.column_id)"></span>
@@ -262,7 +369,7 @@
                                         </template>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-2">
-                                        <template x-if="!bug.project_task">
+                                        <template x-if="!bug.project_task && bug.status !== 'resolved'">
                                             <button @click="convertBugToTask(bug.id)" :disabled="convertingBugId === bug.id" :class="{'opacity-75 cursor-wait': convertingBugId === bug.id}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors">
                                                 <svg x-show="convertingBugId === bug.id" class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                                 <svg x-show="convertingBugId !== bug.id" class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -278,9 +385,17 @@
                         </tbody>
                     </table>
                 </div>
-                <template x-if="projectBugs.length === 0">
+                <template x-if="filteredProjectBugs.length === 0">
                     <div class="p-8 text-center text-gray-500 text-sm">
-                        No bugs reported yet. Great job!
+                        <template x-if="bugFilterTab === 'solved'">
+                            <span>Belum ada bug yang berstatus Solved / Resolved.</span>
+                        </template>
+                        <template x-if="bugFilterTab === 'active'">
+                            <span class="text-green-600 font-semibold">Tidak ada bug aktif saat ini! Semua bug telah terselesaikan.</span>
+                        </template>
+                        <template x-if="bugFilterTab === 'all'">
+                            <span>No bugs reported yet. Great job!</span>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -388,9 +503,9 @@
                                             <svg x-show="movingToColumn === 'in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'in_progress' ? 'Moving...' : '&#x21BA; Return to Developer'"></span>
                                         </button>
-                                        <button @click="updateTaskColumn(activeTask.id, 'done')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors">
+                                        <button @click="updateTaskColumn(activeTask.id, 'done')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3.5 py-1.5 border border-transparent text-xs font-bold rounded shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors">
                                             <svg x-show="movingToColumn === 'done'" class="animate-spin mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                            <span x-text="movingToColumn === 'done' ? 'Moving...' : 'Mark as Done &check;'"></span>
+                                            <span x-text="movingToColumn === 'done' ? 'Passing QC...' : 'Pass QC & Mark Done &check;'"></span>
                                         </button>
                                     </div>
                                 </template>
@@ -434,6 +549,14 @@
                                     class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
                                 Bugs
                                 <span class="bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs" x-text="activeTask?.bugs?.length || 0"></span>
+                            </button>
+                            <button @click="activeTab = 'comments'" 
+                                    :class="{'border-blue-500 text-blue-600': activeTab === 'comments', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'comments'}"
+                                    class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                                <span>Diskusi & Komentar</span>
+                                <span class="py-0.5 px-2 rounded-full text-xs font-semibold"
+                                      :class="activeTaskComments.length > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'"
+                                      x-text="activeTaskComments.length"></span>
                             </button>
                         </nav>
                     </div>
@@ -499,6 +622,17 @@
 
                             <template x-if="activeTask?.testCases && activeTask.testCases.length > 0">
                                 <div class="space-y-3">
+                                    <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                                        <span class="text-xs text-gray-500 font-medium" x-text="activeTask.testCases.length + ' Test Cases terkait task ini'"></span>
+                                        <button type="button" 
+                                                @click="passAllTaskTestCases(activeTask.id)" 
+                                                :disabled="isPassingAllTests"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-md text-xs font-semibold shadow-xs transition-colors disabled:opacity-50">
+                                            <svg x-show="isPassingAllTests" class="animate-spin h-3 w-3 text-green-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <svg x-show="!isPassingAllTests" class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Pass Semua Test Case</span>
+                                        </button>
+                                    </div>
                                     <template x-for="tc in activeTask.testCases" :key="tc.id">
                                         <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm" :class="{'border-red-200 bg-red-50/20': tc.is_from_bug}">
                                             <div>
@@ -580,6 +714,155 @@
                                 </div>
                             </template>
                         </div>
+
+                        <!-- Comments / Diskusi Tab -->
+                        <div x-show="activeTab === 'comments'" x-cloak class="flex flex-col h-full min-h-[420px]">
+                            <!-- Info Banner -->
+                            <div class="mb-4 p-3 bg-blue-50/80 border border-blue-200 rounded-lg flex items-center justify-between text-xs text-blue-900">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                    <span>Diskusi langsung antar <strong>Programmer</strong> dan <strong>QC</strong> terkait pengerjaan dan verifikasi task ini.</span>
+                                </div>
+                                <button type="button" @click="fetchTaskComments(activeTask.id)" class="text-blue-700 hover:text-blue-900 font-semibold underline flex items-center gap-1 shrink-0">
+                                    <svg class="w-3.5 h-3.5" :class="{'animate-spin': isLoadingComments}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    <span>Refresh</span>
+                                </button>
+                            </div>
+
+                            <!-- Message Stream / Timeline -->
+                            <div class="flex-1 overflow-y-auto space-y-4 mb-6 pr-1 max-h-[380px]" id="comments-container">
+                                <template x-if="activeTaskComments.length === 0">
+                                    <div class="text-center py-12 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                                        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 mx-auto flex items-center justify-center mb-3">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                                        </div>
+                                        <h4 class="text-sm font-semibold text-gray-800">Belum ada percakapan</h4>
+                                        <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto">Mulai diskusi atau koordinasi antara Programmer dan tim QC dengan menulis komentar pertama di bawah.</p>
+                                    </div>
+                                </template>
+
+                                <template x-for="c in activeTaskComments" :key="c.id">
+                                    <div class="flex items-start gap-3 p-4 rounded-xl border transition-all"
+                                         :class="c.can_delete ? 'bg-white border-blue-100 shadow-xs' : 'bg-gray-50/60 border-gray-200'">
+                                        <!-- User Initials Avatar -->
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 uppercase shadow-xs ring-2 ring-white"
+                                             :class="{
+                                                 'bg-purple-100 text-purple-700': c.user?.role === 'superadmin' || c.user?.role === 'admin',
+                                                 'bg-emerald-100 text-emerald-700': c.user?.role === 'qc',
+                                                 'bg-blue-100 text-blue-700': c.user?.role !== 'superadmin' && c.user?.role !== 'admin' && c.user?.role !== 'qc'
+                                             }"
+                                             x-text="c.user ? c.user.name.substring(0, 2) : '?'">
+                                        </div>
+
+                                        <div class="flex-1 min-w-0">
+                                            <!-- Comment Meta Header -->
+                                            <div class="flex items-center justify-between flex-wrap gap-2 mb-1.5">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs font-bold text-gray-900" x-text="c.user ? c.user.name : 'Unknown'"></span>
+                                                    
+                                                    <!-- Role Badge -->
+                                                    <template x-if="c.user?.role">
+                                                        <span class="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider border"
+                                                              :class="{
+                                                                  'bg-purple-50 text-purple-700 border-purple-200': c.user.role === 'superadmin' || c.user.role === 'admin',
+                                                                  'bg-emerald-50 text-emerald-700 border-emerald-200': c.user.role === 'qc',
+                                                                  'bg-blue-50 text-blue-700 border-blue-200': c.user.role !== 'superadmin' && c.user.role !== 'admin' && c.user.role !== 'qc'
+                                                              }"
+                                                              x-text="c.user.role"></span>
+                                                    </template>
+
+                                                    <span class="text-[11px] text-gray-400 font-medium" :title="c.created_at" x-text="c.created_at_human || c.created_at"></span>
+                                                </div>
+
+                                                <!-- Action Buttons (Delete) -->
+                                                <template x-if="c.can_delete">
+                                                    <button type="button" 
+                                                            @click="deleteTaskComment(c.id)" 
+                                                            :disabled="deletingCommentId === c.id"
+                                                            class="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors" 
+                                                            title="Hapus Komentar">
+                                                        <svg x-show="deletingCommentId !== c.id" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        <svg x-show="deletingCommentId === c.id" class="w-3.5 h-3.5 animate-spin text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                    </button>
+                                                </template>
+                                            </div>
+
+                                            <!-- Comment Body Text -->
+                                            <div class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed break-words" x-text="c.comment"></div>
+
+                                            <!-- Attachment Preview -->
+                                            <template x-if="c.attachment_path">
+                                                <div class="mt-2.5">
+                                                    <template x-if="isImageAttachment(c.attachment_path)">
+                                                        <div class="mt-1">
+                                                            <a :href="'/storage/' + c.attachment_path" target="_blank" class="inline-block group relative rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-all shadow-xs">
+                                                                <img :src="'/storage/' + c.attachment_path" class="max-h-48 max-w-xs object-cover rounded-lg group-hover:scale-102 transition-transform duration-200" alt="Lampiran">
+                                                                <span class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold gap-1 transition-opacity">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                                                    Buka Gambar
+                                                                </span>
+                                                            </a>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!isImageAttachment(c.attachment_path)">
+                                                        <a :href="'/storage/' + c.attachment_path" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700 border border-gray-200 hover:border-blue-200 rounded-lg text-xs font-medium transition-colors shadow-xs">
+                                                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                                            <span x-text="getFilename(c.attachment_path)"></span>
+                                                            <span class="text-[10px] text-gray-400 font-normal">&darr; Unduh</span>
+                                                        </a>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Input Form (Sticky Bottom) -->
+                            <div class="border-t border-gray-200 pt-3 bg-white mt-auto">
+                                <!-- Attached file badge if selected -->
+                                <div x-show="newCommentFile" x-cloak class="mb-2 flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900">
+                                    <div class="flex items-center gap-2 truncate">
+                                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                        <span class="font-medium truncate" x-text="newCommentFile?.name"></span>
+                                        <span class="text-gray-500 text-[10px]" x-text="formatFileSize(newCommentFile?.size)"></span>
+                                    </div>
+                                    <button type="button" @click="removeCommentFile()" class="text-gray-400 hover:text-red-600 p-0.5 rounded transition-colors ml-2 shrink-0" title="Batal lampiran">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+
+                                <div class="relative">
+                                    <textarea x-model="newCommentText"
+                                              @keydown.ctrl.enter="submitTaskComment()"
+                                              @keydown.meta.enter="submitTaskComment()"
+                                              placeholder="Tulis pesan atau komentar untuk programmer / tim QC... (Ctrl + Enter untuk kirim)"
+                                              rows="3"
+                                              class="w-full border border-gray-300 rounded-xl shadow-inner focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm px-3.5 py-2.5 outline-none resize-none pr-28 pb-10 transition-colors"></textarea>
+                                    
+                                    <div class="absolute bottom-2.5 left-3 flex items-center gap-2 text-xs text-gray-400">
+                                        <label class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                            <span>Lampiran</span>
+                                            <input type="file" id="comment_attachment_input" @change="handleCommentFileChange($event)" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt">
+                                        </label>
+                                        <span class="hidden sm:inline text-[11px] text-gray-400">Ctrl+Enter untuk kirim</span>
+                                    </div>
+
+                                    <div class="absolute bottom-2.5 right-3 flex items-center gap-2">
+                                        <button type="button" 
+                                                @click="submitTaskComment()" 
+                                                :disabled="isSubmittingComment || (!newCommentText.trim() && !newCommentFile)"
+                                                :class="{'opacity-50 cursor-not-allowed': !newCommentText.trim() && !newCommentFile, 'opacity-75 cursor-wait': isSubmittingComment}"
+                                                class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition-colors">
+                                            <svg x-show="isSubmittingComment" class="animate-spin w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <svg x-show="!isSubmittingComment" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                            <span x-text="isSubmittingComment ? 'Mengirim...' : 'Kirim'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -624,6 +907,16 @@
                 </div>
 
                 <div class="px-6 py-6" x-show="!isReportingBug">
+                    <!-- Active Bug Notice -->
+                    <template x-if="activeTest?.bug">
+                        <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-xs text-amber-900">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span>Test Case ini memiliki bug aktif: <strong class="font-mono text-amber-800" x-text="activeTest.bug.code"></strong>. Menekan <strong>PASS</strong> akan otomatis menyelesaikan bug tersebut.</span>
+                            </div>
+                        </div>
+                    </template>
+
                     <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
                         <h4 class="text-xs font-bold text-blue-800 uppercase mb-1">Expected Result</h4>
                         <p class="text-sm text-blue-900" x-text="activeTest?.expected"></p>
@@ -660,9 +953,14 @@
 
                 <!-- Report Bug Form -->
                 <div class="px-6 py-6" x-show="isReportingBug" x-cloak>
-                    <div class="mb-5 flex items-center gap-2 text-red-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <h3 class="text-lg font-bold">Report Bug</h3>
+                    <div class="mb-5 flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-red-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <h3 class="text-lg font-bold" x-text="activeTest?.bug ? 'Update Bug Report (' + activeTest.bug.code + ')' : 'Report Bug'"></h3>
+                        </div>
+                        <template x-if="activeTest?.bug">
+                            <span class="text-xs font-mono font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded" x-text="'Linked: ' + activeTest.bug.code"></span>
+                        </template>
                     </div>
                     
                     <form @submit.prevent="submitTestResult('failed')">
@@ -830,6 +1128,118 @@
                             <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmitting" :class="{'opacity-50 cursor-not-allowed': isSubmitting}">
                                 <span x-show="!isSubmitting">Save Task</span>
                                 <span x-show="isSubmitting">Saving...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Convert Bugs to Task Modal -->
+    <div x-show="isBulkTaskModalOpen" 
+         class="fixed inset-0 z-[60] overflow-y-auto" 
+         aria-labelledby="modal-title" role="dialog" aria-modal="true" x-cloak>
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isBulkTaskModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" 
+                 @click="isBulkTaskModalOpen = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div x-show="isBulkTaskModalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl w-full border border-gray-200">
+                
+                <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg leading-6 font-bold text-gray-900">
+                            Buat 1 Task Kanban dari <span x-text="selectedBugIds.length"></span> Bug
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Semua bug terpilih akan digabungkan ke dalam 1 kartu task baru di Kanban Board.</p>
+                    </div>
+                    <button @click="isBulkTaskModalOpen = false" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="px-6 py-4">
+                    <form @submit.prevent="submitBulkConvert">
+                        <div class="space-y-4">
+                            <!-- Selected Bugs List Preview -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Daftar Bug Terpilih (<span x-text="selectedBugIds.length"></span>)</label>
+                                <div class="max-h-36 overflow-y-auto space-y-1.5 p-2 bg-gray-50 rounded-lg border border-gray-200 text-xs">
+                                    <template x-for="b in getSelectedBugs()" :key="b.id">
+                                        <div class="flex items-center justify-between p-2 bg-white rounded border border-gray-200 shadow-2xs">
+                                            <div class="flex items-center gap-2 overflow-hidden">
+                                                <span class="font-mono font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded text-[11px] shrink-0" x-text="b.code"></span>
+                                                <template x-if="b.test_case">
+                                                    <span class="font-mono text-[10px] text-blue-600 bg-blue-50 px-1 rounded shrink-0" x-text="b.test_case.code"></span>
+                                                </template>
+                                                <span class="text-gray-800 truncate" x-text="b.description"></span>
+                                            </div>
+                                            <button type="button" @click="toggleBugSelection(b.id)" class="text-gray-400 hover:text-red-500 p-1 shrink-0 ml-2" title="Hapus dari pilihan">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Task Kanban <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="bulkTask.title" required placeholder="Contoh: Perbaikan kumpulan bug ..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
+                                    <select x-model="bulkTask.assignee_id" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                        <option value="">-- Unassigned --</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kolom Awal</label>
+                                    <select x-model="bulkTask.column_id" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                        <option value="todo">To Do</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="ready_for_qc">Ready for QC</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Tambahan</label>
+                                <textarea rows="3" x-model="bulkTask.description" placeholder="Catatan perbaikan / deskripsi gabungan..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono text-xs"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" @click="isBulkTaskModalOpen = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Batal
+                            </button>
+                            <button type="submit" :disabled="isSubmittingBulkConvert || selectedBugIds.length === 0" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                <svg x-show="isSubmittingBulkConvert" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-text="isSubmittingBulkConvert ? 'Membuat Task...' : 'Buat Kanban Task'"></span>
                             </button>
                         </div>
                     </form>
@@ -1032,6 +1442,85 @@
                 </div>
 
                 <div class="px-6 py-6 space-y-6">
+                    <!-- Riwayat Bug Tracker / Defect History -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                Riwayat Bug Tracker
+                            </h4>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full" 
+                                  :class="(viewingTestCase?.bugs && viewingTestCase.bugs.length > 0) ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
+                                  x-text="(viewingTestCase?.bugs ? viewingTestCase.bugs.length : 0) + ' Bug Tercatat'"></span>
+                        </div>
+
+                        <template x-if="viewingTestCase?.bugs && viewingTestCase.bugs.length > 0">
+                            <div class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                                <template x-for="b in viewingTestCase.bugs" :key="b.id">
+                                    <div class="p-3 rounded-lg border text-xs flex flex-col gap-1.5 transition-all"
+                                         :class="b.status === 'resolved' ? 'bg-green-50/50 border-green-200' : 'bg-red-50/60 border-red-200'">
+                                        <div class="flex items-center justify-between flex-wrap gap-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-mono font-bold px-2 py-0.5 rounded border"
+                                                      :class="b.status === 'resolved' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-red-100 text-red-800 border-red-300'"
+                                                      x-text="b.code"></span>
+                                                <span class="inline-flex items-center text-[10px] font-bold uppercase px-1.5 py-0.2 rounded border"
+                                                      :class="{
+                                                        'bg-green-100 text-green-700 border-green-200': b.status === 'resolved',
+                                                        'bg-red-100 text-red-700 border-red-200': b.status === 'open',
+                                                        'bg-amber-100 text-amber-700 border-amber-200': b.status === 'in_progress'
+                                                      }" x-text="b.status"></span>
+                                                <span class="inline-flex items-center text-[10px] font-bold uppercase px-1.5 py-0.2 rounded"
+                                                      :class="{
+                                                        'bg-red-100 text-red-700': b.severity === 'Critical' || b.severity === 'High',
+                                                        'bg-yellow-100 text-yellow-700': b.severity === 'Medium',
+                                                        'bg-green-100 text-green-700': b.severity === 'Low'
+                                                      }" x-text="b.severity || 'Medium'"></span>
+                                            </div>
+                                            <div class="text-[11px] text-gray-500">
+                                                <span x-text="'Dilaporkan: ' + (b.created_at || 'Unknown')"></span>
+                                                <template x-if="b.status === 'resolved' && b.updated_at">
+                                                    <span class="text-green-700 font-semibold ml-1.5" x-text="'(Solved: ' + b.updated_at + ')'"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-800 font-medium whitespace-pre-wrap" x-text="b.description"></p>
+                                        <template x-if="b.actual_result">
+                                            <div class="bg-white/80 p-2 rounded border border-gray-200 text-gray-700">
+                                                <strong class="text-gray-900">Actual Result:</strong> <span x-text="b.actual_result"></span>
+                                            </div>
+                                        </template>
+                                        <div class="flex items-center justify-between text-[11px] text-gray-500 pt-1">
+                                            <template x-if="b.project_task">
+                                                <div class="flex items-center gap-1 cursor-pointer text-blue-600 hover:text-blue-800" @click="openTaskModalById(b.project_task.id)">
+                                                    <span>Terkait Task:</span>
+                                                    <span class="font-mono font-bold underline" x-text="b.project_task.code"></span>
+                                                    <span class="text-gray-500" x-text="'(' + b.project_task.title + ')'"></span>
+                                                </div>
+                                            </template>
+                                            <template x-if="!b.project_task">
+                                                <span class="italic text-gray-400">Belum ada Kanban task</span>
+                                            </template>
+                                            <template x-if="b.attachment_path">
+                                                <a :href="'/storage/' + b.attachment_path" target="_blank" class="text-blue-600 hover:underline flex items-center gap-0.5">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                                    Lampiran
+                                                </a>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <template x-if="!viewingTestCase?.bugs || viewingTestCase.bugs.length === 0">
+                            <div class="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Tidak ada riwayat bug pada Test Case ini (Clean).</span>
+                            </div>
+                        </template>
+                    </div>
+
                     <div class="flex flex-wrap gap-2">
                         <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-gray-100 text-gray-700" x-show="viewingTestCase?.test_type">
                             <span class="mr-1 font-normal text-gray-500">Type:</span> <span x-text="viewingTestCase?.test_type"></span>
@@ -1176,12 +1665,29 @@ function qcDashboard() {
         isBugsExpanded: true,
         
         projectBugs: [],
+        bugFilterTab: 'all', // 'all', 'active', 'solved'
+        selectedBugIds: [],
+        isBulkTaskModalOpen: false,
+        isSubmittingBulkConvert: false,
+        bulkTask: {
+            title: '',
+            description: '',
+            assignee_id: '',
+            column_id: 'todo'
+        },
         isConvertingBug: false,
         convertingBugId: null,
+        isPassingAllTests: false,
         
         isTaskModalOpen: false,
         activeTask: null,
         activeTab: 'details',
+        activeTaskComments: [],
+        isLoadingComments: false,
+        newCommentText: '',
+        newCommentFile: null,
+        isSubmittingComment: false,
+        deletingCommentId: null,
         
         isRunTestOpen: false,
         activeTest: null,
@@ -1395,6 +1901,148 @@ function qcDashboard() {
                 }
             } catch (error) {
                 console.error("Error fetching tasks:", error);
+            }
+        },
+
+        get filteredProjectBugs() {
+            if (this.bugFilterTab === 'active') {
+                return this.projectBugs.filter(b => b.status !== 'resolved');
+            }
+            if (this.bugFilterTab === 'solved') {
+                return this.projectBugs.filter(b => b.status === 'resolved');
+            }
+            return this.projectBugs;
+        },
+
+        isBugSelected(id) {
+            return this.selectedBugIds.some(sid => Number(sid) === Number(id));
+        },
+
+        get isAllBugsSelected() {
+            const visible = this.filteredProjectBugs;
+            return visible.length > 0 && visible.every(b => this.isBugSelected(b.id));
+        },
+
+        get isSomeBugsSelected() {
+            return this.selectedBugIds.length > 0 && !this.isAllBugsSelected;
+        },
+
+        toggleSelectAllBugs(event) {
+            const checked = event.target.checked;
+            const visibleIds = this.filteredProjectBugs.map(b => Number(b.id));
+            if (checked) {
+                const currentSet = new Set(this.selectedBugIds.map(Number));
+                visibleIds.forEach(id => currentSet.add(id));
+                this.selectedBugIds = Array.from(currentSet);
+            } else {
+                this.selectedBugIds = this.selectedBugIds.filter(id => !visibleIds.includes(Number(id)));
+            }
+        },
+
+        toggleBugSelection(id) {
+            const numId = Number(id);
+            const index = this.selectedBugIds.findIndex(sid => Number(sid) === numId);
+            if (index > -1) {
+                this.selectedBugIds.splice(index, 1);
+            } else {
+                this.selectedBugIds.push(numId);
+            }
+        },
+
+        getSelectedBugs() {
+            return this.projectBugs.filter(b => this.isBugSelected(b.id));
+        },
+
+        openBulkConvertModal() {
+            if (this.selectedBugIds.length === 0) return;
+            const selected = this.getSelectedBugs();
+            const codes = selected.map(b => b.code).join(', ');
+            
+            this.bulkTask = {
+                title: 'Perbaikan ' + selected.length + ' Bug (' + (selected.length <= 3 ? codes : selected.slice(0, 2).map(b => b.code).join(', ') + '...') + ')',
+                description: "Kumpulan defect untuk diperbaiki:\n" + selected.map(b => `• [${b.code}] (${b.test_case ? b.test_case.code : 'No-TC'}): ${b.description}`).join("\n"),
+                assignee_id: '',
+                column_id: 'todo'
+            };
+            this.isBulkTaskModalOpen = true;
+        },
+
+        async submitBulkConvert() {
+            if (this.isSubmittingBulkConvert || this.selectedBugIds.length === 0) return;
+            this.isSubmittingBulkConvert = true;
+
+            try {
+                const response = await fetch(`/api/projects/${this.projectId}/qc/bugs/bulk-convert`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        bug_ids: this.selectedBugIds,
+                        title: this.bulkTask.title,
+                        description: this.bulkTask.description,
+                        assignee_id: this.bulkTask.assignee_id,
+                        column_id: this.bulkTask.column_id
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    await this.fetchTasks();
+                    await this.fetchProjectBugs();
+                    await this.fetchProjectTestCases();
+                    
+                    this.selectedBugIds = [];
+                    this.isBulkTaskModalOpen = false;
+                    this.isKanbanExpanded = true;
+                    this.showSuccess(`Task baru (${data.task.code}) berhasil dibuat dari ${data.count} bug!`);
+                } else {
+                    const err = await response.json();
+                    this.showError(err.message || 'Gagal membuat task dari bug terpilih.');
+                }
+            } catch (error) {
+                console.error("Error bulk converting bugs to task:", error);
+                this.showError('Terjadi kesalahan saat membuat task.');
+            } finally {
+                this.isSubmittingBulkConvert = false;
+            }
+        },
+
+        async passAllTaskTestCases(taskId) {
+            if (this.isPassingAllTests) return;
+            if (!confirm('Apakah Anda yakin ingin menandai semua Test Case untuk task ini menjadi PASSED dan menyelesaikan bug terkait?')) return;
+            
+            this.isPassingAllTests = true;
+            try {
+                const response = await fetch(`/api/qc/tasks/${taskId}/pass-test-cases`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+
+                if (response.ok) {
+                    await this.fetchTasks();
+                    await this.fetchProjectTestCases();
+                    await this.fetchProjectBugs();
+                    
+                    if (this.activeTask && this.activeTask.id === taskId) {
+                        const updatedTask = this.tasks.find(t => t.id === taskId);
+                        if (updatedTask) {
+                            this.activeTask = updatedTask;
+                        }
+                    }
+                    this.showSuccess('Semua test case berhasil dinyatakan PASSED dan bug terkait telah terselesaikan!');
+                } else {
+                    this.showError('Gagal memperbarui status test cases.');
+                }
+            } catch (error) {
+                console.error('Error passing all test cases:', error);
+                this.showError('Terjadi kesalahan saat memproses permintaan.');
+            } finally {
+                this.isPassingAllTests = false;
             }
         },
 
@@ -1633,14 +2281,21 @@ function qcDashboard() {
 
         openTaskModal(task) {
             this.activeTask = task;
+            this.activeTaskComments = task.comments || [];
             this.activeTab = 'test_cases';
             this.isTaskModalOpen = true;
+            this.newCommentText = '';
+            this.newCommentFile = null;
+            this.fetchTaskComments(task.id);
         },
         
         closeTaskModal() {
             this.isTaskModalOpen = false;
             setTimeout(() => {
                 this.activeTask = null;
+                this.activeTaskComments = [];
+                this.newCommentText = '';
+                this.newCommentFile = null;
             }, 300);
         },
 
@@ -1702,7 +2357,18 @@ function qcDashboard() {
         openRunTestModal(testCase) {
             this.activeTest = testCase;
             this.isReportingBug = false;
-            this.bugDescription = '';
+            
+            if (testCase.bug) {
+                this.bugDescription = testCase.bug.description || '';
+                this.bugActualResult = testCase.bug.actual_result || '';
+                this.bugSeverity = testCase.bug.severity || 'Medium';
+                this.bugEnvironment = testCase.bug.environment || '';
+            } else {
+                this.bugDescription = '';
+                this.bugActualResult = '';
+                this.bugSeverity = 'Medium';
+                this.bugEnvironment = '';
+            }
             
             // Pre-fill steps to reproduce if test case has steps
             if (testCase.steps && testCase.steps.length > 0) {
@@ -1711,9 +2377,6 @@ function qcDashboard() {
                 this.stepsToReproduce = '';
             }
             
-            this.bugSeverity = 'Medium';
-            this.bugActualResult = '';
-            this.bugEnvironment = '';
             this.createKanbanTask = false;
             this.bugAssigneeId = '';
             
@@ -1756,11 +2419,45 @@ function qcDashboard() {
                     });
 
                     if (response.ok) {
+                        const data = await response.json();
                         this.activeTest.status = result;
-                        this.updateTestCaseStatusInTree(this.projectTestCases, this.activeTest.id, result);
                         
-                        if (result === 'failed' && this.createKanbanTask) {
-                            this.fetchTasks();
+                        await this.fetchProjectTestCases();
+                        await this.fetchTasks();
+                        await this.fetchProjectBugs();
+                        
+                        // Resync activeTask if it is currently open
+                        if (this.activeTask) {
+                            const updatedTask = this.tasks.find(t => t.id === this.activeTask.id);
+                            if (updatedTask) {
+                                this.activeTask = updatedTask;
+                            }
+                        }
+
+                        // Resync viewingTestCase if it is currently open
+                        if (this.viewingTestCase && this.viewingTestCase.id === this.activeTest.id) {
+                            this.viewingTestCase.status = result;
+                            const findTc = (list) => {
+                                for (let item of list) {
+                                    if (item.id === this.activeTest.id) return item;
+                                    if (item.children) {
+                                        const found = findTc(item.children);
+                                        if (found) return found;
+                                    }
+                                }
+                                return null;
+                            };
+                            const refreshedTc = findTc(this.projectTestCases);
+                            if (refreshedTc) {
+                                this.viewingTestCase = refreshedTc;
+                            }
+                        }
+                        
+                        if (result === 'failed') {
+                            const bugCode = data.bug ? data.bug.code : '';
+                            this.showSuccess(`Test Case gagal. Bug tracker (${bugCode}) berhasil dihubungkan!`);
+                        } else {
+                            this.showSuccess('Test Case berhasil (Passed) dan bug terkait telah diselesaikan.');
                         }
                         
                         this.closeRunTestModal();
@@ -1856,6 +2553,9 @@ function qcDashboard() {
 
                 if (response.ok) {
                     await this.fetchTasks();
+                    await this.fetchProjectTestCases();
+                    await this.fetchProjectBugs();
+
                     if (this.activeTask && this.activeTask.id === taskId) {
                         this.activeTask.column_id = columnId;
                         
@@ -1865,12 +2565,167 @@ function qcDashboard() {
                             this.activeTask = updatedTask;
                         }
                     }
+
+                    if (columnId === 'done') {
+                        this.showSuccess('Task selesai! Semua test case terkait telah dinyatakan PASSED dan bug terselesaikan.');
+                    }
                 }
             } catch (error) {
                 console.error('Error updating task column:', error);
             } finally {
                 this.isMovingTask = false;
                 this.movingToColumn = null;
+            }
+        },
+
+        async fetchTaskComments(taskId) {
+            if (!taskId) return;
+            this.isLoadingComments = true;
+            try {
+                const response = await fetch(`/api/qc/tasks/${taskId}/comments`);
+                if (response.ok) {
+                    this.activeTaskComments = await response.json();
+                    if (this.activeTask && this.activeTask.id === taskId) {
+                        this.activeTask.comments_count = this.activeTaskComments.length;
+                    }
+                    const cardTask = this.tasks.find(t => t.id === taskId);
+                    if (cardTask) {
+                        cardTask.comments_count = this.activeTaskComments.length;
+                    }
+                    this.$nextTick(() => {
+                        this.scrollCommentsToBottom();
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching comments:", error);
+            } finally {
+                this.isLoadingComments = false;
+            }
+        },
+
+        scrollCommentsToBottom() {
+            const container = document.getElementById('comments-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        },
+
+        handleCommentFileChange(event) {
+            if (event.target.files && event.target.files[0]) {
+                this.newCommentFile = event.target.files[0];
+            }
+        },
+
+        removeCommentFile() {
+            this.newCommentFile = null;
+            const input = document.getElementById('comment_attachment_input');
+            if (input) input.value = '';
+        },
+
+        formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        },
+
+        isImageAttachment(path) {
+            if (!path) return false;
+            const ext = path.split('.').pop().toLowerCase();
+            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+        },
+
+        getFilename(path) {
+            if (!path) return '';
+            return path.split('/').pop().replace(/^attachments\/task_comments\//, '');
+        },
+
+        async submitTaskComment() {
+            if (!this.activeTask || this.isSubmittingComment) return;
+            const text = (this.newCommentText || '').trim();
+            if (!text && !this.newCommentFile) return;
+
+            this.isSubmittingComment = true;
+            try {
+                const formData = new FormData();
+                if (text) {
+                    formData.append('comment', text);
+                }
+                if (this.newCommentFile) {
+                    formData.append('attachment', this.newCommentFile);
+                }
+
+                const response = await fetch(`/api/qc/tasks/${this.activeTask.id}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.comment) {
+                        this.activeTaskComments.push(data.comment);
+                    }
+                    this.newCommentText = '';
+                    this.removeCommentFile();
+                    
+                    if (this.activeTask) {
+                        this.activeTask.comments_count = this.activeTaskComments.length;
+                    }
+                    const cardTask = this.tasks.find(t => t.id === this.activeTask.id);
+                    if (cardTask) {
+                        cardTask.comments_count = this.activeTaskComments.length;
+                    }
+
+                    this.$nextTick(() => {
+                        this.scrollCommentsToBottom();
+                    });
+                } else {
+                    const err = await response.json();
+                    this.showError(err.message || 'Gagal mengirim komentar.');
+                }
+            } catch (error) {
+                console.error("Error submitting comment:", error);
+                this.showError('Terjadi kesalahan saat mengirim komentar.');
+            } finally {
+                this.isSubmittingComment = false;
+            }
+        },
+
+        async deleteTaskComment(commentId) {
+            if (!confirm('Apakah Anda yakin ingin menghapus komentar ini?')) return;
+            this.deletingCommentId = commentId;
+
+            try {
+                const response = await fetch(`/api/qc/comments/${commentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+
+                if (response.ok) {
+                    this.activeTaskComments = this.activeTaskComments.filter(c => c.id !== commentId);
+                    if (this.activeTask) {
+                        this.activeTask.comments_count = this.activeTaskComments.length;
+                    }
+                    const cardTask = this.tasks.find(t => t.id === this.activeTask.id);
+                    if (cardTask) {
+                        cardTask.comments_count = this.activeTaskComments.length;
+                    }
+                    this.showSuccess('Komentar berhasil dihapus.');
+                } else {
+                    const err = await response.json();
+                    this.showError(err.message || 'Gagal menghapus komentar.');
+                }
+            } catch (error) {
+                console.error("Error deleting comment:", error);
+                this.showError('Terjadi kesalahan saat menghapus komentar.');
+            } finally {
+                this.deletingCommentId = null;
             }
         }
     }
