@@ -58,7 +58,14 @@
                                         </span>
                                     </template>
                                 </div>
-                                <h4 class="text-sm font-medium text-gray-800 leading-snug mb-3" x-text="task.title"></h4>
+                                <template x-if="task.source_test_case">
+                                    <div class="mb-2">
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200" title="Bug ditemukan pada Test Case ini">
+                                            <span class="opacity-75 font-normal">Test Case:</span>
+                                            <span class="font-mono" x-text="task.source_test_case.code"></span>
+                                        </span>
+                                    </div>
+                                </template>
                                 <div class="flex justify-between items-center mt-auto">
                                     <div class="flex -space-x-1 overflow-hidden">
                                         <div class="inline-block h-6 w-6 rounded-full bg-blue-100 text-blue-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold uppercase" x-text="task.assignee.substring(0,2)"></div>
@@ -150,6 +157,12 @@
                             <button @click.stop="openEditTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-blue-500 hover:text-blue-700 p-1 rounded-md transition-opacity" title="Edit Test Case">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
+                            <button @click.stop="duplicateTestCase(tc)" class="opacity-0 group-hover:opacity-100 text-yellow-500 hover:text-yellow-700 p-1 rounded-md transition-opacity" title="Duplicate Test Case">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                            </button>
+                            <button @click.stop="deleteTestCase(tc.id)" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 p-1 rounded-md transition-opacity" title="Delete Test Case">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
                             <button @click.stop="openRunTestModal(tc)" class="opacity-0 group-hover:opacity-100 text-green-600 hover:text-green-800 p-1 rounded-md transition-opacity" title="Run Test">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </button>
@@ -171,6 +184,103 @@
                 <template x-if="projectTestCases.length === 0">
                     <div class="p-8 text-center text-gray-500 text-sm">
                         No test cases found for this project.
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Defects / Bug Tracker Box -->
+    <div class="px-6 pb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-red-100 bg-red-50 flex justify-between items-center cursor-pointer select-none" @click="isBugsExpanded = !isBugsExpanded">
+                <h2 class="text-lg font-bold text-red-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Defects / Bug Tracker
+                </h2>
+                <div class="flex items-center gap-3">
+                    <span class="bg-red-200 text-red-800 py-0.5 px-2.5 rounded-full text-xs font-bold" x-text="projectBugs.length + ' Bugs'"></span>
+                    <svg class="w-5 h-5 text-red-600 transition-transform duration-200" :class="{'rotate-180': !isBugsExpanded}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+            </div>
+            
+            <div class="p-0 bg-white" x-show="isBugsExpanded" x-collapse>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bug Details</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity / Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Case</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kanban Task</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="bug in projectBugs" :key="bug.id">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-col">
+                                            <span class="text-xs font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-100 w-max mb-1" x-text="bug.code"></span>
+                                            <span class="text-sm font-medium text-gray-900" x-text="bug.description"></span>
+                                            <span class="text-xs text-gray-500 mt-1" x-text="'Reported: ' + bug.created_at"></span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex flex-col gap-1">
+                                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded w-max" 
+                                                  :class="{
+                                                    'bg-red-100 text-red-700 border border-red-200': bug.severity === 'Critical' || bug.severity === 'High',
+                                                    'bg-yellow-100 text-yellow-700 border border-yellow-200': bug.severity === 'Medium',
+                                                    'bg-green-100 text-green-700 border border-green-200': bug.severity === 'Low'
+                                                  }" x-text="bug.severity || 'Unknown'"></span>
+                                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200 w-max" x-text="bug.status"></span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <template x-if="bug.test_case">
+                                            <div class="text-sm text-gray-600">
+                                                <span class="font-mono text-xs text-blue-600" x-text="bug.test_case.code"></span><br>
+                                                <span class="text-xs" x-text="bug.test_case.title"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="!bug.test_case">
+                                            <span class="text-xs text-gray-400 italic">No Test Case</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <template x-if="bug.project_task">
+                                            <div class="flex items-center gap-2 cursor-pointer group" @click="openTaskModalById(bug.project_task.id)">
+                                                <span class="text-xs font-medium text-blue-600 group-hover:text-blue-800 underline decoration-blue-300 decoration-dotted" x-text="bug.project_task.code"></span>
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
+                                                      :class="getColumnBadgeClass(bug.project_task.column_id)"
+                                                      x-text="getColumnTitle(bug.project_task.column_id)"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="!bug.project_task">
+                                            <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-orange-100 text-orange-700 border border-orange-200">Unassigned</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-2">
+                                        <template x-if="!bug.project_task">
+                                            <button @click="convertBugToTask(bug.id)" :disabled="convertingBugId === bug.id" :class="{'opacity-75 cursor-wait': convertingBugId === bug.id}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors">
+                                                <svg x-show="convertingBugId === bug.id" class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                <svg x-show="convertingBugId !== bug.id" class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                                <span x-text="convertingBugId === bug.id ? 'Creating...' : 'Create Task'"></span>
+                                            </button>
+                                        </template>
+                                        <button @click="deleteBug(bug.id)" class="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors" title="Delete Bug">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <template x-if="projectBugs.length === 0">
+                    <div class="p-8 text-center text-gray-500 text-sm">
+                        No bugs reported yet. Great job!
                     </div>
                 </template>
             </div>
@@ -293,10 +403,15 @@
                                 </template>
                             </div>
                         </div>
-                        <button @click="closeTaskModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                            <span class="sr-only">Close</span>
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button @click="deleteTask(activeTask.id)" type="button" class="bg-red-50 p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors focus:outline-none" title="Delete Task">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                            <button @click="closeTaskModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                <span class="sr-only">Close</span>
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Tabs Navigation -->
@@ -313,6 +428,13 @@
                                 Test Cases
                                 <span class="bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs" x-text="activeTask?.testCases?.length || 0"></span>
                             </button>
+                            <button @click="activeTab = 'bugs'" 
+                                    x-show="activeTask?.bugs && activeTask.bugs.length > 0"
+                                    :class="{'border-red-500 text-red-600': activeTab === 'bugs', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'bugs'}"
+                                    class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                                Bugs
+                                <span class="bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs" x-text="activeTask?.bugs?.length || 0"></span>
+                            </button>
                         </nav>
                     </div>
 
@@ -321,6 +443,27 @@
                         
                         <!-- Details Tab -->
                         <div x-show="activeTab === 'details'" class="prose prose-sm max-w-none text-gray-600">
+                            <!-- Linked Test Case Banner if Task originates from a Bug -->
+                            <template x-if="activeTask?.source_test_case">
+                                <div class="mb-4 p-4 bg-amber-50/80 border border-amber-200 rounded-lg not-prose flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                                    <div class="flex items-start sm:items-center gap-3">
+                                        <div class="p-2 bg-amber-100 text-amber-800 rounded-lg shrink-0">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs text-amber-800 font-medium">Bug ini ditemukan pada Test Case:</div>
+                                            <div class="flex items-center gap-2 mt-0.5">
+                                                <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-mono" x-text="activeTask.source_test_case.code"></span>
+                                                <span class="text-sm font-semibold text-gray-900" x-text="activeTask.source_test_case.title"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="activeTab = 'test_cases'" class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 shrink-0 self-end sm:self-center">
+                                        Buka Tab Test Case &rarr;
+                                    </button>
+                                </div>
+                            </template>
+
                             <h4 class="text-gray-800 font-semibold mb-2">Description</h4>
                             <p x-text="activeTask?.description || 'No description provided.'"></p>
                             
@@ -337,12 +480,29 @@
 
                         <!-- Test Cases Tab -->
                         <div x-show="activeTab === 'test_cases'" x-cloak>
+                            <!-- Alert banner stating which test case the bug was found in -->
+                            <template x-if="activeTask?.source_test_case">
+                                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between shadow-xs">
+                                    <div class="flex items-center gap-2.5">
+                                        <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        <div class="text-xs text-red-900">
+                                            <span>Bug ini ditemukan pada Test Case:</span>
+                                            <span class="font-bold font-mono px-1.5 py-0.5 bg-red-100 rounded text-red-800 ml-1" x-text="activeTask.source_test_case.code"></span>
+                                            <span class="font-semibold text-gray-800 ml-1" x-text="activeTask.source_test_case.title"></span>
+                                        </div>
+                                    </div>
+                                    <button type="button" @click.stop="openViewTestCaseModal(activeTask.source_test_case)" class="text-xs text-red-700 hover:text-red-900 font-bold underline shrink-0">
+                                        Detail Skenario &rarr;
+                                    </button>
+                                </div>
+                            </template>
+
                             <template x-if="activeTask?.testCases && activeTask.testCases.length > 0">
                                 <div class="space-y-3">
                                     <template x-for="tc in activeTask.testCases" :key="tc.id">
-                                        <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                        <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm" :class="{'border-red-200 bg-red-50/20': tc.is_from_bug}">
                                             <div>
-                                                <div class="flex items-center gap-2 mb-1">
+                                                <div class="flex items-center gap-2 mb-1 flex-wrap">
                                                     <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100" x-text="tc.code"></span>
                                                     <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
                                                           :class="{
@@ -350,10 +510,16 @@
                                                             'bg-red-100 text-red-700 border border-red-200': tc.status === 'failed',
                                                             'bg-gray-100 text-gray-500 border border-gray-200': tc.status === 'pending'
                                                           }" x-text="tc.status"></span>
+                                                    <template x-if="tc.is_from_bug">
+                                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200">
+                                                            <svg class="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                            Bug Ditemukan di Kode: <span class="font-mono font-extrabold" x-text="tc.code"></span>
+                                                        </span>
+                                                    </template>
                                                 </div>
                                                 <h4 class="text-sm font-semibold text-gray-800" x-text="tc.title"></h4>
                                             </div>
-                                            <div class="flex gap-2">
+                                            <div class="flex gap-2 shrink-0">
                                                 <button @click.stop="openViewTestCaseModal(tc)" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
                                                     View
                                                 </button>
@@ -373,6 +539,44 @@
                                     </svg>
                                     <h3 class="text-sm font-medium text-gray-900">No Test Cases</h3>
                                     <p class="mt-1 text-sm text-gray-500">There are no test cases linked to this task yet.</p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Bugs Tab -->
+                        <div x-show="activeTab === 'bugs'" x-cloak>
+                            <template x-if="activeTask?.bugs && activeTask.bugs.length > 0">
+                                <div class="space-y-3">
+                                    <template x-for="bug in activeTask.bugs" :key="bug.id">
+                                        <div class="flex flex-col p-4 bg-white border border-red-200 rounded-lg shadow-sm">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="text-xs font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-100" x-text="bug.code"></span>
+                                                <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200" x-text="bug.status"></span>
+                                                <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
+                                                      :class="{
+                                                        'bg-red-100 text-red-700': bug.severity === 'Critical' || bug.severity === 'High',
+                                                        'bg-yellow-100 text-yellow-700': bug.severity === 'Medium',
+                                                        'bg-green-100 text-green-700': bug.severity === 'Low'
+                                                      }" x-text="bug.severity || 'Unknown'"></span>
+                                            </div>
+                                            <h4 class="text-sm font-medium text-gray-800 whitespace-pre-wrap" x-text="bug.description"></h4>
+                                            
+                                            <template x-if="bug.test_case">
+                                                <div class="mt-2 text-xs flex items-center gap-1.5 bg-gray-50 p-2 rounded border border-gray-100">
+                                                    <span class="font-semibold text-gray-600">Ditemukan pada Test Case:</span>
+                                                    <span class="font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100" x-text="bug.test_case.code"></span>
+                                                    <span class="text-gray-800 font-medium" x-text="bug.test_case.title"></span>
+                                                </div>
+                                            </template>
+                                            
+                                            <template x-if="bug.actual_result || bug.environment">
+                                                <div class="mt-3 text-xs text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-2 bg-gray-50 p-2 rounded border border-gray-100">
+                                                    <div x-show="bug.environment"><strong>Environment:</strong> <span x-text="bug.environment"></span></div>
+                                                    <div x-show="bug.actual_result"><strong>Actual Result:</strong> <span x-text="bug.actual_result"></span></div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
                         </div>
@@ -897,6 +1101,62 @@
             </div>
         </div>
     </div>
+    
+    <!-- Toast Notification -->
+    <div x-show="errorMessage" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform translate-x-8"
+         x-transition:enter-end="opacity-100 transform translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 transform translate-x-0"
+         x-transition:leave-end="opacity-0 transform translate-x-8"
+         class="fixed top-4 right-4 z-[100] max-w-sm w-full bg-red-50 border-l-4 border-red-500 rounded-r shadow-lg flex items-start p-4" x-cloak>
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+        </div>
+        <div class="ml-3 w-0 flex-1 pt-0.5">
+            <p class="text-sm font-medium text-red-800">Error</p>
+            <p class="mt-1 text-sm text-red-700" x-text="errorMessage"></p>
+        </div>
+        <div class="ml-4 flex-shrink-0 flex">
+            <button @click="errorMessage = ''" class="bg-red-50 rounded-md inline-flex text-red-500 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <span class="sr-only">Close</span>
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Success Toast Notification -->
+    <div x-show="successMessage" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform translate-x-8"
+         x-transition:enter-end="opacity-100 transform translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 transform translate-x-0"
+         x-transition:leave-end="opacity-0 transform translate-x-8"
+         class="fixed top-4 right-4 z-[100] max-w-sm w-full bg-green-50 border-l-4 border-green-500 rounded-r shadow-lg flex items-start p-4" x-cloak>
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+        </div>
+        <div class="ml-3 w-0 flex-1 pt-0.5">
+            <p class="text-sm font-medium text-green-800">Berhasil</p>
+            <p class="mt-1 text-sm text-green-700" x-text="successMessage"></p>
+        </div>
+        <div class="ml-4 flex-shrink-0 flex">
+            <button @click="successMessage = ''" class="bg-green-50 rounded-md inline-flex text-green-500 hover:text-green-600 focus:outline-none">
+                <span class="sr-only">Close</span>
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -913,6 +1173,11 @@ function qcDashboard() {
         
         isKanbanExpanded: true,
         isTestCasesExpanded: true,
+        isBugsExpanded: true,
+        
+        projectBugs: [],
+        isConvertingBug: false,
+        convertingBugId: null,
         
         isTaskModalOpen: false,
         activeTask: null,
@@ -964,6 +1229,28 @@ function qcDashboard() {
         // View Test Case State
         isViewTestCaseModalOpen: false,
         viewingTestCase: null,
+        
+        // Error & Notification State
+        errorMessage: '',
+        successMessage: '',
+
+        showError(msg) {
+            this.errorMessage = msg;
+            setTimeout(() => {
+                if (this.errorMessage === msg) {
+                    this.errorMessage = '';
+                }
+            }, 5000);
+        },
+
+        showSuccess(msg) {
+            this.successMessage = msg;
+            setTimeout(() => {
+                if (this.successMessage === msg) {
+                    this.successMessage = '';
+                }
+            }, 4000);
+        },
         
         // Drag and Drop State
         draggedTestCase: null,
@@ -1040,7 +1327,7 @@ function qcDashboard() {
                     }
                 } else {
                     const data = await response.json();
-                    alert(data.message || 'Gagal memindahkan test case.');
+                    this.showError(data.message || 'Gagal memindahkan test case.');
                 }
             } catch (error) {
                 console.error('Error moving test case:', error);
@@ -1055,6 +1342,49 @@ function qcDashboard() {
         init() {
             this.fetchTasks();
             this.fetchProjectTestCases();
+            this.fetchProjectBugs();
+        },
+
+        async fetchProjectBugs() {
+            try {
+                const response = await fetch(`/api/projects/${this.projectId}/qc/bugs`);
+                if (response.ok) {
+                    this.projectBugs = await response.json();
+                }
+            } catch (error) {
+                console.error("Error fetching project bugs:", error);
+            }
+        },
+
+        async convertBugToTask(bugId) {
+            if (this.convertingBugId) return;
+            this.convertingBugId = bugId;
+            try {
+                const response = await fetch(`/api/qc/bugs/${bugId}/convert`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({}) // Assignee empty for now, defaults to Todo
+                });
+
+                if (response.ok) {
+                    const resData = await response.json();
+                    await this.fetchTasks();
+                    await this.fetchProjectBugs();
+                    this.isKanbanExpanded = true;
+                    this.showSuccess('Task baru (' + (resData.task?.code || '') + ') berhasil dibuat di Kanban Board!');
+                } else {
+                    const data = await response.json();
+                    this.showError(data.message || 'Gagal mengubah bug menjadi task.');
+                }
+            } catch (error) {
+                console.error("Error converting bug to task:", error);
+                this.showError('Terjadi kesalahan saat memproses permintaan.');
+            } finally {
+                this.convertingBugId = null;
+            }
         },
 
         async fetchTasks() {
@@ -1185,6 +1515,23 @@ function qcDashboard() {
             this.isNewTestCaseModalOpen = true;
         },
 
+        duplicateTestCase(tc) {
+            this.editingTestCaseId = null;
+            this.parentTestCase = tc.parent_id ? {id: tc.parent_id} : null; // Keep the same parent if it's a child
+            this.newTestCase = {
+                title: tc.title ? tc.title + ' (Copy)' : '',
+                preconditions: tc.preconditions || '',
+                expected: tc.expected || '',
+                steps: (tc.steps && tc.steps.length > 0) ? [...tc.steps] : [''],
+                payload: tc.payload || '',
+                complexity: tc.complexity || 'Low',
+                priority: tc.priority || 'Medium',
+                test_type: tc.test_type || 'Functional',
+                automation_status: tc.automation_status || 'Manual'
+            };
+            this.isNewTestCaseModalOpen = true;
+        },
+
         closeNewTestCaseModal() {
             this.isNewTestCaseModalOpen = false;
             setTimeout(() => {
@@ -1239,7 +1586,7 @@ function qcDashboard() {
                     await this.fetchProjectTestCases();
                     this.closeNewTestCaseModal();
                 } else {
-                    alert('Gagal menyimpan test case.');
+                    this.showError('Gagal menyimpan test case.');
                 }
             } catch (error) {
                 console.error('Error submitting new test case:', error);
@@ -1295,6 +1642,61 @@ function qcDashboard() {
             setTimeout(() => {
                 this.activeTask = null;
             }, 300);
+        },
+
+        openTaskModalById(taskId) {
+            const task = this.tasks.find(t => t.id === taskId);
+            if (task) {
+                this.openTaskModal(task);
+            }
+        },
+
+        async deleteTask(taskId) {
+            if (!confirm('Are you sure you want to delete this Kanban Task? This action cannot be undone.')) return;
+            try {
+                const response = await fetch(`/api/qc/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                });
+                if (response.ok) {
+                    this.closeTaskModal();
+                    await this.fetchTasks();
+                    await this.fetchProjectBugs();
+                }
+            } catch (error) {
+                console.error("Error deleting task:", error);
+            }
+        },
+
+        async deleteTestCase(testCaseId) {
+            if (!confirm('Are you sure you want to delete this Test Case? This will also remove associated bugs.')) return;
+            try {
+                const response = await fetch(`/api/qc/test-cases/${testCaseId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                });
+                if (response.ok) {
+                    await this.fetchProjectTestCases();
+                    await this.fetchProjectBugs();
+                }
+            } catch (error) {
+                console.error("Error deleting test case:", error);
+            }
+        },
+
+        async deleteBug(bugId) {
+            if (!confirm('Are you sure you want to delete this Bug?')) return;
+            try {
+                const response = await fetch(`/api/qc/bugs/${bugId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                });
+                if (response.ok) {
+                    await this.fetchProjectBugs();
+                }
+            } catch (error) {
+                console.error("Error deleting bug:", error);
+            }
         },
 
         openRunTestModal(testCase) {
@@ -1363,7 +1765,7 @@ function qcDashboard() {
                         
                         this.closeRunTestModal();
                     } else {
-                        alert('Gagal memperbarui status test case.');
+                        this.showError('Gagal memperbarui status test case.');
                     }
                 } catch (error) {
                     console.error('Error submitting test result:', error);
@@ -1428,7 +1830,7 @@ function qcDashboard() {
                     await this.fetchTasks();
                     this.closeNewTaskModal();
                 } else {
-                    alert('Gagal menyimpan task baru.');
+                    this.showError('Gagal menyimpan task baru.');
                 }
             } catch (error) {
                 console.error('Error submitting new task:', error);

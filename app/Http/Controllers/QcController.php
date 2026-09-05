@@ -14,12 +14,34 @@ class QcController extends Controller
     {
         $tasks = $project->tasks()->with(['assignee', 'testCases' => function($q) {
             $q->orderBy('sort_order')->orderBy('id');
-        }, 'bugs'])->get();
+        }, 'bugs.testCase'])->get();
         
         $formattedTasks = $tasks->map(function ($task) {
             $passedTests = $task->testCases->where('status', 'passed')->count();
-            $hasActiveBug = $task->testCases->where('status', 'failed')->count() > 0;
+            $hasActiveBug = $task->testCases->where('status', 'failed')->count() > 0 || $task->bugs->where('status', 'open')->count() > 0;
             
+            // Collect direct test cases and test cases linked through bugs
+            $directTestCases = $task->testCases;
+            $bugTestCases = $task->bugs->map(fn($b) => $b->testCase)->filter();
+            $allTestCases = $directTestCases->concat($bugTestCases)->unique('id');
+
+            $sourceBug = $task->bugs->first(fn($b) => $b->testCase !== null);
+            $sourceTestCase = $sourceBug && $sourceBug->testCase ? [
+                'id' => $sourceBug->testCase->id,
+                'code' => $sourceBug->testCase->code,
+                'title' => $sourceBug->testCase->title,
+                'bug_code' => $sourceBug->code,
+                'preconditions' => $sourceBug->testCase->preconditions,
+                'expected' => $sourceBug->testCase->expected,
+                'status' => $sourceBug->testCase->status,
+                'steps' => $sourceBug->testCase->steps ?? [],
+                'payload' => $sourceBug->testCase->payload,
+                'complexity' => $sourceBug->testCase->complexity,
+                'priority' => $sourceBug->testCase->priority,
+                'test_type' => $sourceBug->testCase->test_type,
+                'automation_status' => $sourceBug->testCase->automation_status,
+            ] : null;
+
             return [
                 'id' => $task->id,
                 'code' => $task->code,
@@ -29,9 +51,27 @@ class QcController extends Controller
                 'column_id' => $task->column_id,
                 'attachment_path' => $task->attachment_path,
                 'hasActiveBug' => $hasActiveBug,
-                'testCasesCount' => $task->testCases->count(),
+                'source_test_case' => $sourceTestCase,
+                'testCasesCount' => $allTestCases->count(),
                 'passedTests' => $passedTests,
-                'testCases' => $task->testCases->map(function($tc) {
+                'bugs' => $task->bugs->map(function($bug) {
+                    return [
+                        'id' => $bug->id,
+                        'code' => $bug->code,
+                        'description' => $bug->description,
+                        'severity' => $bug->severity,
+                        'status' => $bug->status,
+                        'actual_result' => $bug->actual_result,
+                        'environment' => $bug->environment,
+                        'test_case' => $bug->testCase ? [
+                            'id' => $bug->testCase->id,
+                            'code' => $bug->testCase->code,
+                            'title' => $bug->testCase->title,
+                        ] : null,
+                    ];
+                }),
+                'testCases' => $allTestCases->map(function($tc) use ($task) {
+                    $linkedBug = $task->bugs->firstWhere('test_case_id', $tc->id);
                     return [
                         'id' => $tc->id,
                         'code' => $tc->code,
@@ -39,9 +79,16 @@ class QcController extends Controller
                         'preconditions' => $tc->preconditions,
                         'expected' => $tc->expected,
                         'status' => $tc->status,
-                        'steps' => $tc->steps ?? []
+                        'steps' => $tc->steps ?? [],
+                        'payload' => $tc->payload,
+                        'complexity' => $tc->complexity,
+                        'priority' => $tc->priority,
+                        'test_type' => $tc->test_type,
+                        'automation_status' => $tc->automation_status,
+                        'is_from_bug' => (bool)$linkedBug,
+                        'bug_code' => $linkedBug ? $linkedBug->code : null,
                     ];
-                })
+                })->values()
             ];
         });
 
@@ -130,6 +177,10 @@ class QcController extends Controller
                     'attachment_path' => $attachmentPath
                 ]);
                 $projectTaskId = $newTask->id;
+
+                if (!$testCase->project_task_id) {
+                    $testCase->update(['project_task_id' => $newTask->id]);
+                }
             }
 
             TaskBug::create([
@@ -145,6 +196,11 @@ class QcController extends Controller
                 'attachment_path' => $attachmentPath,
                 'status' => 'open'
             ]);
+        } elseif ($request->status === 'passed') {
+            // Auto-resolve any open bugs for this test case
+            TaskBug::where('test_case_id', $testCase->id)
+                ->whereIn('status', ['open', 'in_progress'])
+                ->update(['status' => 'resolved']);
         }
 
         return response()->json(['success' => true]);
@@ -330,5 +386,108 @@ class QcController extends Controller
             $sibling->save();
             $order += 10;
         }
+    }
+    public function getProjectBugs(Project $project)
+    {
+        $bugs = TaskBug::where('project_id', $project->id)
+            ->with(['testCase', 'projectTask'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $formattedBugs = $bugs->map(function($bug) {
+            return [
+                'id' => $bug->id,
+                'code' => $bug->code,
+                'description' => $bug->description,
+                'steps_to_reproduce' => $bug->steps_to_reproduce,
+                'severity' => $bug->severity,
+                'status' => $bug->status,
+                'actual_result' => $bug->actual_result,
+                'environment' => $bug->environment,
+                'attachment_path' => $bug->attachment_path,
+                'created_at' => $bug->created_at->diffForHumans(),
+                'test_case' => $bug->testCase ? [
+                    'id' => $bug->testCase->id,
+                    'code' => $bug->testCase->code,
+                    'title' => $bug->testCase->title,
+                ] : null,
+                'project_task' => $bug->projectTask ? [
+                    'id' => $bug->projectTask->id,
+                    'code' => $bug->projectTask->code,
+                    'title' => $bug->projectTask->title,
+                    'column_id' => $bug->projectTask->column_id,
+                ] : null,
+            ];
+        });
+
+        return response()->json($formattedBugs);
+    }
+
+    public function convertBugToTask(Request $request, TaskBug $bug)
+    {
+        $request->validate([
+            'assignee_id' => 'nullable|exists:users,id',
+        ]);
+
+        if ($bug->project_task_id) {
+            return response()->json(['success' => false, 'message' => 'Bug is already linked to a task.'], 400);
+        }
+
+        $testCaseCode = $bug->testCase ? $bug->testCase->code : 'Unknown';
+        $projectId = $bug->project_id ?? ($bug->testCase ? $bug->testCase->project_id : null);
+
+        if (!$projectId) {
+            return response()->json(['success' => false, 'message' => 'Project ID tidak ditemukan pada bug ini.'], 400);
+        }
+
+        $newTask = \App\Models\ProjectTask::create([
+            'project_id' => $projectId,
+            'code' => 'TSK-' . strtoupper(substr(uniqid(), -5)),
+            'title' => 'Bug: ' . substr($bug->description, 0, 50) . (strlen($bug->description) > 50 ? '...' : ''),
+            'description' => "Bug report from Test Case: " . $testCaseCode . "\n\n" . $bug->description,
+            'assignee_id' => $request->assignee_id,
+            'column_id' => 'todo',
+            'attachment_path' => $bug->attachment_path
+        ]);
+
+        $bug->update([
+            'project_id' => $projectId,
+            'project_task_id' => $newTask->id
+        ]);
+
+        // Link test case to the new task if it has no task assigned
+        if ($bug->testCase && !$bug->testCase->project_task_id) {
+            $bug->testCase->update([
+                'project_task_id' => $newTask->id
+            ]);
+        }
+
+        return response()->json(['success' => true, 'task' => $newTask]);
+    }
+
+    public function destroyTestCase(TestCase $testCase)
+    {
+        // Recursive deletion handled by database constraints or model boot method if needed.
+        // Assuming cascade on delete is set, or we can just delete it directly.
+        $testCase->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function destroyTask(ProjectTask $task)
+    {
+        if ($task->attachment_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($task->attachment_path);
+        }
+        $task->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function destroyBug(TaskBug $bug)
+    {
+        if ($bug->attachment_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($bug->attachment_path);
+        }
+        $bug->delete();
+        return response()->json(['success' => true]);
     }
 }

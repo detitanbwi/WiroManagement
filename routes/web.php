@@ -57,6 +57,11 @@ Route::middleware('auth')->group(function () {
     Route::post('api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])->name('api.qc.tasks.move');
     Route::post('api/qc/test-cases/{testCase}/move', [QcController::class, 'moveProjectTestCase'])->name('api.qc.test-cases.move');
     Route::post('api/qc/test-cases/{testCase}/result', [QcController::class, 'submitTestResult'])->name('api.qc.test-cases.result');
+    Route::delete('api/qc/test-cases/{testCase}', [QcController::class, 'destroyTestCase'])->name('api.qc.test-cases.destroy');
+    Route::delete('api/qc/tasks/{task}', [QcController::class, 'destroyTask'])->name('api.qc.tasks.destroy');
+    Route::get('api/projects/{project}/qc/bugs', [QcController::class, 'getProjectBugs'])->name('api.qc.project.bugs');
+    Route::post('api/qc/bugs/{bug}/convert', [QcController::class, 'convertBugToTask'])->name('api.qc.bugs.convert');
+    Route::delete('api/qc/bugs/{bug}', [QcController::class, 'destroyBug'])->name('api.qc.bugs.destroy');
 
     Route::resource('projects.invoices', InvoiceController::class)->shallow();
     Route::resource('projects.quotations', QuotationController::class)->shallow();
