@@ -34,6 +34,6 @@ class TestCase extends Model
 
     public function children()
     {
-        return $this->hasMany(TestCase::class, 'parent_id');
+        return $this->hasMany(TestCase::class, 'parent_id')->orderBy('sort_order')->orderBy('id');
     }
 }

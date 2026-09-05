@@ -92,30 +92,24 @@
             </div>
             
             <div class="p-0" x-show="isTestCasesExpanded" x-collapse>
-                <!-- Root Drop Zone -->
-                <div class="p-3 border-b border-dashed border-gray-300 text-center text-sm font-medium transition-all"
-                     x-show="draggedTestCase"
-                     :class="{'bg-blue-50 ring-2 ring-inset ring-blue-400 text-blue-700': dragOverTarget === 'root', 'bg-gray-50 text-gray-400': dragOverTarget !== 'root'}"
-                     @dragover.prevent="dragOverTarget = 'root'"
-                     @dragleave="if (dragOverTarget === 'root') dragOverTarget = null"
-                     @drop="dropTestCase(null)">
-                     Drop here to move to Root Level
-                </div>
 
                 <template x-for="tc in flatTestCases" :key="tc.id">
-                    <div class="flex justify-between items-center p-3 border-b border-gray-100 transition-all group"
+                    <div class="flex justify-between items-center p-3 transition-all group border-b"
                          :class="{
+                             'border-gray-100': dragOverTarget !== tc.id,
+                             'border-t-2 !border-t-blue-500': dragOverTarget === tc.id && dragOverPosition === 'before',
+                             'border-b-2 !border-b-blue-500': dragOverTarget === tc.id && dragOverPosition === 'after',
                              'hover:bg-gray-50': dragOverTarget !== tc.id,
-                             'bg-blue-50 ring-2 ring-inset ring-blue-400': dragOverTarget === tc.id,
+                             'bg-blue-50 ring-2 ring-inset ring-blue-400': dragOverTarget === tc.id && dragOverPosition === 'inside',
                              'opacity-50': draggedTestCase?.id === tc.id
                          }"
                          :style="`padding-left: ${tc.level * 2 + 1}rem`"
                          draggable="true"
                          @dragstart="startDragging(tc, $event)"
-                         @dragover.prevent="dragOverTarget = tc.id"
-                         @dragleave="if (dragOverTarget === tc.id) dragOverTarget = null"
+                         @dragover.prevent="handleDragOver(tc, $event)"
+                         @dragleave="if (dragOverTarget === tc.id) { dragOverTarget = null; dragOverPosition = null; }"
                          @drop="dropTestCase(tc.id)"
-                         @dragend="draggedTestCase = null; dragOverTarget = null;">
+                         @dragend="draggedTestCase = null; dragOverTarget = null; dragOverPosition = null;">
                         <div class="flex items-center gap-2">
                             <!-- Drag Handle -->
                             <div class="cursor-grab text-gray-300 hover:text-gray-500 mr-1" title="Drag to move">
@@ -162,6 +156,18 @@
                 </template>
             </div>
         </div>
+    </div>
+
+    <!-- Floating Root Drop Zone -->
+    <div x-show="draggedTestCase" x-transition.opacity.duration.300ms
+         class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 px-8 py-4 rounded-full shadow-2xl border-2 border-dashed flex items-center gap-3 transition-all duration-200"
+         :class="{'scale-110 bg-blue-600 border-blue-300 text-white': dragOverTarget === 'root', 'bg-gray-800 border-gray-500 text-gray-200': dragOverTarget !== 'root'}"
+         @dragover.prevent="dragOverTarget = 'root'"
+         @dragleave="if (dragOverTarget === 'root') dragOverTarget = null"
+         @drop="dropTestCase(null)"
+         x-cloak>
+         <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+         <span class="font-bold tracking-wide">Drop here to move to Root Level</span>
     </div>
 
     <!-- Modals Overlay View -->
@@ -274,9 +280,28 @@
                         </button>
                     </div>
 
+                    <!-- Tabs Navigation -->
+                    <div class="border-b border-gray-200 bg-gray-50/50 px-6 pt-2 shrink-0">
+                        <nav class="-mb-px flex space-x-6">
+                            <button @click="activeTab = 'details'" 
+                                    :class="{'border-blue-500 text-blue-600': activeTab === 'details', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'details'}"
+                                    class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Details
+                            </button>
+                            <button @click="activeTab = 'test_cases'" 
+                                    :class="{'border-blue-500 text-blue-600': activeTab === 'test_cases', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'test_cases'}"
+                                    class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                                Test Cases
+                                <span class="bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs" x-text="activeTask?.testCases?.length || 0"></span>
+                            </button>
+                        </nav>
+                    </div>
+
                     <!-- Modal Body (Scrollable) -->
                     <div class="px-6 py-6 overflow-y-auto flex-1 bg-white">
-                        <div class="prose prose-sm max-w-none text-gray-600">
+                        
+                        <!-- Details Tab -->
+                        <div x-show="activeTab === 'details'" class="prose prose-sm max-w-none text-gray-600">
                             <h4 class="text-gray-800 font-semibold mb-2">Description</h4>
                             <p x-text="activeTask?.description || 'No description provided.'"></p>
                             
@@ -287,6 +312,48 @@
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                                         View Attachment
                                     </a>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Test Cases Tab -->
+                        <div x-show="activeTab === 'test_cases'" x-cloak>
+                            <template x-if="activeTask?.testCases && activeTask.testCases.length > 0">
+                                <div class="space-y-3">
+                                    <template x-for="tc in activeTask.testCases" :key="tc.id">
+                                        <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                            <div>
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100" x-text="tc.code"></span>
+                                                    <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
+                                                          :class="{
+                                                            'bg-green-100 text-green-700 border border-green-200': tc.status === 'passed',
+                                                            'bg-red-100 text-red-700 border border-red-200': tc.status === 'failed',
+                                                            'bg-gray-100 text-gray-500 border border-gray-200': tc.status === 'pending'
+                                                          }" x-text="tc.status"></span>
+                                                </div>
+                                                <h4 class="text-sm font-semibold text-gray-800" x-text="tc.title"></h4>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button @click.stop="openViewTestCaseModal(tc)" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                                                    View
+                                                </button>
+                                                <button @click.stop="openRunTestModal(tc)" class="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 transition-colors shadow-sm flex items-center gap-1">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                    Run
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                            <template x-if="!activeTask?.testCases || activeTask.testCases.length === 0">
+                                <div class="text-center py-10">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                    </svg>
+                                    <h3 class="text-sm font-medium text-gray-900">No Test Cases</h3>
+                                    <p class="mt-1 text-sm text-gray-500">There are no test cases linked to this task yet.</p>
                                 </div>
                             </template>
                         </div>
@@ -872,26 +939,43 @@ function qcDashboard() {
         // Drag and Drop State
         draggedTestCase: null,
         dragOverTarget: null,
+        dragOverPosition: null,
         isMovingTestCase: false,
 
         startDragging(tc, event) {
             this.draggedTestCase = tc;
-            // Set data transfer for visual drag image if needed, though not strictly required
             event.dataTransfer.effectAllowed = 'move';
-            // Use setTimeout to allow the UI to add the opacity-50 class without hiding the drag image
             setTimeout(() => {
                 this.dragOverTarget = null;
+                this.dragOverPosition = null;
             }, 0);
+        },
+
+        handleDragOver(tc, event) {
+            this.dragOverTarget = tc.id;
+            
+            const rect = event.currentTarget.getBoundingClientRect();
+            const y = event.clientY - rect.top;
+            
+            if (y < rect.height * 0.25) {
+                this.dragOverPosition = 'before';
+            } else if (y > rect.height * 0.75) {
+                this.dragOverPosition = 'after';
+            } else {
+                this.dragOverPosition = 'inside';
+            }
         },
 
         async dropTestCase(targetId) {
             if (!this.draggedTestCase) return;
             const sourceId = this.draggedTestCase.id;
+            const position = this.dragOverPosition || 'inside';
             
             // Cannot drop on itself
             if (sourceId === targetId) {
                 this.draggedTestCase = null;
                 this.dragOverTarget = null;
+                this.dragOverPosition = null;
                 return;
             }
 
@@ -904,13 +988,13 @@ function qcDashboard() {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ parent_id: targetId })
+                    body: JSON.stringify({ target_id: targetId, position: targetId === null ? 'inside' : position })
                 });
 
                 if (response.ok) {
                     await this.fetchProjectTestCases();
                     // Keep the target expanded so the user sees the dropped item
-                    if (targetId) {
+                    if (targetId && position === 'inside') {
                         this.expandTestCase(this.projectTestCases, targetId);
                     }
                 } else {
@@ -923,6 +1007,7 @@ function qcDashboard() {
                 this.isMovingTestCase = false;
                 this.draggedTestCase = null;
                 this.dragOverTarget = null;
+                this.dragOverPosition = null;
             }
         },
 

@@ -12,7 +12,9 @@ class QcController extends Controller
 {
     public function getTasks(Project $project)
     {
-        $tasks = $project->tasks()->with(['assignee', 'testCases', 'bugs'])->get();
+        $tasks = $project->tasks()->with(['assignee', 'testCases' => function($q) {
+            $q->orderBy('sort_order')->orderBy('id');
+        }, 'bugs'])->get();
         
         $formattedTasks = $tasks->map(function ($task) {
             $passedTests = $task->testCases->where('status', 'passed')->count();
@@ -152,7 +154,10 @@ class QcController extends Controller
     {
         // Fetch all test cases for the project
         // Note: For older test cases that might not have project_id, they won't show up unless migrated properly.
-        $testCases = TestCase::where('project_id', $project->id)->get();
+        $testCases = TestCase::where('project_id', $project->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
         
         $tree = $this->buildTestCaseTree($testCases, null);
         
@@ -257,31 +262,73 @@ class QcController extends Controller
     public function moveProjectTestCase(Request $request, TestCase $testCase)
     {
         $request->validate([
-            'parent_id' => 'nullable|exists:test_cases,id'
+            'target_id' => 'nullable|exists:test_cases,id',
+            'position' => 'required|in:before,after,inside'
         ]);
 
-        $newParentId = $request->parent_id;
+        $targetId = $request->target_id;
+        $position = $request->position;
+        $projectId = $testCase->project_id;
+
+        // If no target, meaning moving to root at the end
+        if (!$targetId) {
+            $testCase->update([
+                'parent_id' => null,
+                'sort_order' => TestCase::where('project_id', $projectId)->whereNull('parent_id')->max('sort_order') + 10
+            ]);
+            $this->reorderSiblings($projectId, null);
+            return response()->json(['success' => true]);
+        }
+
+        $target = TestCase::find($targetId);
 
         // Prevent moving to self
-        if ($newParentId == $testCase->id) {
+        if ($targetId == $testCase->id) {
             return response()->json(['success' => false, 'message' => 'Cannot move a test case into itself.'], 400);
         }
+
+        $newParentId = $position === 'inside' ? $targetId : $target->parent_id;
 
         // Prevent cyclic loop (cannot move to a descendant)
         if ($newParentId) {
             $currentParent = TestCase::find($newParentId);
             while ($currentParent) {
-                if ($currentParent->parent_id == $testCase->id) {
+                if ($currentParent->parent_id == $testCase->id || $currentParent->id == $testCase->id) {
                     return response()->json(['success' => false, 'message' => 'Cannot move a test case into its own descendant.'], 400);
                 }
                 $currentParent = $currentParent->parent_id ? TestCase::find($currentParent->parent_id) : null;
             }
         }
 
-        $testCase->update([
-            'parent_id' => $newParentId
-        ]);
+        $testCase->parent_id = $newParentId;
+        
+        if ($position === 'inside') {
+            $testCase->sort_order = TestCase::where('parent_id', $newParentId)->max('sort_order') + 10;
+            $testCase->save();
+        } else {
+            // Give it a slightly lower or higher order, then reorder to normalize
+            $testCase->sort_order = $position === 'before' ? $target->sort_order - 1 : $target->sort_order + 1;
+            $testCase->save();
+        }
+
+        $this->reorderSiblings($projectId, $newParentId);
 
         return response()->json(['success' => true]);
+    }
+
+    private function reorderSiblings($projectId, $parentId)
+    {
+        $siblings = TestCase::where('project_id', $projectId)
+            ->where('parent_id', $parentId)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+        
+        $order = 0;
+        foreach ($siblings as $sibling) {
+            $sibling->sort_order = $order;
+            $sibling->save();
+            $order += 10;
+        }
     }
 }
