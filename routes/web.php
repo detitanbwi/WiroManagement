@@ -55,6 +55,7 @@ Route::middleware('auth')->group(function () {
     Route::put('api/qc/test-cases/{testCase}', [QcController::class, 'updateProjectTestCase'])->name('api.qc.project.test-cases.update');
     Route::post('api/projects/{project}/qc/tasks', [QcController::class, 'storeTask'])->name('api.qc.tasks.store');
     Route::post('api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])->name('api.qc.tasks.move');
+    Route::post('api/qc/test-cases/{testCase}/move', [QcController::class, 'moveProjectTestCase'])->name('api.qc.test-cases.move');
     Route::post('api/qc/test-cases/{testCase}/result', [QcController::class, 'submitTestResult'])->name('api.qc.test-cases.result');
 
     Route::resource('projects.invoices', InvoiceController::class)->shallow();

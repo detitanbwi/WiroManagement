@@ -253,4 +253,35 @@ class QcController extends Controller
 
         return response()->json(['success' => true, 'testCase' => $testCase]);
     }
+
+    public function moveProjectTestCase(Request $request, TestCase $testCase)
+    {
+        $request->validate([
+            'parent_id' => 'nullable|exists:test_cases,id'
+        ]);
+
+        $newParentId = $request->parent_id;
+
+        // Prevent moving to self
+        if ($newParentId == $testCase->id) {
+            return response()->json(['success' => false, 'message' => 'Cannot move a test case into itself.'], 400);
+        }
+
+        // Prevent cyclic loop (cannot move to a descendant)
+        if ($newParentId) {
+            $currentParent = TestCase::find($newParentId);
+            while ($currentParent) {
+                if ($currentParent->parent_id == $testCase->id) {
+                    return response()->json(['success' => false, 'message' => 'Cannot move a test case into its own descendant.'], 400);
+                }
+                $currentParent = $currentParent->parent_id ? TestCase::find($currentParent->parent_id) : null;
+            }
+        }
+
+        $testCase->update([
+            'parent_id' => $newParentId
+        ]);
+
+        return response()->json(['success' => true]);
+    }
 }

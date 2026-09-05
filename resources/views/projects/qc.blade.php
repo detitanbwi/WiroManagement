@@ -92,10 +92,37 @@
             </div>
             
             <div class="p-0" x-show="isTestCasesExpanded" x-collapse>
+                <!-- Root Drop Zone -->
+                <div class="p-3 border-b border-dashed border-gray-300 text-center text-sm font-medium transition-all"
+                     x-show="draggedTestCase"
+                     :class="{'bg-blue-50 ring-2 ring-inset ring-blue-400 text-blue-700': dragOverTarget === 'root', 'bg-gray-50 text-gray-400': dragOverTarget !== 'root'}"
+                     @dragover.prevent="dragOverTarget = 'root'"
+                     @dragleave="if (dragOverTarget === 'root') dragOverTarget = null"
+                     @drop="dropTestCase(null)">
+                     Drop here to move to Root Level
+                </div>
+
                 <template x-for="tc in flatTestCases" :key="tc.id">
-                    <div class="flex justify-between items-center p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
-                         :style="`padding-left: ${tc.level * 2 + 1}rem`">
-                        <div class="flex items-center gap-3">
+                    <div class="flex justify-between items-center p-3 border-b border-gray-100 transition-all group"
+                         :class="{
+                             'hover:bg-gray-50': dragOverTarget !== tc.id,
+                             'bg-blue-50 ring-2 ring-inset ring-blue-400': dragOverTarget === tc.id,
+                             'opacity-50': draggedTestCase?.id === tc.id
+                         }"
+                         :style="`padding-left: ${tc.level * 2 + 1}rem`"
+                         draggable="true"
+                         @dragstart="startDragging(tc, $event)"
+                         @dragover.prevent="dragOverTarget = tc.id"
+                         @dragleave="if (dragOverTarget === tc.id) dragOverTarget = null"
+                         @drop="dropTestCase(tc.id)"
+                         @dragend="draggedTestCase = null; dragOverTarget = null;">
+                        <div class="flex items-center gap-2">
+                            <!-- Drag Handle -->
+                            <div class="cursor-grab text-gray-300 hover:text-gray-500 mr-1" title="Drag to move">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 8v.01M10 12v.01M10 16v.01M14 8v.01M14 12v.01M14 16v.01"></path>
+                                </svg>
+                            </div>
                             <button x-show="tc.children && tc.children.length > 0" 
                                     @click="toggleTestCase(tc.id)"
                                     class="text-gray-400 hover:text-gray-600 focus:outline-none transition-transform" 
@@ -841,6 +868,63 @@ function qcDashboard() {
         // View Test Case State
         isViewTestCaseModalOpen: false,
         viewingTestCase: null,
+        
+        // Drag and Drop State
+        draggedTestCase: null,
+        dragOverTarget: null,
+        isMovingTestCase: false,
+
+        startDragging(tc, event) {
+            this.draggedTestCase = tc;
+            // Set data transfer for visual drag image if needed, though not strictly required
+            event.dataTransfer.effectAllowed = 'move';
+            // Use setTimeout to allow the UI to add the opacity-50 class without hiding the drag image
+            setTimeout(() => {
+                this.dragOverTarget = null;
+            }, 0);
+        },
+
+        async dropTestCase(targetId) {
+            if (!this.draggedTestCase) return;
+            const sourceId = this.draggedTestCase.id;
+            
+            // Cannot drop on itself
+            if (sourceId === targetId) {
+                this.draggedTestCase = null;
+                this.dragOverTarget = null;
+                return;
+            }
+
+            // Execute move
+            this.isMovingTestCase = true;
+            try {
+                const response = await fetch(`/api/qc/test-cases/${sourceId}/move`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ parent_id: targetId })
+                });
+
+                if (response.ok) {
+                    await this.fetchProjectTestCases();
+                    // Keep the target expanded so the user sees the dropped item
+                    if (targetId) {
+                        this.expandTestCase(this.projectTestCases, targetId);
+                    }
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'Gagal memindahkan test case.');
+                }
+            } catch (error) {
+                console.error('Error moving test case:', error);
+            } finally {
+                this.isMovingTestCase = false;
+                this.draggedTestCase = null;
+                this.dragOverTarget = null;
+            }
+        },
 
         init() {
             this.fetchTasks();
