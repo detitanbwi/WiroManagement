@@ -20,10 +20,21 @@
         </div>
     </div>
 
-    <!-- Kanban Board -->
-    <div class="flex-1 overflow-x-auto overflow-y-hidden p-6">
-        <div class="flex h-full space-x-6 min-w-max pb-4">
-            <!-- Columns mapped via Alpine -->
+    <!-- Kanban Board Box -->
+    <div class="px-6 pt-6 pb-4 flex flex-col" :class="{'flex-1 min-h-[400px]': isKanbanExpanded}">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" :class="{'flex-1': isKanbanExpanded}">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center cursor-pointer select-none shrink-0" @click="isKanbanExpanded = !isKanbanExpanded">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                    Kanban Board
+                </h2>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{'rotate-180': !isKanbanExpanded}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+
+            <!-- Kanban Board -->
+            <div class="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50" x-show="isKanbanExpanded" x-collapse>
+                <div class="flex h-full space-x-6 min-w-max pb-4">
+                    <!-- Columns mapped via Alpine -->
             <template x-for="column in columns" :key="column.id">
                 <div class="w-80 flex flex-col max-h-full bg-gray-100/50 rounded-xl border border-gray-200 shrink-0">
                     <div class="px-4 py-3 border-b border-gray-200/80 bg-gray-100 rounded-t-xl shrink-0 flex justify-between items-center">
@@ -61,21 +72,26 @@
             </template>
         </div>
     </div>
+        </div>
+    </div>
 
     <!-- Global Project Test Cases Box -->
     <div class="px-6 pb-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center cursor-pointer select-none" @click="isTestCasesExpanded = !isTestCasesExpanded">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                     Project Test Cases (Global)
                 </h2>
-                <button @click="openNewTestCaseModal(null)" class="px-3 py-1.5 bg-white border border-gray-300 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 shadow-sm transition-colors">
-                    + Add Root Test Case
-                </button>
+                <div class="flex items-center gap-3">
+                    <button @click.stop="openNewTestCaseModal(null)" class="px-3 py-1.5 bg-white border border-gray-300 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 shadow-sm transition-colors">
+                        + Add Root Test Case
+                    </button>
+                    <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{'rotate-180': !isTestCasesExpanded}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
             </div>
             
-            <div class="p-0">
+            <div class="p-0" x-show="isTestCasesExpanded" x-collapse>
                 <template x-for="tc in flatTestCases" :key="tc.id">
                     <div class="flex justify-between items-center p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
                          :style="`padding-left: ${tc.level * 2 + 1}rem`">
@@ -772,6 +788,9 @@ function qcDashboard() {
             { id: 'done', title: 'Done' }
         ],
         tasks: [],
+        
+        isKanbanExpanded: true,
+        isTestCasesExpanded: true,
         
         isTaskModalOpen: false,
         activeTask: null,
