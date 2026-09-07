@@ -11,8 +11,11 @@ class Project extends Model
 
     protected $fillable = [
         'client_id',
+        'pm_id',
+        'project_code',
         'title',
         'status',
+        'progress_percentage',
         'start_date',
         'end_date'
     ];
@@ -20,11 +23,27 @@ class Project extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'progress_percentage' => 'integer',
     ];
 
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function pm()
+    {
+        return $this->belongsTo(User::class, 'pm_id');
+    }
+
+    public function milestones()
+    {
+        return $this->hasMany(ProjectMilestone::class)->orderBy('order_index');
+    }
+
+    public function updates()
+    {
+        return $this->hasMany(ProjectUpdate::class)->latest();
     }
 
     public function quotations()

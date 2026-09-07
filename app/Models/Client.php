@@ -23,4 +23,14 @@ class Client extends Model
     {
         return $this->hasOne(ClientProfile::class);
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(ClientInvitation::class);
+    }
 }

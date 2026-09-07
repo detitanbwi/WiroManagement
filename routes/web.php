@@ -45,6 +45,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class)->except(['show', 'edit', 'update']);
 
     Route::resource('clients', ClientController::class);
+    Route::post('clients/{client}/portal-invite', [ClientController::class, 'generatePortalInvitation'])->name('clients.portal-invite');
+    Route::post('clients/{client}/portal-instant-credentials', [ClientController::class, 'generateInstantCredentials'])->name('clients.portal-instant-credentials');
     Route::resource('projects', ProjectController::class);
     Route::get('projects/{project}/qc', [ProjectController::class, 'qc'])->name('projects.qc');
     

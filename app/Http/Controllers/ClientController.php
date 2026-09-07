@@ -36,8 +36,28 @@ class ClientController extends Controller
 
     public function show(Client $client)
     {
-        $client->load('projects');
+        $client->load(['projects', 'users', 'invitations' => fn($q) => $q->latest()]);
         return view('clients.show', compact('client'));
+    }
+
+    public function generatePortalInvitation(Client $client, \App\Services\ClientCredentialService $credentialService)
+    {
+        try {
+            $invitation = $credentialService->generateInvitation($client);
+            return back()->with('success', 'Link undangan portal Wiromitra berhasil dibuat: ' . $invitation['activation_url']);
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function generateInstantCredentials(Client $client, \App\Services\ClientCredentialService $credentialService)
+    {
+        try {
+            $cred = $credentialService->createInstantCredentials($client);
+            return back()->with('success', "Kredensial portal berhasil dibuat! Email: {$cred['email']} | Password: {$cred['temporary_password']}");
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function edit(Client $client)

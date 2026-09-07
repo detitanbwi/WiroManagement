@@ -23,6 +23,10 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'client_id',
+        'is_active',
+        'must_change_password',
+        'last_login_at',
     ];
 
     /**
@@ -45,6 +49,29 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function isClient(): bool
+    {
+        return $this->role === 'client';
+    }
+
+    public function isPm(): bool
+    {
+        return $this->role === 'pm' || $this->role === 'admin';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 }
