@@ -246,12 +246,6 @@
                 <!-- Bug Tracker Tabs -->
                 <div class="border-b border-gray-200 bg-gray-50/75 px-6 pt-2">
                     <nav class="-mb-px flex space-x-6">
-                        <button @click="bugFilterTab = 'all'" 
-                                :class="{'border-red-600 text-red-700 font-bold': bugFilterTab === 'all', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'all'}"
-                                class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
-                            Semua Bug
-                            <span class="bg-gray-100 text-gray-700 py-0.5 px-2 rounded-full text-xs font-semibold" x-text="projectBugs.length"></span>
-                        </button>
                         <button @click="bugFilterTab = 'active'" 
                                 :class="{'border-amber-500 text-amber-800 font-bold': bugFilterTab === 'active', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'active'}"
                                 class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
@@ -263,6 +257,12 @@
                                 class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
                             Bug Solved / Resolved
                             <span class="bg-green-100 text-green-800 py-0.5 px-2 rounded-full text-xs font-bold" x-text="projectBugs.filter(b => b.status === 'resolved').length"></span>
+                        </button>
+                        <button @click="bugFilterTab = 'all'" 
+                                :class="{'border-red-600 text-red-700 font-bold': bugFilterTab === 'all', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'all'}"
+                                class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
+                            Semua Bug
+                            <span class="bg-gray-100 text-gray-700 py-0.5 px-2 rounded-full text-xs font-semibold" x-text="projectBugs.length"></span>
                         </button>
                     </nav>
                 </div>
@@ -287,6 +287,7 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
+                            <!-- Main Column Headers -->
                             <tr>
                                 <th scope="col" x-show="permissions.canManageBugs" class="px-4 py-3 text-center w-10">
                                     <input type="checkbox" 
@@ -296,11 +297,62 @@
                                            title="Pilih Semua Bug"
                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer">
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bug Details</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity / Status</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Case</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kanban Task</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bug Details</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28">Severity</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Test Case</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Kanban Task</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-36">Action</th>
+                            </tr>
+                            <!-- Per-Column Filters Row -->
+                            <tr class="bg-gray-100/90 border-t border-gray-200 text-xs">
+                                <th scope="col" x-show="permissions.canManageBugs" class="px-2 py-2 text-center">
+                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="text-gray-400 hover:text-red-600 transition-colors p-1" title="Reset Semua Filter">
+                                        <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    <div class="relative">
+                                        <input type="text" x-model="bugFilters.details" placeholder="Filter kode / deskripsi..." class="w-full text-xs pl-7 pr-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
+                                        <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-3 py-2">
+                                    <select x-model="bugFilters.severity" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
+                                        <option value="">Semua</option>
+                                        <option value="Critical">Critical</option>
+                                        <option value="High">High</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="Low">Low</option>
+                                    </select>
+                                </th>
+                                <th scope="col" class="px-3 py-2">
+                                    <select x-model="bugFilters.status" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
+                                        <option value="">Semua</option>
+                                        <option value="open">Open</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="resolved">Resolved</option>
+                                    </select>
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    <div class="relative">
+                                        <input type="text" x-model="bugFilters.testCase" placeholder="Filter test case..." class="w-full text-xs pl-7 pr-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
+                                        <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    <select x-model="bugFilters.task" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
+                                        <option value="">Semua Task</option>
+                                        <option value="assigned">Assigned</option>
+                                        <option value="unassigned">Unassigned</option>
+                                    </select>
+                                </th>
+                                <th scope="col" class="px-6 py-2 text-right">
+                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="inline-flex items-center gap-1 text-[11px] text-red-600 hover:text-red-800 font-semibold px-2 py-1 rounded bg-red-50 hover:bg-red-100 border border-red-200 transition-colors" title="Reset Semua Filter Kolom">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        <span>Reset</span>
+                                    </button>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -350,34 +402,44 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex flex-col gap-1">
-                                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded w-max" 
-                                                  :class="{
-                                                    'bg-red-100 text-red-700 border border-red-200': bug.severity === 'Critical' || bug.severity === 'High',
-                                                    'bg-yellow-100 text-yellow-700 border border-yellow-200': bug.severity === 'Medium',
-                                                    'bg-green-100 text-green-700 border border-green-200': bug.severity === 'Low'
-                                                  }" x-text="bug.severity || 'Unknown'"></span>
-                                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border w-max"
-                                                  :class="{
-                                                    'bg-green-100 text-green-700 border border-green-200': bug.status === 'resolved',
-                                                    'bg-red-100 text-red-700 border border-red-200': bug.status === 'open',
-                                                    'bg-amber-100 text-amber-700 border border-amber-200': bug.status === 'in_progress',
-                                                    'bg-gray-100 text-gray-600 border border-gray-200': bug.status !== 'resolved' && bug.status !== 'open' && bug.status !== 'in_progress'
-                                                  }"
-                                                  x-text="bug.status"></span>
-                                        </div>
+                                    <!-- Separate Severity Column -->
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded w-max" 
+                                              :class="{
+                                                'bg-red-100 text-red-700 border border-red-200': bug.severity === 'Critical' || bug.severity === 'High',
+                                                'bg-yellow-100 text-yellow-700 border border-yellow-200': bug.severity === 'Medium',
+                                                'bg-green-100 text-green-700 border border-green-200': bug.severity === 'Low',
+                                                'bg-gray-100 text-gray-700 border border-gray-200': !bug.severity
+                                              }" x-text="bug.severity || 'Unknown'"></span>
                                     </td>
+                                    <!-- Separate Status Column -->
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border w-max"
+                                              :class="{
+                                                'bg-green-100 text-green-700 border border-green-200': bug.status === 'resolved',
+                                                'bg-red-100 text-red-700 border border-red-200': bug.status === 'open',
+                                                'bg-amber-100 text-amber-700 border border-amber-200': bug.status === 'in_progress',
+                                                'bg-gray-100 text-gray-600 border border-gray-200': bug.status !== 'resolved' && bug.status !== 'open' && bug.status !== 'in_progress'
+                                              }"
+                                              x-text="bug.status"></span>
+                                    </td>
+                                    <!-- Test Case Column with Clickable Code opening Modal -->
                                     <td class="px-6 py-4">
                                         <template x-if="bug.test_case">
                                             <div class="text-sm text-gray-600">
-                                                <div class="flex items-center gap-1.5 mb-0.5">
-                                                    <span class="font-mono text-xs text-blue-600 font-bold" x-text="bug.test_case.code"></span>
+                                                <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                                                    <button type="button" 
+                                                            @click.stop="openViewTestCaseModal(bug.test_case)"
+                                                            class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-900 border border-blue-200 hover:border-blue-300 transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                                                            title="Klik untuk melihat pop up detail Test Case">
+                                                        <svg class="w-3 h-3 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                        <span x-text="bug.test_case.code"></span>
+                                                    </button>
                                                     <span class="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded border"
                                                           :class="bug.test_case.status === 'passed' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'"
                                                           x-text="bug.test_case.status"></span>
                                                 </div>
-                                                <span class="text-xs text-gray-700" x-text="bug.test_case.title"></span>
+                                                <span class="text-xs text-gray-700 block line-clamp-1" :title="bug.test_case.title" x-text="bug.test_case.title"></span>
                                             </div>
                                         </template>
                                         <template x-if="!bug.test_case">
@@ -426,13 +488,22 @@
                 </div>
                 <template x-if="filteredProjectBugs.length === 0">
                     <div class="p-8 text-center text-gray-500 text-sm">
-                        <template x-if="bugFilterTab === 'solved'">
+                        <template x-if="hasActiveBugFilters">
+                            <div class="flex flex-col items-center justify-center gap-2 py-4">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                                <span class="font-medium text-gray-600">Tidak ada bug yang cocok dengan kriteria filter yang dipilih.</span>
+                                <button type="button" @click="resetBugFilters()" class="text-xs text-primary hover:underline font-bold mt-1">
+                                    Reset Semua Filter Kolom
+                                </button>
+                            </div>
+                        </template>
+                        <template x-if="!hasActiveBugFilters && bugFilterTab === 'solved'">
                             <span>Belum ada bug yang berstatus Solved / Resolved.</span>
                         </template>
-                        <template x-if="bugFilterTab === 'active'">
+                        <template x-if="!hasActiveBugFilters && bugFilterTab === 'active'">
                             <span class="text-green-600 font-semibold">Tidak ada bug aktif saat ini! Semua bug telah terselesaikan.</span>
                         </template>
-                        <template x-if="bugFilterTab === 'all'">
+                        <template x-if="!hasActiveBugFilters && bugFilterTab === 'all'">
                             <span>No bugs reported yet. Great job!</span>
                         </template>
                     </div>
@@ -542,7 +613,7 @@
                                             <svg x-show="movingToColumn === 'in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'in_progress' ? 'Moving...' : '&#x21BA; Return to Developer'"></span>
                                         </button>
-                                        <button @click="updateTaskColumn(activeTask.id, 'done')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3.5 py-1.5 border border-transparent text-xs font-bold rounded shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors">
+                                        <button x-show="permissions.canExecuteTests" @click="updateTaskColumn(activeTask.id, 'done')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3.5 py-1.5 border border-transparent text-xs font-bold rounded shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors">
                                             <svg x-show="movingToColumn === 'done'" class="animate-spin mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'done' ? 'Passing QC...' : 'Pass QC & Mark Done &check;'"></span>
                                         </button>
@@ -1940,7 +2011,14 @@ function qcDashboard() {
         isBugsExpanded: true,
         
         projectBugs: [],
-        bugFilterTab: 'all', // 'all', 'active', 'solved'
+        bugFilterTab: 'active', // Default: 'active' (Bug Aktif), 'solved', 'all'
+        bugFilters: {
+            details: '',
+            severity: '',
+            status: '',
+            testCase: '',
+            task: '',
+        },
         selectedBugIds: [],
         isBulkTaskModalOpen: false,
         isSubmittingBulkConvert: false,
@@ -2186,14 +2264,77 @@ function qcDashboard() {
             }
         },
 
+        get hasActiveBugFilters() {
+            return !!(
+                (this.bugFilters.details && this.bugFilters.details.trim()) ||
+                this.bugFilters.severity ||
+                this.bugFilters.status ||
+                (this.bugFilters.testCase && this.bugFilters.testCase.trim()) ||
+                this.bugFilters.task
+            );
+        },
+
+        resetBugFilters() {
+            this.bugFilters = {
+                details: '',
+                severity: '',
+                status: '',
+                testCase: '',
+                task: '',
+            };
+        },
+
         get filteredProjectBugs() {
+            let list = this.projectBugs;
+
+            // 1. Tab Filter
             if (this.bugFilterTab === 'active') {
-                return this.projectBugs.filter(b => b.status !== 'resolved');
+                list = list.filter(b => b.status !== 'resolved');
+            } else if (this.bugFilterTab === 'solved') {
+                list = list.filter(b => b.status === 'resolved');
             }
-            if (this.bugFilterTab === 'solved') {
-                return this.projectBugs.filter(b => b.status === 'resolved');
+
+            // 2. Column: Details (Code or Description)
+            if (this.bugFilters.details && this.bugFilters.details.trim()) {
+                const q = this.bugFilters.details.toLowerCase().trim();
+                list = list.filter(b => 
+                    (b.code && b.code.toLowerCase().includes(q)) || 
+                    (b.description && b.description.toLowerCase().includes(q))
+                );
             }
-            return this.projectBugs;
+
+            // 3. Column: Severity
+            if (this.bugFilters.severity) {
+                const sev = this.bugFilters.severity.toLowerCase();
+                list = list.filter(b => b.severity && b.severity.toLowerCase() === sev);
+            }
+
+            // 4. Column: Status
+            if (this.bugFilters.status) {
+                const st = this.bugFilters.status.toLowerCase();
+                list = list.filter(b => b.status && b.status.toLowerCase() === st);
+            }
+
+            // 5. Column: Test Case (Code or Title)
+            if (this.bugFilters.testCase && this.bugFilters.testCase.trim()) {
+                const q = this.bugFilters.testCase.toLowerCase().trim();
+                list = list.filter(b => {
+                    if (!b.test_case) return false;
+                    return (b.test_case.code && b.test_case.code.toLowerCase().includes(q)) ||
+                           (b.test_case.title && b.test_case.title.toLowerCase().includes(q));
+                });
+            }
+
+            // 6. Column: Kanban Task
+            if (this.bugFilters.task) {
+                if (this.bugFilters.task === 'assigned') {
+                    list = list.filter(b => !!b.project_task);
+                } else if (this.bugFilters.task === 'unassigned') {
+                    list = list.filter(b => !b.project_task);
+                }
+            }
+
+            return list;
         },
 
         isBugSelected(id) {

@@ -22,6 +22,7 @@ class QcExportTest extends BaseTestCase
     {
         parent::setUp();
         $this->seed(RoleSeeder::class);
+        $this->seed(\Database\Seeders\PermissionSeeder::class);
     }
 
     public function test_qc_export_service_generates_three_sheets_with_data(): void

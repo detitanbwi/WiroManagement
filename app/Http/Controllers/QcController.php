@@ -214,6 +214,16 @@ class QcController extends Controller
             'column_id' => 'required|string|in:todo,in_progress,ready_for_qc,qc_in_progress,done'
         ]);
 
+        // When a task is marked as done (passed QC), verify execute tests permission
+        if ($request->column_id === 'done') {
+            if (!auth()->user()->can('qc.execute_tests')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Anda tidak memiliki izin untuk menandai Pass QC.',
+                ], 403);
+            }
+        }
+
         $task->update([
             'column_id' => $request->column_id
         ]);

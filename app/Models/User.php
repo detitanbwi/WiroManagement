@@ -247,6 +247,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Reload the current model instance with fresh attributes from the database,
+     * and clear the in-memory permission cache.
+     */
+    public function refresh()
+    {
+        $this->clearPermissionCache();
+        return parent::refresh();
+    }
+
+    /**
      * Get all permission names granted to this user.
      *
      * @return array<string>
