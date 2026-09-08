@@ -19,9 +19,15 @@
                 </svg>
                 <span>Export Excel</span>
             </a>
+            @if(auth()->user()->can('projects.manage'))
             <a href="{{ route('projects.show', $project->id) }}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors">
                 Back to Project
             </a>
+            @else
+            <a href="{{ route('projects.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors">
+                Daftar Proyek
+            </a>
+            @endif
             <button @click="openNewTaskModal()" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-blue-800 shadow-sm transition-colors">
                 New Task
             </button>

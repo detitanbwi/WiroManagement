@@ -6,9 +6,11 @@
 <div x-data="{ showDeleteModal: false, deleteUrl: '' }" class="max-w-7xl mx-auto">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Daftar Proyek</h1>
+        @can('projects.create')
         <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
             Buat Proyek Baru
         </a>
+        @endcan
     </div>
 
     <div class="bg-white/80 backdrop-blur-sm overflow-hidden shadow-sm sm:rounded-xl border border-gray-100">
@@ -18,7 +20,9 @@
                     <tr>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Judul Proyek / Client</th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Status</th>
+                        @canany(['projects.view_financial', 'finance.view'])
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Financial</th>
+                        @endcanany
                         <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-indigo-50 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -44,23 +48,40 @@
                                 {{ strtoupper(str_replace('_', ' ', $project->status)) }}
                             </span>
                         </td>
+                        @canany(['projects.view_financial', 'finance.view'])
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div class="font-medium text-gray-900">Rp {{ number_format($project->grand_total, 0, ',', '.') }}</div>
                             <div class="text-xs font-medium {{ $project->balance_due > 0 ? 'text-red-600' : 'text-green-600' }}">
                                 Due: Rp {{ number_format($project->balance_due, 0, ',', '.') }}
                             </div>
                         </td>
+                        @endcanany
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex justify-end space-x-2 items-center">
+                                @can('projects.manage')
                                 <a href="{{ route('projects.show', $project) }}" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors font-medium">Kelola</a>
+                                @endcan
+
+                                @canany(['projects.qc', 'qc.view'])
+                                <a href="{{ route('projects.qc', $project) }}" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors font-medium">Fitur QC</a>
+                                @endcanany
+
+                                @can('projects.edit')
                                 <a href="{{ route('projects.edit', $project) }}" class="px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-gray-200 rounded-md transition-colors font-medium">Edit</a>
+                                @endcan
+
+                                @can('projects.delete')
                                 <button type="button" @click="showDeleteModal = true; deleteUrl = '{{ route('projects.destroy', $project) }}'" class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition-colors font-medium border-none cursor-pointer">Hapus</button>
+                                @endcan
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="px-6 py-12 whitespace-nowrap text-center text-gray-500">
+                        @php
+                            $canSeeFinancial = auth()->user()->canany(['projects.view_financial', 'finance.view']);
+                        @endphp
+                        <td colspan="{{ $canSeeFinancial ? 4 : 3 }}" class="px-6 py-12 whitespace-nowrap text-center text-gray-500">
                             <div class="flex flex-col items-center justify-center">
                                 <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                                 Belum ada proyek terdaftar.
@@ -74,6 +95,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
+    @can('projects.delete')
     <div x-show="showDeleteModal" style="display: none;" class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <!-- Background backdrop -->
         <div x-show="showDeleteModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-600/50 transition-opacity backdrop-blur-sm"></div>
@@ -109,5 +131,6 @@
             </div>
         </div>
     </div>
+    @endcan
 </div>
 @endsection

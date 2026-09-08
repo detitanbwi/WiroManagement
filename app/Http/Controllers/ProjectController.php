@@ -17,12 +17,14 @@ class ProjectController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('projects.create'), 403, 'Akses ditolak. Anda tidak memiliki izin untuk membuat proyek baru.');
         $clients = Client::all();
         return view('projects.create', compact('clients'));
     }
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('projects.create'), 403, 'Akses ditolak. Anda tidak memiliki izin untuk membuat proyek baru.');
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'title' => 'required|string|max:255',
@@ -38,6 +40,7 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
+        abort_unless(auth()->user()->can('projects.manage'), 403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola proyek ini.');
         $project->load(['client', 'quotations', 'invoices.items', 'changeRequests']);
         return view('projects.show', compact('project'));
     }
@@ -50,12 +53,14 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
+        abort_unless(auth()->user()->can('projects.edit'), 403, 'Akses ditolak. Anda tidak memiliki izin untuk mengedit proyek ini.');
         $clients = Client::all();
         return view('projects.edit', compact('project', 'clients'));
     }
 
     public function update(Request $request, Project $project)
     {
+        abort_unless(auth()->user()->can('projects.edit'), 403, 'Akses ditolak. Anda tidak memiliki izin untuk mengedit proyek ini.');
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'title' => 'required|string|max:255',
@@ -71,6 +76,7 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        abort_unless(auth()->user()->can('projects.delete'), 403, 'Akses ditolak. Anda tidak memiliki izin untuk menghapus proyek ini.');
         $hasUnpaidInvoices = $project->invoices()->whereIn('status', ['issued', 'partial'])->exists();
 
         if ($hasUnpaidInvoices) {

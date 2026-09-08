@@ -18,6 +18,7 @@ class MultiRoleRbacTest extends TestCase
     {
         parent::setUp();
         $this->seed(RoleSeeder::class);
+        $this->seed(\Database\Seeders\PermissionSeeder::class);
     }
 
     public function test_superadmin_has_full_access_to_users_settings_and_finance(): void
@@ -63,10 +64,18 @@ class MultiRoleRbacTest extends TestCase
         ]);
 
         // Allowed: Projects (from PM)
-        $this->actingAs($user)->get(route('projects.index'))->assertStatus(200);
+        $indexResponse = $this->actingAs($user)->get(route('projects.index'));
+        $indexResponse->assertStatus(200);
+        $indexResponse->assertSee(route('projects.qc', $project));
+        $indexResponse->assertSee('Fitur QC');
 
         // Allowed: Project QC (from QC & PM)
         $this->actingAs($user)->get(route('projects.qc', $project))->assertStatus(200);
+
+        // Project detail page (Fitur QC button has been moved to index)
+        $showResponse = $this->actingAs($user)->get(route('projects.show', $project));
+        $showResponse->assertStatus(200);
+        $showResponse->assertDontSee('Fitur QC');
 
         // Prohibited: User Management (Superadmin only) -> 403
         $this->actingAs($user)->get(route('users.index'))->assertStatus(403);
@@ -189,5 +198,65 @@ class MultiRoleRbacTest extends TestCase
         $response->assertSessionHas('error');
         $superadmin->refresh();
         $this->assertTrue($superadmin->hasRole('superadmin'));
+    }
+
+    public function test_project_list_granular_permissions_and_qc_default_view(): void
+    {
+        $client = Client::create([
+            'name' => 'PT Solusi Bangun',
+            'email' => 'solusi@test.com',
+        ]);
+        $project = Project::create([
+            'client_id' => $client->id,
+            'title' => 'E-Commerce App',
+            'status' => 'in_progress',
+        ]);
+
+        // 1. Default QC User: ONLY Fitur QC button is displayed
+        $qcUser = User::factory()->create(['is_active' => true]);
+        $qcUser->syncRoles(['qc']);
+
+        $qcResponse = $this->actingAs($qcUser)->get(route('projects.index'));
+        $qcResponse->assertStatus(200);
+        // Sees Fitur QC
+        $qcResponse->assertSee('Fitur QC');
+        $qcResponse->assertSee(route('projects.qc', $project));
+        // Does NOT see other buttons
+        $qcResponse->assertDontSee('>Kelola<', false);
+        $qcResponse->assertDontSee('>Edit<', false);
+        $qcResponse->assertDontSee('Ya, Hapus Proyek');
+        $qcResponse->assertDontSee('Buat Proyek Baru');
+        // Does NOT see financial column
+        $qcResponse->assertDontSee('<th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Financial</th>', false);
+        $qcResponse->assertDontSee('Due: Rp');
+
+        // QC user is forbidden from direct access to show, edit, create, and destroy
+        $this->actingAs($qcUser)->get(route('projects.show', $project))->assertStatus(403);
+        $this->actingAs($qcUser)->get(route('projects.edit', $project))->assertStatus(403);
+        $this->actingAs($qcUser)->get(route('projects.create'))->assertStatus(403);
+        $this->actingAs($qcUser)->delete(route('projects.destroy', $project))->assertStatus(403);
+
+        // 2. Default Finance User: Sees Financial & Kelola, but NOT Fitur QC
+        $financeUser = User::factory()->create(['is_active' => true]);
+        $financeUser->syncRoles(['finance']);
+
+        $financeResponse = $this->actingAs($financeUser)->get(route('projects.index'));
+        $financeResponse->assertStatus(200);
+        $financeResponse->assertSee('Financial');
+        $financeResponse->assertSee('Kelola');
+        $financeResponse->assertDontSee('Fitur QC');
+
+        // 3. Superadmin: Full visibility (Financial, Kelola, Fitur QC, Edit, Hapus, Buat Proyek Baru)
+        $superadmin = User::factory()->create(['is_active' => true]);
+        $superadmin->syncRoles(['superadmin']);
+
+        $saResponse = $this->actingAs($superadmin)->get(route('projects.index'));
+        $saResponse->assertStatus(200);
+        $saResponse->assertSee('Financial');
+        $saResponse->assertSee('Kelola');
+        $saResponse->assertSee('Fitur QC');
+        $saResponse->assertSee('Edit');
+        $saResponse->assertSee('Hapus');
+        $saResponse->assertSee('Buat Proyek Baru');
     }
 }
