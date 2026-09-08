@@ -8,9 +8,30 @@ use App\Models\ProjectTask;
 use App\Models\TestCase;
 use App\Models\TaskBug;
 use App\Models\TaskComment;
+use App\Services\QcExportService;
+use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class QcController extends Controller
 {
+    /**
+     * Export QA/QC project data to Excel (.xlsx) with 3 sheets (Kanban, Test Case, Bug).
+     */
+    public function exportExcel(Project $project, QcExportService $exportService)
+    {
+        $spreadsheet = $exportService->generate($project);
+
+        $sanitizedTitle = Str::slug($project->title, '_');
+        $filename = 'QA_QC_' . ($sanitizedTitle ?: 'Project_' . $project->id) . '_' . now()->format('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
     public function getTasks(Project $project)
     {
         $tasks = $project->tasks()->with([

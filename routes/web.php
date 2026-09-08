@@ -66,6 +66,7 @@ Route::middleware(['auth', 'internal'])->group(function () {
     // QA/QC Routes (Accessible to Superadmin, Admin, PM, QC, and Staff/Developer)
     Route::middleware('role:superadmin,admin,pm,qc,staff')->group(function () {
         Route::get('projects/{project}/qc', [ProjectController::class, 'qc'])->name('projects.qc');
+        Route::get('projects/{project}/qc/export-excel', [QcController::class, 'exportExcel'])->name('projects.qc.export-excel');
         Route::get('api/projects/{project}/qc/tasks', [QcController::class, 'getTasks'])->name('api.qc.tasks');
         Route::get('api/projects/{project}/qc/test-cases', [QcController::class, 'getProjectTestCases'])->name('api.qc.project.test-cases');
         Route::post('api/projects/{project}/qc/test-cases', [QcController::class, 'storeProjectTestCase'])->name('api.qc.project.test-cases.store');
