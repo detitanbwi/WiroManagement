@@ -169,15 +169,17 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <template x-if="tc.bug">
-                                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border font-mono tracking-wide" 
-                                      :class="tc.bug.status === 'resolved' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'"
-                                      :title="'Bug: ' + tc.bug.code + ' (' + tc.bug.status + ')'">
+                                <button type="button" 
+                                        @click.stop="openViewBugModal(tc.bug)"
+                                        class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border font-mono tracking-wide hover:opacity-80 transition-opacity cursor-pointer" 
+                                        :class="tc.bug.status === 'resolved' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'"
+                                        :title="'Lihat Detail Deskripsi Bug: ' + tc.bug.code">
                                     <svg class="w-3 h-3 shrink-0" :class="tc.bug.status === 'resolved' ? 'text-green-600' : 'text-red-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path x-show="tc.bug.status === 'resolved'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         <path x-show="tc.bug.status !== 'resolved'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                     </svg>
                                     <span x-text="tc.bug.code"></span>
-                                </span>
+                                </button>
                             </template>
                             <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
                                   :class="{
@@ -316,9 +318,12 @@
                                     <td class="px-6 py-4">
                                         <div class="flex flex-col">
                                             <div class="flex items-center gap-2 mb-1">
-                                                <span class="text-xs font-bold px-2 py-0.5 rounded border w-max font-mono"
-                                                      :class="bug.status === 'resolved' ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-100'"
-                                                      x-text="bug.code"></span>
+                                                <button type="button"
+                                                        @click="openViewBugModal(bug)"
+                                                        class="text-xs font-bold px-2 py-0.5 rounded border w-max font-mono cursor-pointer transition-colors"
+                                                        :class="bug.status === 'resolved' ? 'text-green-700 bg-green-50 border-green-200 hover:bg-green-100' : 'text-red-700 bg-red-50 border-red-100 hover:bg-red-100'"
+                                                        title="Klik untuk melihat detail lengkap bug"
+                                                        x-text="bug.code"></button>
                                                 <template x-if="bug.status === 'resolved'">
                                                     <span class="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded border border-green-200">
                                                         <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -326,12 +331,20 @@
                                                     </span>
                                                 </template>
                                             </div>
-                                            <span class="text-sm font-medium text-gray-900" x-text="bug.description"></span>
-                                            <div class="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                                            <span class="text-sm font-medium text-gray-900 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors" 
+                                                  @click="openViewBugModal(bug)" 
+                                                  title="Klik untuk membaca deskripsi lengkap" 
+                                                  x-text="bug.description"></span>
+                                            <div class="flex items-center gap-3 text-xs text-gray-500 mt-1.5 flex-wrap">
                                                 <span x-text="'Dilaporkan: ' + (bug.created_at_human || bug.created_at)"></span>
                                                 <template x-if="bug.status === 'resolved' && bug.updated_at">
                                                     <span class="text-green-700 font-medium" x-text="'Diselesaikan: ' + bug.updated_at"></span>
                                                 </template>
+                                                <button type="button" 
+                                                        @click="openViewBugModal(bug)" 
+                                                        class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline inline-flex items-center gap-0.5">
+                                                    Lihat Detail Deskripsi &rarr;
+                                                </button>
                                             </div>
                                         </div>
                                     </td>
@@ -383,6 +396,16 @@
                                         </template>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-2">
+                                        <button type="button" 
+                                                @click="openViewBugModal(bug)" 
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-700 border border-gray-300 hover:border-blue-300 rounded-md text-xs font-medium transition-colors shadow-xs" 
+                                                title="Lihat Detail Deskripsi Bug">
+                                            <svg class="w-3.5 h-3.5 text-gray-500 hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                            <span>Detail</span>
+                                        </button>
                                         <template x-if="!bug.project_task && bug.status !== 'resolved'">
                                             <button @click="convertBugToTask(bug.id)" :disabled="convertingBugId === bug.id" :class="{'opacity-75 cursor-wait': convertingBugId === bug.id}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors">
                                                 <svg x-show="convertingBugId === bug.id" class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -723,6 +746,12 @@
                                                     <div x-show="bug.actual_result"><strong>Actual Result:</strong> <span x-text="bug.actual_result"></span></div>
                                                 </div>
                                             </template>
+
+                                            <div class="mt-3 pt-2 border-t border-gray-100 flex justify-end">
+                                                <button type="button" @click="openViewBugModal(bug)" class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline inline-flex items-center gap-1">
+                                                    <span>Lihat Detail Deskripsi Bug &rarr;</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>
@@ -1475,9 +1504,12 @@
                                          :class="b.status === 'resolved' ? 'bg-green-50/50 border-green-200' : 'bg-red-50/60 border-red-200'">
                                         <div class="flex items-center justify-between flex-wrap gap-2">
                                             <div class="flex items-center gap-2">
-                                                <span class="font-mono font-bold px-2 py-0.5 rounded border"
-                                                      :class="b.status === 'resolved' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-red-100 text-red-800 border-red-300'"
-                                                      x-text="b.code"></span>
+                                                <button type="button"
+                                                        @click.stop="openViewBugModal(b)"
+                                                        class="font-mono font-bold px-2 py-0.5 rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                                                        :class="b.status === 'resolved' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-red-100 text-red-800 border-red-300'"
+                                                        title="Klik untuk melihat detail lengkap bug"
+                                                        x-text="b.code"></button>
                                                 <span class="inline-flex items-center text-[10px] font-bold uppercase px-1.5 py-0.2 rounded border"
                                                       :class="{
                                                         'bg-green-100 text-green-700 border-green-200': b.status === 'resolved',
@@ -1515,12 +1547,17 @@
                                             <template x-if="!b.project_task">
                                                 <span class="italic text-gray-400">Belum ada Kanban task</span>
                                             </template>
-                                            <template x-if="b.attachment_path">
-                                                <a :href="'/storage/' + b.attachment_path" target="_blank" class="text-blue-600 hover:underline flex items-center gap-0.5">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                                                    Lampiran
-                                                </a>
-                                            </template>
+                                            <div class="flex items-center gap-2">
+                                                <template x-if="b.attachment_path">
+                                                    <a :href="'/storage/' + b.attachment_path" target="_blank" class="text-blue-600 hover:underline flex items-center gap-0.5">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                                        Lampiran
+                                                    </a>
+                                                </template>
+                                                <button type="button" @click.stop="openViewBugModal(b)" class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline inline-flex items-center gap-0.5">
+                                                    Lihat Detail &rarr;
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
@@ -1599,6 +1636,221 @@
                 <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
                     <button @click="closeViewTestCaseModal()" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
                         Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Bug Details Modal -->
+    <div x-show="isViewBugModalOpen" 
+         class="fixed inset-0 z-[70] overflow-y-auto" 
+         aria-labelledby="bug-modal-title" role="dialog" aria-modal="true" x-cloak>
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isViewBugModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" 
+                 @click="closeViewBugModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div x-show="isViewBugModalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full border border-gray-200">
+                
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-red-50/70 via-white to-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span class="text-xs font-mono font-bold px-2.5 py-0.5 rounded border"
+                                  :class="viewingBug?.status === 'resolved' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-red-100 text-red-800 border-red-300'"
+                                  x-text="viewingBug?.code"></span>
+                            
+                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border"
+                                  :class="{
+                                      'bg-green-100 text-green-700 border-green-200': viewingBug?.status === 'resolved',
+                                      'bg-red-100 text-red-700 border-red-200': viewingBug?.status === 'open',
+                                      'bg-amber-100 text-amber-700 border-amber-200': viewingBug?.status === 'in_progress'
+                                  }"
+                                  x-text="viewingBug?.status"></span>
+
+                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border" 
+                                  :class="{
+                                      'bg-red-50 text-red-700 border-red-200': viewingBug?.severity === 'Critical' || viewingBug?.severity === 'High',
+                                      'bg-yellow-50 text-yellow-700 border-yellow-200': viewingBug?.severity === 'Medium',
+                                      'bg-green-50 text-green-700 border-green-200': viewingBug?.severity === 'Low'
+                                  }" 
+                                  x-text="'Severity: ' + (viewingBug?.severity || 'Medium')"></span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900" id="bug-modal-title">Detail Deskripsi Bug</h3>
+                    </div>
+                    <button @click="closeViewBugModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none p-1">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="px-6 py-5 space-y-5 max-h-[75vh] overflow-y-auto">
+                    <!-- Deskripsi Bug (Primary Focus) -->
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Deskripsi Masalah / Bug
+                        </h4>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm text-gray-900 leading-relaxed whitespace-pre-wrap font-sans" x-text="viewingBug?.description || 'Tidak ada deskripsi.'"></div>
+                    </div>
+
+                    <!-- Steps to Reproduce (if any) -->
+                    <div x-show="viewingBug?.steps_to_reproduce">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            Langkah untuk Mereproduksi (Steps to Reproduce)
+                        </h4>
+                        <div class="bg-amber-50/50 p-4 rounded-lg border border-amber-200/80 text-sm text-amber-950 whitespace-pre-wrap leading-relaxed" x-text="viewingBug?.steps_to_reproduce"></div>
+                    </div>
+
+                    <!-- Expected Result vs Actual Result -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div x-show="viewingBug?.test_case?.expected">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Expected Result (Hasil yang Diharapkan)
+                            </h4>
+                            <div class="bg-emerald-50/60 p-3.5 rounded-lg border border-emerald-200 text-xs text-emerald-900 whitespace-pre-wrap" x-text="viewingBug?.test_case?.expected"></div>
+                        </div>
+
+                        <div :class="{'md:col-span-2': !viewingBug?.test_case?.expected}" x-show="viewingBug?.actual_result">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Actual Result (Hasil yang Terjadi)
+                            </h4>
+                            <div class="bg-red-50/60 p-3.5 rounded-lg border border-red-200 text-xs text-red-900 whitespace-pre-wrap" x-text="viewingBug?.actual_result"></div>
+                        </div>
+                    </div>
+
+                    <!-- Environment (if any) -->
+                    <div x-show="viewingBug?.environment">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            Environment / Lingkungan Uji
+                        </h4>
+                        <div class="text-xs text-gray-700 bg-gray-100/80 px-3 py-2 rounded border border-gray-200 font-mono" x-text="viewingBug?.environment"></div>
+                    </div>
+
+                    <!-- Relations: Test Case & Kanban Task -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+                        <!-- Test Case Relation -->
+                        <div class="p-3 rounded-lg border bg-gray-50/80 border-gray-200">
+                            <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Sumber Test Case</span>
+                            <template x-if="viewingBug?.test_case">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="font-mono text-xs font-bold text-blue-700" x-text="viewingBug.test_case.code"></span>
+                                        <p class="text-xs text-gray-800 font-medium truncate max-w-[200px]" x-text="viewingBug.test_case.title"></p>
+                                    </div>
+                                    <button type="button" @click="closeViewBugModal(); openViewTestCaseModal(viewingBug.test_case)" class="text-xs text-blue-600 hover:text-blue-800 font-medium underline">
+                                        Buka &rarr;
+                                    </button>
+                                </div>
+                            </template>
+                            <template x-if="!viewingBug?.test_case">
+                                <span class="text-xs text-gray-400 italic">Tidak terhubung ke Test Case</span>
+                            </template>
+                        </div>
+
+                        <!-- Kanban Task Relation -->
+                        <div class="p-3 rounded-lg border bg-gray-50/80 border-gray-200">
+                            <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Status Kanban Task</span>
+                            <template x-if="viewingBug?.project_task">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="font-mono text-xs font-bold text-blue-700" x-text="viewingBug.project_task.code"></span>
+                                        <p class="text-xs text-gray-800 font-medium truncate max-w-[200px]" x-text="viewingBug.project_task.title"></p>
+                                    </div>
+                                    <button type="button" @click="closeViewBugModal(); openTaskModalById(viewingBug.project_task.id)" class="text-xs text-blue-600 hover:text-blue-800 font-medium underline">
+                                        Buka &rarr;
+                                    </button>
+                                </div>
+                            </template>
+                            <template x-if="!viewingBug?.project_task">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-orange-600 font-medium">Belum ditugaskan ke task</span>
+                                    <template x-if="viewingBug?.status !== 'resolved'">
+                                        <button type="button" @click="convertBugToTask(viewingBug.id); closeViewBugModal();" class="text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium px-2 py-1 rounded shadow-xs">
+                                            + Buat Task
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Attachment / Lampiran -->
+                    <template x-if="viewingBug?.attachment_path">
+                        <div class="p-4 rounded-lg border border-blue-100 bg-blue-50/40">
+                            <h4 class="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                Lampiran Bukti Bug
+                            </h4>
+                            <!-- Image preview if image -->
+                            <template x-if="isImageAttachment(viewingBug.attachment_path)">
+                                <div class="space-y-2">
+                                    <a :href="'/storage/' + viewingBug.attachment_path" target="_blank" title="Klik untuk memperbesar gambar">
+                                        <img :src="'/storage/' + viewingBug.attachment_path" class="max-h-64 rounded border border-gray-200 shadow-xs hover:opacity-95 transition-opacity object-contain bg-white">
+                                    </a>
+                                    <a :href="'/storage/' + viewingBug.attachment_path" target="_blank" class="text-xs text-blue-600 hover:underline font-medium inline-flex items-center gap-1">
+                                        <span>Buka gambar di tab baru &rarr;</span>
+                                    </a>
+                                </div>
+                            </template>
+                            <!-- Non-image download link -->
+                            <template x-if="!isImageAttachment(viewingBug.attachment_path)">
+                                <a :href="'/storage/' + viewingBug.attachment_path" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-xs">
+                                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    <span x-text="getFilename(viewingBug.attachment_path)"></span>
+                                </a>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Timestamp Footer Details -->
+                    <div class="text-[11px] text-gray-500 flex justify-between items-center pt-2 border-t border-gray-100">
+                        <span x-text="'Dilaporkan: ' + (viewingBug?.created_at_human || viewingBug?.created_at || 'Unknown')"></span>
+                        <template x-if="viewingBug?.status === 'resolved' && viewingBug?.updated_at">
+                            <span class="text-green-700 font-semibold" x-text="'Diselesaikan: ' + viewingBug.updated_at"></span>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-gray-50 px-6 py-3.5 border-t border-gray-200 flex justify-between items-center">
+                    <div>
+                        <template x-if="viewingBug?.project_task">
+                            <button type="button" @click="closeViewBugModal(); openTaskModalById(viewingBug.project_task.id)" class="px-3.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-md transition-colors inline-flex items-center gap-1.5">
+                                <span>Lihat Kanban Task</span>
+                                <span class="font-mono text-[10px]" x-text="'(' + viewingBug.project_task.code + ')'"></span>
+                            </button>
+                        </template>
+                        <template x-if="!viewingBug?.project_task && viewingBug?.status !== 'resolved'">
+                            <button type="button" @click="convertBugToTask(viewingBug.id); closeViewBugModal();" class="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-xs transition-colors inline-flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                <span>Buat Task Baru di Kanban</span>
+                            </button>
+                        </template>
+                    </div>
+                    <button @click="closeViewBugModal()" type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                        Tutup
                     </button>
                 </div>
             </div>
@@ -1749,6 +2001,10 @@ function qcDashboard() {
         // View Test Case State
         isViewTestCaseModalOpen: false,
         viewingTestCase: null,
+
+        // View Bug State
+        isViewBugModalOpen: false,
+        viewingBug: null,
         
         // Error & Notification State
         errorMessage: '',
@@ -1893,6 +2149,9 @@ function qcDashboard() {
                     const resData = await response.json();
                     await this.fetchTasks();
                     await this.fetchProjectBugs();
+                    if (this.viewingBug && this.viewingBug.id === bugId) {
+                        this.viewingBug = this.projectBugs.find(b => b.id === bugId) || this.viewingBug;
+                    }
                     this.isKanbanExpanded = true;
                     this.showSuccess('Task baru (' + (resData.task?.code || '') + ') berhasil dibuat di Kanban Board!');
                 } else {
@@ -2131,8 +2390,23 @@ function qcDashboard() {
             }
         },
 
-        openViewTestCaseModal(tc) {
-            this.viewingTestCase = tc;
+        findTestCaseById(id, cases = this.projectTestCases) {
+            if (!id) return null;
+            for (let tc of cases) {
+                if (tc.id === id) return tc;
+                if (tc.children && tc.children.length > 0) {
+                    const found = this.findTestCaseById(id, tc.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        },
+
+        openViewTestCaseModal(tcOrId) {
+            if (!tcOrId) return;
+            const tcId = typeof tcOrId === 'object' ? tcOrId.id : tcOrId;
+            const fullTc = this.findTestCaseById(tcId);
+            this.viewingTestCase = fullTc || (typeof tcOrId === 'object' ? tcOrId : null);
             this.isViewTestCaseModalOpen = true;
         },
 
@@ -2140,6 +2414,21 @@ function qcDashboard() {
             this.isViewTestCaseModalOpen = false;
             setTimeout(() => {
                 this.viewingTestCase = null;
+            }, 300);
+        },
+
+        openViewBugModal(bugOrId) {
+            if (!bugOrId) return;
+            const bugId = typeof bugOrId === 'object' ? bugOrId.id : bugOrId;
+            const fullBug = this.projectBugs.find(b => b.id === bugId);
+            this.viewingBug = fullBug || (typeof bugOrId === 'object' ? bugOrId : null);
+            this.isViewBugModalOpen = true;
+        },
+
+        closeViewBugModal() {
+            this.isViewBugModalOpen = false;
+            setTimeout(() => {
+                this.viewingBug = null;
             }, 300);
         },
 
@@ -2361,6 +2650,9 @@ function qcDashboard() {
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
                 if (response.ok) {
+                    if (this.viewingBug && this.viewingBug.id === bugId) {
+                        this.closeViewBugModal();
+                    }
                     await this.fetchProjectBugs();
                 }
             } catch (error) {
@@ -2411,22 +2703,26 @@ function qcDashboard() {
                 try {
                     const formData = new FormData();
                     formData.append('status', result);
-                    formData.append('bug_description', this.bugDescription);
-                    formData.append('steps_to_reproduce', this.stepsToReproduce);
-                    formData.append('severity', this.bugSeverity);
-                    formData.append('actual_result', this.bugActualResult);
-                    formData.append('environment', this.bugEnvironment);
-                    formData.append('create_task', this.createKanbanTask);
-                    formData.append('assignee_id', this.bugAssigneeId);
                     
-                    const fileInput = document.getElementById('bug_attachment');
-                    if (fileInput && fileInput.files[0]) {
-                        formData.append('attachment', fileInput.files[0]);
+                    if (result === 'failed') {
+                        formData.append('bug_description', this.bugDescription);
+                        formData.append('steps_to_reproduce', this.stepsToReproduce);
+                        formData.append('severity', this.bugSeverity);
+                        formData.append('actual_result', this.bugActualResult);
+                        formData.append('environment', this.bugEnvironment);
+                        formData.append('create_task', this.createKanbanTask);
+                        formData.append('assignee_id', this.bugAssigneeId);
+                        
+                        const fileInput = document.getElementById('bug_attachment');
+                        if (fileInput && fileInput.files[0]) {
+                            formData.append('attachment', fileInput.files[0]);
+                        }
                     }
 
                     const response = await fetch(`/api/qc/test-cases/${this.activeTest.id}/result`, {
                         method: 'POST',
                         headers: {
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: formData
@@ -2436,34 +2732,25 @@ function qcDashboard() {
                         const data = await response.json();
                         this.activeTest.status = result;
                         
-                        await this.fetchProjectTestCases();
-                        await this.fetchTasks();
-                        await this.fetchProjectBugs();
-                        
-                        // Resync activeTask if it is currently open
-                        if (this.activeTask) {
-                            const updatedTask = this.tasks.find(t => t.id === this.activeTask.id);
-                            if (updatedTask) {
-                                this.activeTask = updatedTask;
+                        // Immediately update status in projectTestCases tree so UI reflects change right away
+                        this.updateTestCaseStatusInTree(this.projectTestCases, this.activeTest.id, result, data.bug);
+                        this.projectTestCases = [...this.projectTestCases];
+
+                        // Also update in activeTask if it contains this test case
+                        if (this.activeTask && this.activeTask.testCases) {
+                            const taskTc = this.activeTask.testCases.find(t => t.id === this.activeTest.id);
+                            if (taskTc) {
+                                taskTc.status = result;
                             }
                         }
 
                         // Resync viewingTestCase if it is currently open
                         if (this.viewingTestCase && this.viewingTestCase.id === this.activeTest.id) {
                             this.viewingTestCase.status = result;
-                            const findTc = (list) => {
-                                for (let item of list) {
-                                    if (item.id === this.activeTest.id) return item;
-                                    if (item.children) {
-                                        const found = findTc(item.children);
-                                        if (found) return found;
-                                    }
-                                }
-                                return null;
-                            };
-                            const refreshedTc = findTc(this.projectTestCases);
-                            if (refreshedTc) {
-                                this.viewingTestCase = refreshedTc;
+                            if (result === 'passed' && this.viewingTestCase.bug) {
+                                this.viewingTestCase.bug.status = 'resolved';
+                            } else if (result === 'failed' && data.bug) {
+                                this.viewingTestCase.bug = data.bug;
                             }
                         }
                         
@@ -2475,25 +2762,47 @@ function qcDashboard() {
                         }
                         
                         this.closeRunTestModal();
+
+                        // Sync in background from server
+                        await Promise.all([
+                            this.fetchProjectTestCases(),
+                            this.fetchTasks(),
+                            this.fetchProjectBugs()
+                        ]);
+                        
+                        // Resync activeTask if it is currently open
+                        if (this.activeTask) {
+                            const updatedTask = this.tasks.find(t => t.id === this.activeTask.id);
+                            if (updatedTask) {
+                                this.activeTask = updatedTask;
+                            }
+                        }
                     } else {
-                        this.showError('Gagal memperbarui status test case.');
+                        const errorData = await response.json().catch(() => ({}));
+                        this.showError(errorData.message || 'Gagal memperbarui status test case.');
                     }
                 } catch (error) {
                     console.error('Error submitting test result:', error);
+                    this.showError('Terjadi kesalahan saat memproses test execution.');
                 } finally {
                     this.isSubmittingTest = false;
                 }
             }
         },
 
-        updateTestCaseStatusInTree(cases, id, status) {
+        updateTestCaseStatusInTree(cases, id, status, bug = null) {
             for (let tc of cases) {
                 if (tc.id === id) {
                     tc.status = status;
+                    if (status === 'passed' && tc.bug) {
+                        tc.bug.status = 'resolved';
+                    } else if (status === 'failed' && bug) {
+                        tc.bug = bug;
+                    }
                     return true;
                 }
                 if (tc.children && tc.children.length > 0) {
-                    if (this.updateTestCaseStatusInTree(tc.children, id, status)) return true;
+                    if (this.updateTestCaseStatusInTree(tc.children, id, status, bug)) return true;
                 }
             }
             return false;

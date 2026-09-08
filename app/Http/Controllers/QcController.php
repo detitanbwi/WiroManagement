@@ -87,16 +87,21 @@ class QcController extends Controller
                         'id' => $bug->id,
                         'code' => $bug->code,
                         'description' => $bug->description,
+                        'steps_to_reproduce' => $bug->steps_to_reproduce,
                         'severity' => $bug->severity,
                         'status' => $bug->status,
                         'actual_result' => $bug->actual_result,
                         'environment' => $bug->environment,
+                        'attachment_path' => $bug->attachment_path,
                         'created_at' => $bug->created_at ? $bug->created_at->format('d M Y, H:i') : null,
+                        'created_at_human' => $bug->created_at ? $bug->created_at->diffForHumans() : null,
                         'updated_at' => $bug->updated_at ? $bug->updated_at->format('d M Y, H:i') : null,
                         'test_case' => $bug->testCase ? [
                             'id' => $bug->testCase->id,
                             'code' => $bug->testCase->code,
                             'title' => $bug->testCase->title,
+                            'status' => $bug->testCase->status,
+                            'expected' => $bug->testCase->expected,
                         ] : null,
                     ];
                 }),
@@ -252,17 +257,23 @@ class QcController extends Controller
 
     public function submitTestResult(Request $request, TestCase $testCase)
     {
-        $request->validate([
-            'status' => 'required|in:passed,failed',
-            'bug_description' => 'required_if:status,failed|string',
-            'steps_to_reproduce' => 'nullable|string',
-            'severity' => 'nullable|string|in:Low,Medium,High,Critical',
-            'actual_result' => 'nullable|string',
-            'environment' => 'nullable|string',
-            'create_task' => 'nullable|in:true,false,1,0', // FormData sends strings
-            'assignee_id' => 'nullable|exists:users,id',
-            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240'
-        ]);
+        if ($request->status === 'failed') {
+            $request->validate([
+                'status' => 'required|in:passed,failed',
+                'bug_description' => 'required|string',
+                'steps_to_reproduce' => 'nullable|string',
+                'severity' => 'nullable|string|in:Low,Medium,High,Critical',
+                'actual_result' => 'nullable|string',
+                'environment' => 'nullable|string',
+                'create_task' => 'nullable|in:true,false,1,0', // FormData sends strings
+                'assignee_id' => 'nullable|exists:users,id',
+                'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240'
+            ]);
+        } else {
+            $request->validate([
+                'status' => 'required|in:passed,failed',
+            ]);
+        }
 
         $testCase->update([
             'status' => $request->status
@@ -393,22 +404,43 @@ class QcController extends Controller
                         'status' => $activeBug->status,
                         'severity' => $activeBug->severity,
                         'description' => $activeBug->description,
+                        'steps_to_reproduce' => $activeBug->steps_to_reproduce,
                         'actual_result' => $activeBug->actual_result,
                         'environment' => $activeBug->environment,
+                        'attachment_path' => $activeBug->attachment_path,
+                        'created_at' => $activeBug->created_at ? $activeBug->created_at->format('d M Y, H:i') : null,
+                        'created_at_human' => $activeBug->created_at ? $activeBug->created_at->diffForHumans() : null,
+                        'updated_at' => $activeBug->updated_at ? $activeBug->updated_at->format('d M Y, H:i') : null,
                         'project_task_id' => $activeBug->project_task_id,
+                        'test_case' => [
+                            'id' => $testCase->id,
+                            'code' => $testCase->code,
+                            'title' => $testCase->title,
+                            'status' => $testCase->status,
+                            'expected' => $testCase->expected,
+                        ],
                     ] : null,
-                    'bugs' => $testCase->bugs->map(function($b) {
+                    'bugs' => $testCase->bugs->map(function($b) use ($testCase) {
                         return [
                             'id' => $b->id,
                             'code' => $b->code,
                             'status' => $b->status,
                             'severity' => $b->severity,
                             'description' => $b->description,
+                            'steps_to_reproduce' => $b->steps_to_reproduce,
                             'actual_result' => $b->actual_result,
                             'environment' => $b->environment,
                             'attachment_path' => $b->attachment_path,
                             'created_at' => $b->created_at ? $b->created_at->format('d M Y, H:i') : null,
+                            'created_at_human' => $b->created_at ? $b->created_at->diffForHumans() : null,
                             'updated_at' => $b->updated_at ? $b->updated_at->format('d M Y, H:i') : null,
+                            'test_case' => [
+                                'id' => $testCase->id,
+                                'code' => $testCase->code,
+                                'title' => $testCase->title,
+                                'status' => $testCase->status,
+                                'expected' => $testCase->expected,
+                            ],
                             'project_task' => $b->projectTask ? [
                                 'id' => $b->projectTask->id,
                                 'code' => $b->projectTask->code,
@@ -588,6 +620,7 @@ class QcController extends Controller
                     'code' => $bug->testCase->code,
                     'title' => $bug->testCase->title,
                     'status' => $bug->testCase->status,
+                    'expected' => $bug->testCase->expected,
                 ] : null,
                 'project_task' => $bug->projectTask ? [
                     'id' => $bug->projectTask->id,
