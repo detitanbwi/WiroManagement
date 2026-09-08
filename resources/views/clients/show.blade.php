@@ -16,12 +16,16 @@
             <p class="text-xs text-gray-500 mt-1">{{ $client->company_name ?? 'Klien Perorangan' }} • Terdaftar sejak {{ $client->created_at->format('d M Y') }}</p>
         </div>
         <div class="flex items-center gap-2">
+            @can('clients.edit')
             <a href="{{ route('clients.edit', $client) }}" class="px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition">
                 Edit Profil
             </a>
+            @endcan
+            @can('projects.create')
             <a href="{{ route('projects.create') }}?client_id={{ $client->id }}" class="px-3.5 py-2 bg-primary border border-transparent rounded-lg text-xs font-bold text-white hover:bg-blue-700 shadow-sm transition">
                 + Tambah Proyek Klien
             </a>
+            @endcan
         </div>
     </div>
 
@@ -41,9 +45,9 @@
     </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 {{ auth()->user()->can('clients.portal_credentials') ? 'lg:grid-cols-3' : '' }} gap-6">
         {{-- Kolom Kiri: Informasi Klien --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4 {{ auth()->user()->can('clients.portal_credentials') ? '' : 'lg:col-span-3' }}">
             <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider border-b pb-3">Informasi Klien</h2>
             
             <div class="space-y-3 text-xs">
@@ -71,6 +75,7 @@
         </div>
 
         {{-- Kolom Kanan: Akses Portal Wiromitra (Otomatisasi Kredensial) --}}
+        @can('clients.portal_credentials')
         <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
             <div class="flex items-center justify-between border-b pb-3">
                 <div class="flex items-center gap-2">
@@ -122,18 +127,22 @@
                 </form>
             </div>
         </div>
+        @endcan
     </div>
 
     {{-- Daftar Proyek Klien (Multi-Project) --}}
+    @can('projects.view')
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <div>
                 <h3 class="font-bold text-sm text-gray-900">Daftar Proyek Klien Ini ({{ $client->projects->count() }})</h3>
                 <p class="text-xs text-gray-500">Seluruh proyek ini akan otomatis dirangkum dalam dashboard Wiromitra klien.</p>
             </div>
+            @can('projects.create')
             <a href="{{ route('projects.create') }}?client_id={{ $client->id }}" class="text-xs text-primary font-bold hover:underline">
                 + Proyek Baru
             </a>
+            @endcan
         </div>
 
         <div class="overflow-x-auto">
@@ -187,5 +196,6 @@
             </table>
         </div>
     </div>
+    @endcan
 </div>
 @endsection

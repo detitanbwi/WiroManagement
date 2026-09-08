@@ -23,17 +23,20 @@
             <h1 class="text-2xl font-bold text-gray-900">Bank Accounts</h1>
             <p class="text-sm text-gray-500">Kelola rekening dan dompet untuk pencatatan pengeluaran.</p>
         </div>
+        @can('finance.bank_accounts')
         <button @click="openCreate()" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all font-medium shadow-sm">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
             Tambah Akun
         </button>
+        @endcan
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         @foreach($accounts as $account)
         <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all relative group">
+            @can('finance.bank_accounts')
             <div class="absolute top-4 right-4 flex space-x-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <button @click="openEdit({{ json_encode($account) }})" class="p-1 text-blue-600 hover:bg-blue-50 rounded">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
@@ -46,6 +49,7 @@
                     </button>
                 </form>
             </div>
+            @endcan
             <div class="flex items-start justify-between">
                 <div>
                     <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full {{ $account->type == 'personal' ? 'bg-orange-100 text-orange-600' : 'bg-teal-100 text-teal-600' }}">
@@ -68,6 +72,7 @@
     </div>
 
     <!-- Modal Form -->
+    @can('finance.bank_accounts')
     <div x-show="showModal" 
          class="fixed inset-0 z-[100] overflow-y-auto" 
          style="display: none;"
@@ -129,5 +134,6 @@
             </div>
         </div>
     </div>
+    @endcan
 </div>
 @endsection

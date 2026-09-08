@@ -10,7 +10,13 @@
     </div>
 
     <!-- Stats Grid -->
+    @php
+        $canSeeAnyStat = auth()->user()->canany(['clients.view', 'projects.view', 'finance.view', 'projects.view_financial', 'payments.manage']);
+    @endphp
+
+    @if($canSeeAnyStat)
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        @can('clients.view')
         <div class="p-6 rounded-xl shadow-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
             <div class="flex items-center">
                 <div class="p-3 bg-white/20 rounded-lg text-white mr-4 backdrop-blur-sm">
@@ -22,6 +28,9 @@
                 </div>
             </div>
         </div>
+        @endcan
+
+        @can('projects.view')
         <div class="p-6 rounded-xl shadow-md bg-gradient-to-br from-purple-600 to-fuchsia-500 text-white">
             <div class="flex items-center">
                 <div class="p-3 bg-white/20 rounded-lg text-white mr-4 backdrop-blur-sm">
@@ -33,6 +42,9 @@
                 </div>
             </div>
         </div>
+        @endcan
+
+        @canany(['finance.view', 'projects.view_financial'])
         <div class="p-6 rounded-xl shadow-md bg-gradient-to-br from-teal-500 to-emerald-500 text-white">
             <div class="flex items-center">
                 <div class="p-3 bg-white/20 rounded-lg text-white mr-4 backdrop-blur-sm">
@@ -44,6 +56,9 @@
                 </div>
             </div>
         </div>
+        @endcanany
+
+        @canany(['finance.view', 'payments.manage'])
         <div class="p-6 rounded-xl shadow-md bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
             <div class="flex items-center">
                 <div class="p-3 bg-white/20 rounded-lg text-white mr-4 backdrop-blur-sm">
@@ -55,10 +70,13 @@
                 </div>
             </div>
         </div>
+        @endcanany
     </div>
+    @endif
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Recent Projects -->
+        @can('projects.view')
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-6 py-4 border-b border-indigo-600 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-blue-500 text-white">
                 <h3 class="font-bold text-white shadow-sm">Proyek Terbaru</h3>
@@ -77,7 +95,9 @@
                                 <span class="px-2 py-1 bg-blue-50 text-primary text-[10px] font-bold rounded-full uppercase">{{ str_replace('_', ' ', $p->status) }}</span>
                             </td>
                             <td class="px-6 py-4 text-right">
+                                @can('projects.manage')
                                 <a href="{{ route('projects.show', $p) }}" class="text-xs font-bold text-gray-400 hover:text-primary">DETAIL</a>
+                                @endcan
                             </td>
                         </tr>
                         @endforeach
@@ -85,12 +105,14 @@
                 </table>
             </div>
         </div>
+        @endcan
 
         <!-- Unpaid Invoices -->
+        @canany(['invoices.manage', 'finance.view'])
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-600 flex justify-between items-center bg-gradient-to-r from-slate-600 to-gray-500 text-white">
                 <h3 class="font-bold text-white shadow-sm">Invoice Belum Lunas</h3>
-                <a href="#" class="text-xs font-bold text-slate-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">Lihat Semua &rarr;</a>
+                <span class="text-xs font-bold text-slate-100 px-3 py-1.5">Monitoring Penagihan</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full">
@@ -106,7 +128,9 @@
                                 <div class="text-[10px] text-gray-400 uppercase">Due: {{ $inv->due_date ? $inv->due_date->format('d/m/Y') : 'N/A' }}</div>
                             </td>
                             <td class="px-6 py-4 text-right">
+                                @can('invoices.manage')
                                 <a href="{{ route('invoices.show', $inv) }}" class="text-xs font-bold text-gray-400 hover:text-primary">VIEW</a>
+                                @endcan
                             </td>
                         </tr>
                         @endforeach
@@ -114,6 +138,7 @@
                 </table>
             </div>
         </div>
+        @endcanany
     </div>
 </div>
 @endsection

@@ -78,7 +78,7 @@
                         </a>
                     </li>
 
-                    @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'finance', 'staff']))
+                    @can('clients.view')
                     <li>
                         <a href="{{ route('clients.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('clients.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -88,9 +88,9 @@
                             Clients
                         </a>
                     </li>
-                    @endif
+                    @endcan
 
-                    @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc', 'staff', 'finance']))
+                    @can('projects.view')
                     <li>
                         <a href="{{ route('projects.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('projects.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -100,9 +100,9 @@
                             Projects
                         </a>
                     </li>
-                    @endif
+                    @endcan
 
-                    @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'staff']))
+                    @can('ai_pricing.use')
                     <li>
                         <a href="{{ route('ai-pricing.index') }}"
                             class="flex items-center justify-between px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('ai-pricing.*') ? 'bg-gradient-to-r from-indigo-600 to-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600' }}">
@@ -117,9 +117,9 @@
                             </span>
                         </a>
                     </li>
-                    @endif
+                    @endcan
 
-                    @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'finance']))
+                    @canany(['finance.view', 'finance.transactions', 'finance.bank_accounts'])
                     <li x-data="{ open: {{ request()->routeIs('finance.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open" 
                                 class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('finance.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -134,28 +134,32 @@
                             </svg>
                         </button>
                         <ul x-show="open" x-cloak x-transition class="mt-2 space-y-1 pl-11 pr-2 pb-2 border-l-2 border-blue-100 ml-6">
+                            @can('finance.view')
                             <li>
                                 <a href="{{ route('finance.overview') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.overview') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Overview
                                 </a>
                             </li>
-                            @if(auth()->user()->hasAnyRole(['superadmin', 'finance']))
+                            @endcan
+                            @can('finance.bank_accounts')
                             <li>
                                 <a href="{{ route('finance.bank-accounts') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.bank-accounts') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Bank Account
                                 </a>
                             </li>
-                            @endif
+                            @endcan
+                            @can('finance.transactions')
                             <li>
                                 <a href="{{ route('finance.transactions') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.transactions') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Transaksi
                                 </a>
                             </li>
+                            @endcan
                         </ul>
                     </li>
-                    @endif
+                    @endcanany
 
-                    @if(auth()->user()->hasRole('superadmin'))
+                    @can('settings.manage')
                     <li>
                         <a href="{{ route('settings.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('settings.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -166,6 +170,9 @@
                             Settings
                         </a>
                     </li>
+                    @endcan
+
+                    @can('users.view')
                     <li>
                         <a href="{{ route('users.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('users.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -175,6 +182,9 @@
                             User Management
                         </a>
                     </li>
+                    @endcan
+
+                    @can('roles.manage')
                     <li>
                         <a href="{{ route('roles.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('roles.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -184,7 +194,7 @@
                             Peran & Izin (RBAC)
                         </a>
                     </li>
-                    @endif
+                    @endcan
                 </ul>
             </nav>
 

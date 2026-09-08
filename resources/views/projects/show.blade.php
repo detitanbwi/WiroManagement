@@ -16,9 +16,19 @@
             <p class="text-sm md:text-base text-gray-600 mt-1">Client: <span class="font-semibold text-gray-900">{{ $project->client->name }}</span> {{ $project->client->company_name ? "({$project->client->company_name})" : '' }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 md:space-x-3">
+            @canany(['projects.qc', 'qc.view'])
+            <a href="{{ route('projects.qc', $project) }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold text-[10px] md:text-xs uppercase tracking-widest shadow-sm transition">
+                Papan QA / QC
+            </a>
+            @endcanany
+
+            @can('projects.edit')
             <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-[10px] md:text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
                 Edit Proyek
             </a>
+            @endcan
+
+            @can('projects.status')
             <form action="{{ route('projects.status.update', $project) }}" method="POST" x-data x-ref="statusForm">
                 @csrf
                 <select name="status" @change="$refs.statusForm.submit()" class="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-[10px] md:text-xs uppercase font-bold cursor-pointer bg-white">
@@ -29,6 +39,11 @@
                     @endforeach
                 </select>
             </form>
+            @else
+            <span class="px-3 py-2 bg-gray-100 border border-gray-200 text-gray-700 rounded-md text-[10px] md:text-xs uppercase font-bold">
+                {{ str_replace('_', ' ', strtoupper($project->status)) }}
+            </span>
+            @endcan
         </div>
     </div>
 
@@ -78,6 +93,7 @@
     </div>
 
     <!-- Financial Cards -->
+    @canany(['projects.view_financial', 'finance.view'])
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
             <p class="text-[10px] text-blue-100 font-bold uppercase tracking-wider">Total Kontrak</p>
@@ -109,16 +125,20 @@
             <p class="text-[10px] text-amber-100 mt-2 italic">Total biaya operasional</p>
         </div>
     </div>
+    @endcanany
 
     <!-- Details Tabs/Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Invoices & CRs -->
         <div class="lg:col-span-2 space-y-8">
             <!-- Section: Invoices -->
+            @canany(['invoices.manage', 'finance.view'])
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-blue-600 flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-500 text-white">
                     <h3 class="text-lg font-bold text-white shadow-sm">Tagihan (Invoices)</h3>
+                    @can('invoices.manage')
                     <a href="{{ route('projects.invoices.create', $project) }}" class="text-sm font-bold text-blue-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">+ Buat Invoice</a>
+                    @endcan
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -146,6 +166,7 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right flex justify-end items-center space-x-2">
+                                    @can('invoices.manage')
                                     <a href="{{ route('invoices.show', $invoice) }}" class="text-primary font-bold hover:underline">Detail</a>
                                     <span class="text-gray-300">|</span>
                                     <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline" onsubmit="return confirm('Hapus invoice ini? Semua data pembayaran terkait juga akan terhapus.')">
@@ -153,6 +174,9 @@
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 font-bold hover:underline">Hapus</button>
                                     </form>
+                                    @else
+                                    <span class="text-xs text-gray-400 italic">Lihat Saja</span>
+                                    @endcan
                                 </td>
                             </tr>
                             @empty
@@ -162,12 +186,16 @@
                     </table>
                 </div>
             </div>
+            @endcanany
 
             <!-- Section: Quotations -->
+            @canany(['quotations.manage', 'finance.view'])
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-teal-600 flex justify-between items-center bg-gradient-to-r from-teal-600 to-emerald-500 text-white">
                     <h3 class="text-lg font-bold text-white shadow-sm">Penawaran (Quotations)</h3>
+                    @can('quotations.manage')
                     <a href="{{ route('projects.quotations.create', $project) }}" class="text-sm font-bold text-teal-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">+ Buat Quotation</a>
+                    @endcan
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -191,6 +219,7 @@
                                 <td class="px-6 py-4">Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 uppercase font-bold text-[10px]">{{ $quotation->status }}</td>
                                 <td class="px-6 py-4 text-right">
+                                    @can('quotations.manage')
                                     <a href="{{ route('quotations.show', $quotation) }}" class="text-primary font-bold hover:underline">View</a>
                                     @if($quotation->status != 'approved')
                                         <span class="mx-1 text-gray-300">|</span>
@@ -202,6 +231,9 @@
                                             <button type="submit" class="text-red-600 font-bold hover:underline">Hapus</button>
                                         </form>
                                     @endif
+                                    @else
+                                    <span class="text-xs text-gray-400 italic">Lihat Saja</span>
+                                    @endcan
                                 </td>
                             </tr>
                             @empty
@@ -211,8 +243,10 @@
                     </table>
                 </div>
             </div>
+            @endcanany
 
             <!-- Section: Project Expenses -->
+            @canany(['expenses.manage', 'finance.view'])
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" x-data="{ 
                 openAddExpense: false, 
                 editExpense: null,
@@ -232,7 +266,9 @@
             }">
                 <div class="px-6 py-4 border-b border-amber-500 flex justify-between items-center bg-gradient-to-r from-amber-500 to-orange-400 text-white">
                     <h3 class="text-lg font-bold text-white shadow-sm">Pengeluaran Proyek</h3>
+                    @can('expenses.manage')
                     <button @click="resetForm(); openAddExpense = true" class="text-xs font-bold text-amber-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm uppercase tracking-widest transition-colors">+ Tambah Pengeluaran</button>
+                    @endcan
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -253,6 +289,7 @@
                                 <td class="px-6 py-4 font-medium">{{ $expense->description }}</td>
                                 <td class="px-6 py-4 font-bold text-gray-900">Rp {{ number_format($expense->amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 text-right flex justify-end space-x-2">
+                                    @can('expenses.manage')
                                     <button @click="editExpense = {{ json_encode($expense) }}; rawAmount = editExpense.amount; openAddExpense = true" class="text-amber-600 font-bold hover:underline">Edit</button>
                                     <span class="text-gray-300">|</span>
                                     <form action="{{ route('expenses.destroy', $expense) }}" method="POST" class="inline" onsubmit="return confirm('Hapus pengeluaran ini?')">
@@ -260,6 +297,9 @@
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 font-bold hover:underline">Hapus</button>
                                     </form>
+                                    @else
+                                    <span class="text-xs text-gray-400 italic">Lihat Saja</span>
+                                    @endcan
                                 </td>
                             </tr>
                             @empty
@@ -279,6 +319,7 @@
                 </div>
 
                 <!-- Modal Form (Add/Edit) -->
+                @can('expenses.manage')
                 <template x-if="openAddExpense">
                     <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
                         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -325,7 +366,9 @@
                         </div>
                     </div>
                 </template>
+                @endcan
             </div>
+            @endcanany
         </div>
 
         <!-- Sidebar Info -->
@@ -349,9 +392,11 @@
                         <p class="text-sm text-gray-800">{{ $project->client->email }}</p>
                         <p class="text-sm text-gray-800">{{ $project->client->phone }}</p>
                     </div>
+                    @can('clients.view')
                     <div class="pt-4 border-t border-gray-100">
                         <a href="{{ route('clients.show', $project->client) }}" class="text-xs font-bold text-primary uppercase hover:underline">Lihat Semua Proyek Client &rarr;</a>
                     </div>
+                    @endcan
                 </div>
             </div>
 

@@ -48,13 +48,16 @@
         </div>
         <div class="flex flex-wrap items-center gap-2">
             @if($quotation->status == 'draft')
+                @can('quotations.manage')
                 <a href="{{ route('quotations.edit', $quotation) }}" class="inline-flex items-center px-4 py-2 bg-amber-500 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-amber-600 transition shadow-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     EDIT DRAFT
                 </a>
+                @endcan
             @endif
 
             @if($quotation->status == 'approved')
+                @canany(['quotations.manage', 'invoices.manage'])
                 <form action="{{ route('quotations.convert', $quotation) }}" method="POST" onsubmit="return confirm('Konversi penawaran ini menjadi Invoice?')">
                     @csrf
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none transition ease-in-out duration-150 shadow-sm">
@@ -62,11 +65,14 @@
                         KONVERSI KE INVOICE
                     </button>
                 </form>
+                @endcanany
             @endif
+            @canany(['quotations.manage', 'finance.view'])
             <a href="{{ route('documents.quotation.pdf', $quotation) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring ring-red-300 transition ease-in-out duration-150 shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                 CETAK PDF
             </a>
+            @endcanany
         </div>
     </div>
 

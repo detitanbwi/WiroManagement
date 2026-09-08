@@ -9,10 +9,12 @@
             <h1 class="text-2xl font-black text-gray-800 tracking-tight">Manajemen Pengguna & Peran (RBAC)</h1>
             <p class="text-gray-500 text-sm mt-0.5">Kelola akun staf, atur hak akses multi-peran, dan pantau status keaktifan pengguna sistem.</p>
         </div>
+        @can('users.create')
         <a href="{{ route('users.create') }}" class="inline-flex items-center px-5 py-2.5 bg-primary hover:bg-blue-800 text-white rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-blue-100 transition">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             Tambah Pengguna
         </a>
+        @endcan
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -60,20 +62,27 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            @if($user->id !== auth()->id())
-                                <form action="{{ route('users.toggle-status', $user) }}" method="POST" class="inline-block">
-                                    @csrf
-                                    <button type="submit" title="Klik untuk ubah status" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold transition {{ $user->is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full mr-1.5 {{ $user->is_active ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
-                                        {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
-                                    </button>
-                                </form>
+                            @can('users.edit')
+                                @if($user->id !== auth()->id())
+                                    <form action="{{ route('users.toggle-status', $user) }}" method="POST" class="inline-block">
+                                        @csrf
+                                        <button type="submit" title="Klik untuk ubah status" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold transition {{ $user->is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }}">
+                                            <span class="w-1.5 h-1.5 rounded-full mr-1.5 {{ $user->is_active ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                                            {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-emerald-500"></span>
+                                        Aktif
+                                    </span>
+                                @endif
                             @else
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-emerald-500"></span>
-                                    Aktif
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold {{ $user->is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                                    <span class="w-1.5 h-1.5 rounded-full mr-1.5 {{ $user->is_active ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                                    {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
                                 </span>
-                            @endif
+                            @endcan
                         </td>
                         <td class="px-6 py-4 text-xs text-gray-500">
                             <div><span class="text-gray-400">Dibuat:</span> {{ $user->created_at->format('d M Y') }}</div>
@@ -83,10 +92,13 @@
                         </td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
+                                @can('users.edit')
                                 <a href="{{ route('users.edit', $user) }}" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition" title="Edit Pengguna">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </a>
+                                @endcan
 
+                                @can('users.delete')
                                 @if($user->id !== auth()->id())
                                 <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun {{ $user->name }}?')">
                                     @csrf
@@ -96,6 +108,7 @@
                                     </button>
                                 </form>
                                 @endif
+                                @endcan
                             </div>
                         </td>
                     </tr>

@@ -9,10 +9,12 @@
             <h1 class="text-2xl font-bold text-gray-800">Daftar Client & Showcase</h1>
             <p class="text-xs text-gray-500 mt-1">Kelola data klien, proyek, serta artikel profil usaha yang tayang di wirodev.com.</p>
         </div>
+        @can('clients.create')
         <a href="{{ route('clients.create') }}" class="inline-flex items-center px-4 py-2.5 bg-primary border border-transparent rounded-lg font-bold text-xs text-white uppercase tracking-wider hover:bg-blue-700 active:bg-blue-900 transition shadow-sm">
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Tambah Client Baru
         </a>
+        @endcan
     </div>
 
     <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
@@ -65,15 +67,19 @@
                                             </a>
                                         @endif
                                     </div>
+                                    @can('clients.edit')
                                     <a href="{{ route('clients.edit', $client) }}?tab=profile" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                         Edit Artikel &amp; Profil (WYSIWYG)
                                     </a>
+                                    @endcan
                                 </div>
                             @else
+                                @can('clients.edit')
                                 <a href="{{ route('clients.edit', $client) }}?tab=profile" class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-primary bg-gray-100 hover:bg-blue-50 px-2.5 py-1 rounded-md transition">
                                     + Buat Profil Artikel
                                 </a>
+                                @endcan
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -83,13 +89,19 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-xs font-semibold">
                             <div class="flex justify-end items-center space-x-2">
+                                @can('clients.view')
                                 <a href="{{ route('clients.show', $client) }}" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-2 py-1 rounded">Detail</a>
+                                @endcan
+                                @can('clients.edit')
                                 <a href="{{ route('clients.edit', $client) }}" class="text-gray-700 hover:text-gray-900 bg-gray-100 px-2 py-1 rounded">Edit</a>
+                                @endcan
+                                @can('clients.delete')
                                 <form action="{{ route('clients.destroy', $client) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus client ini? semua proyek terkait akan ikut terhapus.')" class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 px-2 py-1 rounded">Hapus</button>
                                 </form>
+                                @endcan
                             </div>
                         </td>
                     </tr>

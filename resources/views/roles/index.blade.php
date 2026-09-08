@@ -22,10 +22,12 @@
                 <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 Daftar Pengguna
             </a>
+            @can('roles.manage')
             <a href="{{ route('roles.create') }}" class="inline-flex items-center px-5 py-2.5 bg-primary hover:bg-blue-800 text-white rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-blue-100 transition">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 Tambah Peran Baru
             </a>
+            @endcan
         </div>
     </div>
 
@@ -100,6 +102,7 @@
 
             <!-- Card Actions Footer -->
             <div class="px-6 py-3.5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                @can('roles.manage')
                 <a href="{{ route('roles.edit', $role) }}" class="inline-flex items-center text-xs font-bold text-primary hover:text-blue-800 transition">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     Konfigurasi Izin & Edit
@@ -116,6 +119,9 @@
                 @elseif(!$role->is_system)
                     <span class="text-[10px] font-medium text-gray-400" title="Tidak dapat dihapus karena masih digunakan oleh pengguna">Digunakan</span>
                 @endif
+                @else
+                <span class="text-xs text-gray-400 italic">Hanya lihat</span>
+                @endcan
             </div>
         </div>
         @endforeach

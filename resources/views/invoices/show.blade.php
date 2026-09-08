@@ -13,13 +13,17 @@
             <h1 class="text-2xl font-bold text-gray-800 mt-2">Invoice - {{ $invoice->invoice_number }}</h1>
         </div>
         <div class="flex flex-wrap items-center gap-2">
+            @canany(['invoices.manage', 'finance.view'])
             <a href="{{ route('documents.invoice.pdf', $invoice) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md font-bold text-xs uppercase hover:bg-indigo-700 shadow-sm">
                 Cetak PDF
             </a>
+            @endcanany
             @if($invoice->status == 'draft')
+                @can('invoices.manage')
                 <a href="{{ route('invoices.edit', $invoice) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-bold text-xs text-gray-700 uppercase hover:bg-gray-50">
                     Edit
                 </a>
+                @endcan
             @endif
         </div>
     </div>
@@ -155,6 +159,7 @@
             </div>
 
             <!-- Record Payment Form -->
+            @can('payments.manage')
             @if($invoice->balance_due > 0)
             <div class="bg-gray-50 rounded-lg shadow-sm border border-gray-200 p-6" x-data="{ 
                 rawAmount: {{ $invoice->balance_due }},
@@ -204,8 +209,10 @@
                 </form>
             </div>
             @endif
+            @endcan
 
             <!-- History Payments -->
+            @canany(['payments.manage', 'finance.view'])
             @if($invoice->payments->count() > 0)
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Riwayat Pembayaran</h3>
@@ -222,6 +229,7 @@
                 </div>
             </div>
             @endif
+            @endcanany
         </div>
     </div>
 </div>

@@ -15,8 +15,8 @@ class UserController extends Controller
      */
     public function index()
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403, 'Akses ditolak. Hanya Super Admin yang dapat mengelola pengguna.');
+        if (!auth()->user()->can('users.view')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk melihat daftar pengguna.');
         }
 
         $users = User::with('roles')->latest()->get();
@@ -28,8 +28,8 @@ class UserController extends Controller
      */
     public function create()
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403);
+        if (!auth()->user()->can('users.create')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk menambah pengguna.');
         }
 
         $roles = Role::where('slug', '!=', 'client')->get();
@@ -41,8 +41,8 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403);
+        if (!auth()->user()->can('users.create')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk menambah pengguna.');
         }
 
         $validated = $request->validate([
@@ -71,8 +71,8 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403);
+        if (!auth()->user()->can('users.edit')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengedit pengguna.');
         }
 
         $roles = Role::where('slug', '!=', 'client')->get();
@@ -86,8 +86,8 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403);
+        if (!auth()->user()->can('users.edit')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengedit pengguna.');
         }
 
         $validated = $request->validate([
@@ -111,16 +111,18 @@ class UserController extends Controller
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
-        $user->is_active = $request->boolean('is_active', true);
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
 
+        $user->is_active = $request->boolean('is_active', true);
         $user->save();
-        $user->syncRoles($validated['roles']);
 
-        return redirect()->route('users.index')->with('success', 'Profil dan peran pengguna ' . $user->name . ' berhasil diperbarui.');
+        $user->syncRoles($validated['roles']);
+        $user->clearPermissionCache();
+
+        return redirect()->route('users.index')->with('success', 'Data pengguna ' . $user->name . ' berhasil diperbarui.');
     }
 
     /**
@@ -128,8 +130,8 @@ class UserController extends Controller
      */
     public function toggleStatus(User $user)
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403);
+        if (!auth()->user()->can('users.edit')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengubah status pengguna.');
         }
 
         if ($user->id === auth()->id()) {
@@ -182,8 +184,8 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        if (!auth()->user()->isSuperAdmin() || $user->id === auth()->id()) {
-            abort(403, 'Anda tidak dapat menghapus akun Anda sendiri atau Anda bukan Super Admin.');
+        if (!auth()->user()->can('users.delete') || $user->id === auth()->id()) {
+            abort(403, 'Anda tidak dapat menghapus akun Anda sendiri atau Anda tidak memiliki izin.');
         }
 
         $user->roles()->detach();

@@ -125,6 +125,10 @@ class RoleController extends Controller
         // Update permissions
         $role->syncPermissions($validated['permissions'] ?? []);
 
+        if (auth()->check()) {
+            auth()->user()->clearPermissionCache();
+        }
+
         return redirect()->route('roles.index')->with('success', "Konfigurasi hak akses peran '{$role->name}' berhasil diperbarui.");
     }
 

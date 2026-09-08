@@ -233,21 +233,67 @@ class User extends Authenticatable
     }
 
     /**
+     * Cache of permission names for the current request cycle.
+     */
+    protected ?array $cachedPermissionNames = null;
+
+    /**
+     * Clear the memoized permissions for this user instance.
+     */
+    public function clearPermissionCache(): self
+    {
+        $this->cachedPermissionNames = null;
+        return $this;
+    }
+
+    /**
+     * Get all permission names granted to this user.
+     *
+     * @return array<string>
+     */
+    public function getPermissionNames(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return Permission::pluck('name')->toArray();
+        }
+
+        if ($this->cachedPermissionNames === null) {
+            $roleIds = $this->roles()->pluck('roles.id')->toArray();
+
+            // Fallback for legacy users.role column if role_user pivot is empty
+            if (empty($roleIds) && !empty($this->role)) {
+                $roleIds = Role::where('slug', $this->role)->pluck('id')->toArray();
+            }
+
+            if (empty($roleIds)) {
+                $this->cachedPermissionNames = [];
+            } else {
+                $this->cachedPermissionNames = \Illuminate\Support\Facades\DB::table('permission_role')
+                    ->join('permissions', 'permissions.id', '=', 'permission_role.permission_id')
+                    ->whereIn('permission_role.role_id', $roleIds)
+                    ->pluck('permissions.name')
+                    ->unique()
+                    ->values()
+                    ->toArray();
+            }
+        }
+
+        return $this->cachedPermissionNames;
+    }
+
+    /**
      * Get all unique permissions granted to this user across all their roles.
      *
      * @return \Illuminate\Support\Collection<int, Permission>
      */
     public function getAllPermissions()
     {
-        if ($this->relationLoaded('roles')) {
-            return $this->roles->flatMap(function ($role) {
-                return $role->relationLoaded('permissions') ? $role->permissions : $role->permissions()->get();
-            })->unique('id');
+        $permNames = $this->getPermissionNames();
+        if (empty($permNames)) {
+            return collect();
         }
 
-        return Permission::whereHas('roles', function ($query) {
-            $query->whereIn('roles.id', $this->roles()->pluck('roles.id'));
-        })->get();
+        return Permission::whereIn('name', $permNames)->get();
     }
 
     /**
@@ -259,8 +305,7 @@ class User extends Authenticatable
             return true;
         }
 
-        $allPermissionNames = $this->getAllPermissions()->pluck('name')->toArray();
-        return in_array($permissionName, $allPermissionNames, true);
+        return in_array($permissionName, $this->getPermissionNames(), true);
     }
 
     /**
@@ -272,7 +317,7 @@ class User extends Authenticatable
             return true;
         }
 
-        $allPermissionNames = $this->getAllPermissions()->pluck('name')->toArray();
+        $allPermissionNames = $this->getPermissionNames();
 
         foreach ($permissionNames as $perm) {
             if (in_array($perm, $allPermissionNames, true)) {

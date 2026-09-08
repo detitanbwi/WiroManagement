@@ -17,6 +17,10 @@ class SettingController extends Controller
 
     public function index(Request $request)
     {
+        if (!auth()->user()->can('settings.manage')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola pengaturan.');
+        }
+
         $settings = Setting::all()->pluck('value', 'key');
         $rules = $this->calculator->getRules();
         $activeTab = $request->query('tab', 'rate-card');
@@ -26,6 +30,10 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+        if (!auth()->user()->can('settings.manage')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola pengaturan.');
+        }
+
         $activeTab = $request->input('active_tab', 'rate-card');
 
         // Handle Document / Terms settings

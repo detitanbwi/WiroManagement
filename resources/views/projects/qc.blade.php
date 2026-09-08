@@ -28,9 +28,11 @@
                 Daftar Proyek
             </a>
             @endif
+            @can('qc.manage_tasks')
             <button @click="openNewTaskModal()" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-blue-800 shadow-sm transition-colors">
                 New Task
             </button>
+            @endcan
         </div>
     </div>
 
@@ -114,7 +116,7 @@
                     Project Test Cases (Global)
                 </h2>
                 <div class="flex items-center gap-3">
-                    <button @click.stop="openNewTestCaseModal(null)" class="px-3 py-1.5 bg-white border border-gray-300 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 shadow-sm transition-colors">
+                    <button x-show="permissions.canManageTestCases" @click.stop="openNewTestCaseModal(null)" class="px-3 py-1.5 bg-white border border-gray-300 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 shadow-sm transition-colors">
                         + Add Root Test Case
                     </button>
                     <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{'rotate-180': !isTestCasesExpanded}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -125,9 +127,9 @@
 
                 <template x-for="tc in flatTestCases" :key="tc.id">
                     <div class="transition-all"
-                         @dragover.prevent="handleDragOver(tc, $event)"
-                         @dragleave="handleDragLeave(tc, $event)"
-                         @drop="dropTestCase(tc.id)"
+                         @dragover.prevent="if(permissions.canManageTestCases) handleDragOver(tc, $event)"
+                         @dragleave="if(permissions.canManageTestCases) handleDragLeave(tc, $event)"
+                         @drop="if(permissions.canManageTestCases) dropTestCase(tc.id)"
                          @dragend="draggedTestCase = null; dragOverTarget = null; dragOverPosition = null;">
                          
                         <!-- Before Spacer -->
@@ -147,11 +149,11 @@
                                  'opacity-50': draggedTestCase?.id === tc.id
                              }"
                              :style="`padding-left: ${tc.level * 2 + 1}rem`"
-                             draggable="true"
-                             @dragstart="startDragging(tc, $event)">
+                             :draggable="permissions.canManageTestCases"
+                             @dragstart="if(permissions.canManageTestCases) startDragging(tc, $event)">
                         <div class="flex items-center gap-2">
                             <!-- Drag Handle -->
-                            <div class="cursor-grab text-gray-300 hover:text-gray-500 mr-1" title="Drag to move">
+                            <div x-show="permissions.canManageTestCases" class="cursor-grab text-gray-300 hover:text-gray-500 mr-1" title="Drag to move">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 8v.01M10 12v.01M10 16v.01M14 8v.01M14 12v.01M14 16v.01"></path>
                                 </svg>
@@ -190,19 +192,19 @@
                             <button @click.stop="openViewTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-800 p-1 rounded-md transition-opacity" title="View Details">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                             </button>
-                            <button @click.stop="openEditTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-blue-500 hover:text-blue-700 p-1 rounded-md transition-opacity" title="Edit Test Case">
+                            <button x-show="permissions.canManageTestCases" @click.stop="openEditTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-blue-500 hover:text-blue-700 p-1 rounded-md transition-opacity" title="Edit Test Case">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
-                            <button @click.stop="duplicateTestCase(tc)" class="opacity-0 group-hover:opacity-100 text-yellow-500 hover:text-yellow-700 p-1 rounded-md transition-opacity" title="Duplicate Test Case">
+                            <button x-show="permissions.canManageTestCases" @click.stop="duplicateTestCase(tc)" class="opacity-0 group-hover:opacity-100 text-yellow-500 hover:text-yellow-700 p-1 rounded-md transition-opacity" title="Duplicate Test Case">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
                             </button>
-                            <button @click.stop="deleteTestCase(tc.id)" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 p-1 rounded-md transition-opacity" title="Delete Test Case">
+                            <button x-show="permissions.canManageTestCases" @click.stop="deleteTestCase(tc.id)" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 p-1 rounded-md transition-opacity" title="Delete Test Case">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
-                            <button @click.stop="openRunTestModal(tc)" class="opacity-0 group-hover:opacity-100 text-green-600 hover:text-green-800 p-1 rounded-md transition-opacity" title="Run Test">
+                            <button x-show="permissions.canExecuteTests" @click.stop="openRunTestModal(tc)" class="opacity-0 group-hover:opacity-100 text-green-600 hover:text-green-800 p-1 rounded-md transition-opacity" title="Run Test">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </button>
-                            <button @click.stop="openNewTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-xs text-blue-600 hover:text-blue-800 font-medium transition-opacity" title="Add Sub Test">+ Sub Test</button>
+                            <button x-show="permissions.canManageTestCases" @click.stop="openNewTestCaseModal(tc)" class="opacity-0 group-hover:opacity-100 text-xs text-blue-600 hover:text-blue-800 font-medium transition-opacity" title="Add Sub Test">+ Sub Test</button>
                         </div>
                     </div>
 
@@ -266,7 +268,7 @@
                 </div>
 
                 <!-- Selection Action Toolbar -->
-                <div x-show="selectedBugIds.length > 0" x-cloak class="px-6 py-2.5 bg-blue-50 border-b border-blue-200 flex items-center justify-between flex-wrap gap-3">
+                <div x-show="selectedBugIds.length > 0 && permissions.canManageBugs" x-cloak class="px-6 py-2.5 bg-blue-50 border-b border-blue-200 flex items-center justify-between flex-wrap gap-3">
                     <div class="flex items-center gap-3">
                         <span class="inline-flex items-center justify-center bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full" x-text="selectedBugIds.length + ' Bug Terpilih'"></span>
                         <span class="text-xs text-blue-900 font-medium">Pilih beberapa bug untuk digabungkan menjadi satu Kanban Task baru.</span>
@@ -286,7 +288,7 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-4 py-3 text-center w-10">
+                                <th scope="col" x-show="permissions.canManageBugs" class="px-4 py-3 text-center w-10">
                                     <input type="checkbox" 
                                            @change="toggleSelectAllBugs($event)" 
                                            :checked="isAllBugsSelected" 
@@ -308,7 +310,7 @@
                                         'bg-blue-50/60': isBugSelected(bug.id),
                                         'bg-green-50/20': bug.status === 'resolved' && !isBugSelected(bug.id)
                                     }">
-                                    <td class="px-4 py-4 text-center whitespace-nowrap">
+                                    <td x-show="permissions.canManageBugs" class="px-4 py-4 text-center whitespace-nowrap">
                                         <input type="checkbox" 
                                                :checked="isBugSelected(bug.id)" 
                                                @change="toggleBugSelection(bug.id)" 
@@ -406,14 +408,14 @@
                                             </svg>
                                             <span>Detail</span>
                                         </button>
-                                        <template x-if="!bug.project_task && bug.status !== 'resolved'">
+                                        <template x-if="!bug.project_task && bug.status !== 'resolved' && permissions.canManageBugs">
                                             <button @click="convertBugToTask(bug.id)" :disabled="convertingBugId === bug.id" :class="{'opacity-75 cursor-wait': convertingBugId === bug.id}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors">
                                                 <svg x-show="convertingBugId === bug.id" class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                                 <svg x-show="convertingBugId !== bug.id" class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                                                 <span x-text="convertingBugId === bug.id ? 'Creating...' : 'Create Task'"></span>
                                             </button>
                                         </template>
-                                        <button @click="deleteBug(bug.id)" class="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors" title="Delete Bug">
+                                        <button x-show="permissions.canManageBugs" @click="deleteBug(bug.id)" class="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors" title="Delete Bug">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </td>
@@ -496,7 +498,7 @@
                             <p class="text-sm text-gray-500 mt-1">Assignee: <span class="font-medium text-gray-700" x-text="activeTask?.assignee"></span></p>
                             
                             <!-- State Transition Buttons -->
-                            <div class="mt-3 flex gap-2">
+                            <div class="mt-3 flex gap-2" x-show="permissions.canManageTasks">
                                 <template x-if="activeTask?.column_id === 'todo'">
                                     <button @click="updateTaskColumn(activeTask.id, 'in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors">
                                         <svg x-show="movingToColumn === 'in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -556,7 +558,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button @click="deleteTask(activeTask.id)" type="button" class="bg-red-50 p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors focus:outline-none" title="Delete Task">
+                            <button x-show="permissions.canManageTasks" @click="deleteTask(activeTask.id)" type="button" class="bg-red-50 p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors focus:outline-none" title="Delete Task">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                             <button @click="closeTaskModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
@@ -661,7 +663,7 @@
                                 <div class="space-y-3">
                                     <div class="flex items-center justify-between pb-2 border-b border-gray-100">
                                         <span class="text-xs text-gray-500 font-medium" x-text="activeTask.testCases.length + ' Test Cases terkait task ini'"></span>
-                                        <button type="button" 
+                                        <button x-show="permissions.canExecuteTests" type="button" 
                                                 @click="passAllTaskTestCases(activeTask.id)" 
                                                 :disabled="isPassingAllTests"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-md text-xs font-semibold shadow-xs transition-colors disabled:opacity-50">
@@ -694,7 +696,7 @@
                                                 <button @click.stop="openViewTestCaseModal(tc)" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
                                                     View
                                                 </button>
-                                                <button @click.stop="openRunTestModal(tc)" class="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 transition-colors shadow-sm flex items-center gap-1">
+                                                <button x-show="permissions.canExecuteTests" @click.stop="openRunTestModal(tc)" class="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 transition-colors shadow-sm flex items-center gap-1">
                                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                                     Run
                                                 </button>
@@ -818,7 +820,7 @@
                                                 </div>
 
                                                 <!-- Action Buttons (Delete) -->
-                                                <template x-if="c.can_delete">
+                                                <template x-if="c.can_delete && permissions.canComment">
                                                     <button type="button" 
                                                             @click="deleteTaskComment(c.id)" 
                                                             :disabled="deletingCommentId === c.id"
@@ -862,7 +864,7 @@
                             </div>
 
                             <!-- Input Form (Sticky Bottom) -->
-                            <div class="border-t border-gray-200 pt-3 bg-white mt-auto">
+                            <div x-show="permissions.canComment" class="border-t border-gray-200 pt-3 bg-white mt-auto">
                                 <!-- Attached file badge if selected -->
                                 <div x-show="newCommentFile" x-cloak class="mb-2 flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900">
                                     <div class="flex items-center gap-2 truncate">
@@ -1842,7 +1844,7 @@
                                 <span class="font-mono text-[10px]" x-text="'(' + viewingBug.project_task.code + ')'"></span>
                             </button>
                         </template>
-                        <template x-if="!viewingBug?.project_task && viewingBug?.status !== 'resolved'">
+                        <template x-if="!viewingBug?.project_task && viewingBug?.status !== 'resolved' && permissions.canManageBugs">
                             <button type="button" @click="convertBugToTask(viewingBug.id); closeViewBugModal();" class="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-xs transition-colors inline-flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                                 <span>Buat Task Baru di Kanban</span>
@@ -1917,6 +1919,13 @@
 <script>
 function qcDashboard() {
     return {
+        permissions: {
+            canManageTasks: {{ auth()->user()->can('qc.manage_tasks') ? 'true' : 'false' }},
+            canManageTestCases: {{ auth()->user()->can('qc.manage_test_cases') ? 'true' : 'false' }},
+            canExecuteTests: {{ auth()->user()->can('qc.execute_tests') ? 'true' : 'false' }},
+            canManageBugs: {{ auth()->user()->can('qc.manage_bugs') ? 'true' : 'false' }},
+            canComment: {{ auth()->user()->can('qc.comments') ? 'true' : 'false' }},
+        },
         columns: [
             { id: 'todo', title: 'To Do' },
             { id: 'in_progress', title: 'In Progress' },
@@ -2071,7 +2080,7 @@ function qcDashboard() {
         },
 
         async dropTestCase(targetId) {
-            if (!this.draggedTestCase) return;
+            if (!this.permissions.canManageTestCases || !this.draggedTestCase) return;
             const sourceId = this.draggedTestCase.id;
             const position = this.dragOverPosition || 'inside';
             
@@ -2133,7 +2142,7 @@ function qcDashboard() {
         },
 
         async convertBugToTask(bugId) {
-            if (this.convertingBugId) return;
+            if (!this.permissions.canManageBugs || this.convertingBugId) return;
             this.convertingBugId = bugId;
             try {
                 const response = await fetch(`/api/qc/bugs/${bugId}/convert`, {
@@ -2227,7 +2236,7 @@ function qcDashboard() {
         },
 
         openBulkConvertModal() {
-            if (this.selectedBugIds.length === 0) return;
+            if (!this.permissions.canManageBugs || this.selectedBugIds.length === 0) return;
             const selected = this.getSelectedBugs();
             const codes = selected.map(b => b.code).join(', ');
             
@@ -2241,7 +2250,7 @@ function qcDashboard() {
         },
 
         async submitBulkConvert() {
-            if (this.isSubmittingBulkConvert || this.selectedBugIds.length === 0) return;
+            if (!this.permissions.canManageBugs || this.isSubmittingBulkConvert || this.selectedBugIds.length === 0) return;
             this.isSubmittingBulkConvert = true;
 
             try {
@@ -2283,7 +2292,7 @@ function qcDashboard() {
         },
 
         async passAllTaskTestCases(taskId) {
-            if (this.isPassingAllTests) return;
+            if (!this.permissions.canExecuteTests || this.isPassingAllTests) return;
             if (!confirm('Apakah Anda yakin ingin menandai semua Test Case untuk task ini menjadi PASSED dan menyelesaikan bug terkait?')) return;
             
             this.isPassingAllTests = true;
@@ -2433,6 +2442,7 @@ function qcDashboard() {
         },
 
         openNewTestCaseModal(parentTC = null) {
+            if (!this.permissions.canManageTestCases) return;
             this.parentTestCase = parentTC;
             this.editingTestCaseId = null;
             this.newTestCase = {
@@ -2450,6 +2460,7 @@ function qcDashboard() {
         },
 
         openEditTestCaseModal(tc) {
+            if (!this.permissions.canManageTestCases) return;
             this.editingTestCaseId = tc.id;
             this.parentTestCase = null;
             this.newTestCase = {
@@ -2467,6 +2478,7 @@ function qcDashboard() {
         },
 
         duplicateTestCase(tc) {
+            if (!this.permissions.canManageTestCases) return;
             this.editingTestCaseId = null;
             this.parentTestCase = tc.parent_id ? {id: tc.parent_id} : null; // Keep the same parent if it's a child
             this.newTestCase = {
@@ -2491,7 +2503,7 @@ function qcDashboard() {
         },
 
         async submitNewTestCase() {
-            if (this.isSubmittingTestCase) return;
+            if (!this.permissions.canManageTestCases || this.isSubmittingTestCase) return;
             this.isSubmittingTestCase = true;
 
             const payload = {
@@ -2610,6 +2622,7 @@ function qcDashboard() {
         },
 
         async deleteTask(taskId) {
+            if (!this.permissions.canManageTasks) return;
             if (!confirm('Are you sure you want to delete this Kanban Task? This action cannot be undone.')) return;
             try {
                 const response = await fetch(`/api/qc/tasks/${taskId}`, {
@@ -2627,6 +2640,7 @@ function qcDashboard() {
         },
 
         async deleteTestCase(testCaseId) {
+            if (!this.permissions.canManageTestCases) return;
             if (!confirm('Are you sure you want to delete this Test Case? This will also remove associated bugs.')) return;
             try {
                 const response = await fetch(`/api/qc/test-cases/${testCaseId}`, {
@@ -2643,6 +2657,7 @@ function qcDashboard() {
         },
 
         async deleteBug(bugId) {
+            if (!this.permissions.canManageBugs) return;
             if (!confirm('Are you sure you want to delete this Bug?')) return;
             try {
                 const response = await fetch(`/api/qc/bugs/${bugId}`, {
@@ -2661,6 +2676,7 @@ function qcDashboard() {
         },
 
         openRunTestModal(testCase) {
+            if (!this.permissions.canExecuteTests) return;
             this.activeTest = testCase;
             this.isReportingBug = false;
             
@@ -2698,6 +2714,7 @@ function qcDashboard() {
         },
 
         async submitTestResult(result) {
+            if (!this.permissions.canExecuteTests) return;
             if (this.activeTest) {
                 this.isSubmittingTest = true;
                 try {
@@ -2809,6 +2826,7 @@ function qcDashboard() {
         },
 
         openNewTaskModal() {
+            if (!this.permissions.canManageTasks) return;
             this.newTask = {
                 title: '',
                 description: '',
@@ -2823,7 +2841,7 @@ function qcDashboard() {
         },
 
         async submitNewTask() {
-            if (this.isSubmitting) return;
+            if (!this.permissions.canManageTasks || this.isSubmitting) return;
             this.isSubmitting = true;
 
             try {
@@ -2860,7 +2878,7 @@ function qcDashboard() {
         },
         
         async updateTaskColumn(taskId, columnId) {
-            if (this.isMovingTask) return;
+            if (!this.permissions.canManageTasks || this.isMovingTask) return;
             this.isMovingTask = true;
             this.movingToColumn = columnId;
             
@@ -2965,7 +2983,7 @@ function qcDashboard() {
         },
 
         async submitTaskComment() {
-            if (!this.activeTask || this.isSubmittingComment) return;
+            if (!this.permissions.canComment || !this.activeTask || this.isSubmittingComment) return;
             const text = (this.newCommentText || '').trim();
             if (!text && !this.newCommentFile) return;
 
@@ -3019,6 +3037,7 @@ function qcDashboard() {
         },
 
         async deleteTaskComment(commentId) {
+            if (!this.permissions.canComment) return;
             if (!confirm('Apakah Anda yakin ingin menghapus komentar ini?')) return;
             this.deletingCommentId = commentId;
 
