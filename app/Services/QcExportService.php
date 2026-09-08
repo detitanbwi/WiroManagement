@@ -159,17 +159,13 @@ class QcExportService
      */
     protected function buildTestCaseSheet(Worksheet $sheet, Project $project): void
     {
-        $testCases = TestCase::where('project_id', $project->id)
-            ->with(['parent', 'projectTask', 'bugs'])
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
+        $testCases = $this->getFlattenedTestCases($project->id);
 
         $columns = [
-            'A' => ['label' => 'No', 'width' => 6, 'align' => Alignment::HORIZONTAL_CENTER],
+            'A' => ['label' => 'No', 'width' => 8, 'align' => Alignment::HORIZONTAL_CENTER],
             'B' => ['label' => 'Kode TC', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
-            'C' => ['label' => 'Modul / Parent', 'width' => 24, 'align' => Alignment::HORIZONTAL_LEFT],
-            'D' => ['label' => 'Judul Skenario Uji', 'width' => 32, 'align' => Alignment::HORIZONTAL_LEFT],
+            'C' => ['label' => 'Modul / Parent', 'width' => 30, 'align' => Alignment::HORIZONTAL_LEFT],
+            'D' => ['label' => 'Sub Test Case / Skenario (Anak)', 'width' => 38, 'align' => Alignment::HORIZONTAL_LEFT],
             'E' => ['label' => 'Tipe Uji', 'width' => 15, 'align' => Alignment::HORIZONTAL_CENTER],
             'F' => ['label' => 'Prioritas', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
             'G' => ['label' => 'Kompleksitas', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
@@ -184,14 +180,14 @@ class QcExportService
             'P' => ['label' => 'Tanggal Dibuat', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
         ];
 
-        $passedCount = $testCases->where('status', 'passed')->count();
-        $failedCount = $testCases->where('status', 'failed')->count();
-        $pendingCount = $testCases->where('status', 'pending')->count();
+        $passedCount = collect($testCases)->where('status', 'passed')->count();
+        $failedCount = collect($testCases)->where('status', 'failed')->count();
+        $pendingCount = collect($testCases)->where('status', 'pending')->count();
 
         $metaText = sprintf(
             'Proyek: %s | Total Test Case: %d | Passed: %d | Failed: %d | Pending: %d | Diekspor: %s',
             $project->title,
-            $testCases->count(),
+            count($testCases),
             $passedCount,
             $failedCount,
             $pendingCount,
@@ -201,9 +197,8 @@ class QcExportService
         $this->applyHeaderLayout($sheet, 'PROJECT TEST CASES', $metaText, $columns);
 
         $row = 5;
-        $no = 1;
 
-        foreach ($testCases as $tc) {
+        foreach ($testCases as $index => $tc) {
             // Steps formatting
             $stepsText = '-';
             if (is_array($tc->steps) && count($tc->steps) > 0) {
@@ -216,14 +211,24 @@ class QcExportService
                 $stepsText = $tc->steps;
             }
 
-            $parentText = $tc->parent ? ($tc->parent->code . ' - ' . $tc->parent->title) : 'Root (Parent)';
             $taskText = $tc->projectTask ? ($tc->projectTask->code . ' - ' . $tc->projectTask->title) : '-';
             $bugsText = $tc->bugs->pluck('code')->implode(', ') ?: '-';
+            $isParent = ($tc->tree_level ?? 0) === 0;
 
-            $sheet->setCellValue("A{$row}", $no);
+            $sheet->setCellValue("A{$row}", $tc->tree_number ?? ($index + 1));
             $sheet->setCellValue("B{$row}", $tc->code);
-            $sheet->setCellValue("C{$row}", $parentText);
-            $sheet->setCellValue("D{$row}", $tc->title);
+
+            // Parent goes in Col C (Modul / Parent), Child goes in Col D (Sub Test Case / Skenario (Anak))
+            if ($isParent) {
+                $sheet->setCellValue("C{$row}", $tc->title);
+                $sheet->setCellValue("D{$row}", '-');
+            } else {
+                $indentPrefix = ($tc->tree_level > 1) ? str_repeat('   ', $tc->tree_level - 1) . '↳ ' : '↳ ';
+                $sheet->setCellValue("C{$row}", '');
+                $sheet->setCellValue("D{$row}", $indentPrefix . $tc->title);
+                $sheet->getStyle("D{$row}")->getAlignment()->setIndent($tc->tree_level);
+            }
+
             $sheet->setCellValue("E{$row}", $tc->test_type ?: 'Functional');
             $sheet->setCellValue("F{$row}", $tc->priority ?: 'Medium');
             $sheet->setCellValue("G{$row}", $tc->complexity ?: 'Medium');
@@ -260,13 +265,68 @@ class QcExportService
                 $this->setCellFillAndText($prioStyle, 'FFEDD5', 'C2410C');
             }
 
-            $this->applyDataRowBorders($sheet, "A{$row}:P{$row}", $no % 2 === 0);
+            // Distinguish Parent row visually with soft background
+            if ($isParent) {
+                $sheet->getStyle("A{$row}:P{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+                $sheet->getStyle("C{$row}")->getFont()->setBold(true);
+                $this->applyDataRowBorders($sheet, "A{$row}:P{$row}", false);
+            } else {
+                $this->applyDataRowBorders($sheet, "A{$row}:P{$row}", ($index + 1) % 2 === 0);
+            }
 
             $row++;
-            $no++;
         }
 
         $this->finalizeSheet($sheet, $columns, $row);
+    }
+
+    /**
+     * Get test cases flattened in hierarchical depth-first tree order.
+     */
+    protected function getFlattenedTestCases(int $projectId): array
+    {
+        $allCases = TestCase::where('project_id', $projectId)
+            ->with(['parent', 'projectTask', 'bugs'])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        // Safeguard for orphan test cases whose parent_id does not exist in this project
+        $validIds = $allCases->pluck('id')->all();
+        foreach ($allCases as $tc) {
+            if ($tc->parent_id && !in_array($tc->parent_id, $validIds)) {
+                $tc->parent_id = null;
+            }
+        }
+
+        return $this->flattenTestCaseTree($allCases, null, 0, '');
+    }
+
+    /**
+     * Recursively flatten test cases tree (Parent first, then its children directly beneath it).
+     */
+    protected function flattenTestCaseTree($cases, $parentId = null, int $level = 0, string $prefix = ''): array
+    {
+        $result = [];
+        $index = 1;
+
+        $matching = $cases->filter(fn($c) => $c->parent_id == $parentId);
+
+        foreach ($matching as $case) {
+            $numStr = $prefix === '' ? (string)$index : "{$prefix}.{$index}";
+            $case->tree_level = $level;
+            $case->tree_number = $numStr;
+            $result[] = $case;
+
+            $children = $this->flattenTestCaseTree($cases, $case->id, $level + 1, $numStr);
+            foreach ($children as $child) {
+                $result[] = $child;
+            }
+
+            $index++;
+        }
+
+        return $result;
     }
 
     /**

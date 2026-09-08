@@ -46,23 +46,44 @@ class QcExportTest extends BaseTestCase
             'column_id' => 'ready_for_qc',
         ]);
 
-        $tc = TestCase::create([
+        // Root Parent Test Case
+        $tcParent = TestCase::create([
             'project_id' => $project->id,
             'project_task_id' => $task->id,
-            'code' => 'TC-TEST-1',
-            'title' => 'Test Scenario 1',
+            'code' => 'TC-PARENT-1',
+            'title' => 'Modul Dashboard',
+            'status' => 'passed',
+            'sort_order' => 10,
+        ]);
+
+        // Child Test Case under tcParent
+        $tcChild = TestCase::create([
+            'project_id' => $project->id,
+            'parent_id' => $tcParent->id,
+            'code' => 'TC-CHILD-1',
+            'title' => 'Verify Chart Data',
             'status' => 'passed',
             'steps' => ['Step 1', 'Step 2'],
             'priority' => 'High',
             'complexity' => 'Medium',
             'test_type' => 'Functional',
             'expected' => 'Expected output',
+            'sort_order' => 20,
+        ]);
+
+        // Second Root Test Case to verify children stay with their parent
+        $tcParent2 = TestCase::create([
+            'project_id' => $project->id,
+            'code' => 'TC-PARENT-2',
+            'title' => 'Modul Authentication',
+            'status' => 'pending',
+            'sort_order' => 30,
         ]);
 
         $bug = TaskBug::create([
             'project_id' => $project->id,
             'project_task_id' => $task->id,
-            'test_case_id' => $tc->id,
+            'test_case_id' => $tcChild->id,
             'code' => 'BUG-TEST-1',
             'description' => 'Test bug description',
             'severity' => 'Critical',
@@ -93,8 +114,27 @@ class QcExportTest extends BaseTestCase
         $this->assertNotNull($tcSheet);
         $this->assertStringContainsString('PROJECT TEST CASES', $tcSheet->getCell('A1')->getValue());
         $this->assertEquals('Kode TC', $tcSheet->getCell('B4')->getValue());
-        $this->assertEquals('TC-TEST-1', $tcSheet->getCell('B5')->getValue());
-        $this->assertStringContainsString('Step 1', $tcSheet->getCell('K5')->getValue());
+        $this->assertEquals('Modul / Parent', $tcSheet->getCell('C4')->getValue());
+        $this->assertEquals('Sub Test Case / Skenario (Anak)', $tcSheet->getCell('D4')->getValue());
+
+        // Row 5: Parent 1
+        $this->assertEquals('1', $tcSheet->getCell('A5')->getValue());
+        $this->assertEquals('TC-PARENT-1', $tcSheet->getCell('B5')->getValue());
+        $this->assertEquals('Modul Dashboard', $tcSheet->getCell('C5')->getValue());
+        $this->assertEquals('-', $tcSheet->getCell('D5')->getValue());
+
+        // Row 6: Child 1 (directly below Parent 1, shifted one column right to Column D)
+        $this->assertEquals('1.1', $tcSheet->getCell('A6')->getValue());
+        $this->assertEquals('TC-CHILD-1', $tcSheet->getCell('B6')->getValue());
+        $this->assertEquals('', $tcSheet->getCell('C6')->getValue());
+        $this->assertStringContainsString('Verify Chart Data', $tcSheet->getCell('D6')->getValue());
+        $this->assertStringContainsString('Step 1', $tcSheet->getCell('K6')->getValue());
+
+        // Row 7: Parent 2 (after Child 1)
+        $this->assertEquals('2', $tcSheet->getCell('A7')->getValue());
+        $this->assertEquals('TC-PARENT-2', $tcSheet->getCell('B7')->getValue());
+        $this->assertEquals('Modul Authentication', $tcSheet->getCell('C7')->getValue());
+        $this->assertEquals('-', $tcSheet->getCell('D7')->getValue());
 
         // Verify Sheet 3 (Bug)
         $bugSheet = $spreadsheet->getSheetByName('Bug');
