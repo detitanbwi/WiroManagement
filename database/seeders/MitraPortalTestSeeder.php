@@ -17,6 +17,11 @@ class MitraPortalTestSeeder extends Seeder
 {
     public function run(): void
     {
+        // Ensure roles exist
+        if (\App\Models\Role::count() === 0) {
+            $this->call(RoleSeeder::class);
+        }
+
         // 1. PM User
         $pm = User::updateOrCreate(
             ['email' => 'pm@wirodev.com'],
@@ -27,6 +32,7 @@ class MitraPortalTestSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        $pm->syncRoles(['pm']);
 
         // 2. Klien PT Sinergi Digital Indonesia
         $client = Client::updateOrCreate(
@@ -51,6 +57,7 @@ class MitraPortalTestSeeder extends Seeder
                 'must_change_password' => false,
             ]
         );
+        $clientUser->syncRoles(['client']);
 
         // 4. Token Undangan untuk simulasi /set-password
         $testRawToken = 'test-onboarding-token-123456789abcdef';

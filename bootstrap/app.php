@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
+            'internal' => \App\Http\Middleware\EnsureInternalUser::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle CSRF Token Mismatch & Session Expired (HTTP 419)
@@ -44,8 +48,14 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             if ($e->getStatusCode() === 403) {
-                info("403 thrown at: " . $e->getFile() . " line " . $e->getLine() . "\n" . $e->getTraceAsString());
-                return response('This is a custom 403 from Laravel!', 403);
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $e->getMessage() ?: 'Akses ditolak. Anda tidak memiliki izin untuk tindakan ini.',
+                    ], 403);
+                }
+
+                return response()->view('errors.403', ['exception' => $e], 403);
             }
         });
     })->create();

@@ -13,22 +13,26 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@wirodev.com'],
             [
                 'name' => 'Super Admin Wirodev',
                 'password' => Hash::make('wirodev2026'),
                 'role' => 'superadmin',
+                'is_active' => true,
             ]
         );
+        $admin->syncRoles(['superadmin']);
 
-        User::updateOrCreate(
+        $staff = User::updateOrCreate(
             ['email' => 'sekretaris@wirodev.com'],
             [
                 'name' => 'Sekretaris Wiro Management',
                 'password' => Hash::make('wirodev2026'),
                 'role' => 'staff',
+                'is_active' => true,
             ]
         );
+        $staff->syncRoles(['staff']);
     }
 }

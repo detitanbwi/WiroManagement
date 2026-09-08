@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Pengguna Baru')
+@section('title', 'Edit Pengguna: ' . $user->name)
 
 @section('content')
 <div class="max-w-4xl mx-auto">
@@ -9,14 +9,20 @@
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             Kembali ke Daftar
         </a>
-        <h1 class="text-2xl font-black text-gray-800 tracking-tight">Tambah Pengguna Baru</h1>
-        <p class="text-gray-500 text-sm">Daftarkan akun staf baru dan tentukan satu atau beberapa peran (multi-role) sekaligus.</p>
+        <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-black text-gray-800 tracking-tight">Edit Pengguna: {{ $user->name }}</h1>
+            @if($user->id === auth()->id())
+                <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">Akun Anda</span>
+            @endif
+        </div>
+        <p class="text-gray-500 text-sm mt-0.5">Perbarui informasi profil dan kombinasikan peran (multi-role) untuk akun ini.</p>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="p-8">
-            <form action="{{ route('users.store') }}" method="POST" class="space-y-8">
+            <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-8">
                 @csrf
+                @method('PUT')
                 
                 <!-- Identitas Akun -->
                 <div>
@@ -24,28 +30,28 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-2">Nama Lengkap <span class="text-rose-500">*</span></label>
-                            <input type="text" name="name" value="{{ old('name') }}" required placeholder="Contoh: Pratama Dev"
+                            <input type="text" name="name" value="{{ old('name', $user->name) }}" required
                                 class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
                             @error('name') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-2">Alamat Email <span class="text-rose-500">*</span></label>
-                            <input type="email" name="email" value="{{ old('email') }}" required placeholder="nama@wirodev.com"
+                            <input type="email" name="email" value="{{ old('email', $user->email) }}" required
                                 class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
                             @error('email') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Password <span class="text-rose-500">*</span></label>
-                            <input type="password" name="password" required placeholder="Minimal 8 karakter"
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Ganti Password <span class="text-gray-400 font-normal">(Kosongkan jika tidak diubah)</span></label>
+                            <input type="password" name="password" placeholder="Minimal 8 karakter baru"
                                 class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
                             @error('password') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Konfirmasi Password <span class="text-rose-500">*</span></label>
-                            <input type="password" name="password_confirmation" required placeholder="Ulangi password di atas"
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Konfirmasi Password Baru</label>
+                            <input type="password" name="password_confirmation" placeholder="Ulangi password baru"
                                 class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
                         </div>
                     </div>
@@ -56,9 +62,9 @@
                     <div class="flex items-center justify-between mb-3">
                         <div>
                             <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Penugasan Peran (Multi-Role) <span class="text-rose-500">*</span></h3>
-                            <p class="text-xs text-gray-500 mt-0.5">Pilih satu atau lebih peran yang diemban oleh pengguna ini (misal: PM sekaligus QC).</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Centang satu atau lebih peran untuk menggabungkan hak akses (misal: PM sekaligus QC).</p>
                         </div>
-                        <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">Bisa Pilih Lebih Dari 1</span>
+                        <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">Multi-Role Aktif</span>
                     </div>
 
                     @error('roles')
@@ -69,10 +75,16 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                         @foreach($roles as $role)
-                        <label class="relative flex items-start p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer transition has-checked:border-primary has-checked:bg-blue-50/50 has-checked:ring-1 has-checked:ring-primary">
+                        @php
+                            $isChecked = is_array(old('roles')) 
+                                ? in_array($role->slug, old('roles')) 
+                                : in_array($role->slug, $userRoleSlugs);
+                            $isDisabled = ($user->id === auth()->id() && $role->slug === 'superadmin');
+                        @endphp
+                        <label class="relative flex items-start p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer transition has-checked:border-primary has-checked:bg-blue-50/50 has-checked:ring-1 has-checked:ring-primary {{ $isDisabled ? 'opacity-90 bg-gray-50' : '' }}">
                             <div class="flex items-center h-5">
                                 <input type="checkbox" name="roles[]" value="{{ $role->slug }}"
-                                    {{ (is_array(old('roles')) && in_array($role->slug, old('roles'))) || (!old('roles') && $role->slug === 'staff') ? 'checked' : '' }}
+                                    {{ $isChecked ? 'checked' : '' }}
                                     class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
                             </div>
                             <div class="ml-3.5 flex-1">
@@ -83,6 +95,11 @@
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-500 mt-1 leading-relaxed">{{ $role->description }}</p>
+                                @if($isDisabled)
+                                    <span class="inline-block mt-2 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                        Peran utama akun Anda saat ini (tidak dapat dicabut sendiri)
+                                    </span>
+                                @endif
                             </div>
                         </label>
                         @endforeach
@@ -91,11 +108,17 @@
 
                 <!-- Status Aktif -->
                 <div class="border-t border-gray-100 pt-6">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', '1') == '1' ? 'checked' : '' }} class="sr-only peer">
+                    <label class="inline-flex items-center cursor-pointer {{ $user->id === auth()->id() ? 'opacity-60 cursor-not-allowed' : '' }}">
+                        <input type="checkbox" name="is_active" value="1" 
+                            {{ old('is_active', $user->is_active ? '1' : '0') == '1' ? 'checked' : '' }}
+                            {{ $user->id === auth()->id() ? 'disabled' : '' }}
+                            class="sr-only peer">
                         <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                         <span class="ms-3 text-sm font-bold text-gray-700">Akun Aktif (Bisa Login ke Sistem)</span>
                     </label>
+                    @if($user->id === auth()->id())
+                        <p class="text-[11px] text-gray-400 mt-1">Anda tidak dapat menonaktifkan akun yang sedang Anda gunakan saat ini.</p>
+                    @endif
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
@@ -104,7 +127,7 @@
                     </a>
                     <button type="submit" class="px-7 py-2.5 bg-primary text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-blue-800 transition shadow-lg shadow-blue-100 flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        Simpan Pengguna
+                        Simpan Perubahan
                     </button>
                 </div>
             </form>

@@ -77,6 +77,8 @@
                             Dashboard
                         </a>
                     </li>
+
+                    @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'finance', 'staff']))
                     <li>
                         <a href="{{ route('clients.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('clients.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -86,6 +88,9 @@
                             Clients
                         </a>
                     </li>
+                    @endif
+
+                    @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc', 'staff', 'finance']))
                     <li>
                         <a href="{{ route('projects.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('projects.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -95,6 +100,9 @@
                             Projects
                         </a>
                     </li>
+                    @endif
+
+                    @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'staff']))
                     <li>
                         <a href="{{ route('ai-pricing.index') }}"
                             class="flex items-center justify-between px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('ai-pricing.*') ? 'bg-gradient-to-r from-indigo-600 to-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600' }}">
@@ -109,6 +117,9 @@
                             </span>
                         </a>
                     </li>
+                    @endif
+
+                    @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'finance']))
                     <li x-data="{ open: {{ request()->routeIs('finance.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open" 
                                 class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('finance.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -128,23 +139,23 @@
                                     Overview
                                 </a>
                             </li>
+                            @if(auth()->user()->hasAnyRole(['superadmin', 'finance']))
                             <li>
                                 <a href="{{ route('finance.bank-accounts') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.bank-accounts') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Bank Account
                                 </a>
                             </li>
+                            @endif
                             <li>
                                 <a href="{{ route('finance.transactions') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.transactions') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Transaksi
                                 </a>
                             </li>
-                            <li>
-                                <span class="block px-3 py-2 text-sm text-gray-400 cursor-not-allowed italic">
-                                    Account (Soon)
-                                </span>
-                            </li>
                         </ul>
                     </li>
+                    @endif
+
+                    @if(auth()->user()->hasRole('superadmin'))
                     <li>
                         <a href="{{ route('settings.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('settings.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -155,7 +166,6 @@
                             Settings
                         </a>
                     </li>
-                    @if(auth()->user()->role == 'superadmin')
                     <li>
                         <a href="{{ route('users.index') }}"
                             class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('users.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -165,21 +175,37 @@
                             User Management
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('roles.index') }}"
+                            class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('roles.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('roles.*') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            Peran & Izin (RBAC)
+                        </a>
+                    </li>
                     @endif
                 </ul>
             </nav>
 
             <div class="p-4 border-t border-gray-200">
                 <div class="flex flex-col space-y-3">
-                    <a href="{{ route('profile') }}" class="flex items-center px-2 hover:bg-gray-50 p-1 rounded-lg transition-colors group">
+                    <a href="{{ route('profile') }}" class="flex items-center px-2 hover:bg-gray-50 p-1.5 rounded-lg transition-colors group">
                         <div class="flex-shrink-0">
-                            <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm group-hover:scale-110 transition-transform">
+                            <div class="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm group-hover:scale-105 transition-transform">
                                 {{ substr(auth()->user()->name, 0, 1) }}
                             </div>
                         </div>
-                        <div class="ml-3 overflow-hidden">
+                        <div class="ml-3 overflow-hidden flex-1 min-w-0">
                             <p class="text-xs font-bold text-gray-800 truncate group-hover:text-primary transition-colors">{{ auth()->user()->name }}</p>
-                            <p class="text-[10px] text-gray-500 truncate lowercase">{{ auth()->user()->email }}</p>
+                            <p class="text-[10px] text-gray-500 truncate lowercase mb-1">{{ auth()->user()->email }}</p>
+                            <div class="flex flex-wrap gap-1">
+                                @foreach(auth()->user()->role_badges as $badge)
+                                    <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border {{ $badge['classes'] }}">
+                                        {{ $badge['name'] }}
+                                    </span>
+                                @endforeach
+                            </div>
                         </div>
                     </a>
                     

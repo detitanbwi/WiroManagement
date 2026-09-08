@@ -88,7 +88,7 @@ class MitraAuthController extends Controller
             ], 401);
         }
 
-        if ($user->role !== 'client') {
+        if (!$user->hasRole('client')) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Akses ditolak. Akun ini bukan akun portal klien Wiromitra.',
@@ -119,6 +119,7 @@ class MitraAuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'roles' => $user->getRoleSlugs(),
                     'client_id' => $user->client_id,
                     'must_change_password' => (bool)$user->must_change_password,
                     'company_name' => $user->client ? $user->client->company_name : null,
@@ -143,6 +144,7 @@ class MitraAuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'roles' => $user->getRoleSlugs(),
                     'client_id' => $user->client_id,
                     'company_name' => $user->client ? $user->client->company_name : null,
                     'client_name' => $user->client ? $user->client->name : null,

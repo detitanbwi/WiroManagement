@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -10,35 +11,37 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
     /**
-     * Display a listing of users (Admin only).
+     * Display a listing of users (Super Admin only).
      */
     public function index()
     {
-        if (auth()->user()->role !== 'superadmin') {
+        if (!auth()->user()->isSuperAdmin()) {
             abort(403, 'Akses ditolak. Hanya Super Admin yang dapat mengelola pengguna.');
         }
 
-        $users = User::latest()->get();
+        $users = User::with('roles')->latest()->get();
         return view('users.index', compact('users'));
     }
 
     /**
-     * Show the form for creating a new user (Admin only).
+     * Show the form for creating a new user (Super Admin only).
      */
     public function create()
     {
-        if (auth()->user()->role !== 'superadmin') {
+        if (!auth()->user()->isSuperAdmin()) {
             abort(403);
         }
-        return view('users.create');
+
+        $roles = Role::where('slug', '!=', 'client')->get();
+        return view('users.create', compact('roles'));
     }
 
     /**
-     * Store a newly created user (Admin only).
+     * Store a newly created user (Super Admin only).
      */
     public function store(Request $request)
     {
-        if (auth()->user()->role !== 'superadmin') {
+        if (!auth()->user()->isSuperAdmin()) {
             abort(403);
         }
 
@@ -46,17 +49,98 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', Rule::in(['superadmin', 'staff'])],
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'exists:roles,slug',
+            'is_active' => 'nullable|boolean',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
+            'is_active' => $request->boolean('is_active', true),
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
+        $user->syncRoles($validated['roles']);
+
+        return redirect()->route('users.index')->with('success', 'Pengguna ' . $user->name . ' berhasil didaftarkan dengan ' . count($validated['roles']) . ' peran.');
+    }
+
+    /**
+     * Show the form for editing an existing user (Super Admin only).
+     */
+    public function edit(User $user)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403);
+        }
+
+        $roles = Role::where('slug', '!=', 'client')->get();
+        $userRoleSlugs = $user->getRoleSlugs();
+
+        return view('users.edit', compact('user', 'roles', 'userRoleSlugs'));
+    }
+
+    /**
+     * Update an existing user (Super Admin only).
+     */
+    public function update(Request $request, User $user)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:8|confirmed',
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'exists:roles,slug',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        // Proteksi: Tidak bisa mencabut Super Admin dari diri sendiri jika login sebagai user tsb
+        if ($user->id === auth()->id()) {
+            if (!in_array('superadmin', $validated['roles'], true)) {
+                return back()->with('error', 'Anda tidak dapat mencabut peran Super Admin dari akun Anda sendiri.');
+            }
+            if (!$request->boolean('is_active', true)) {
+                return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
+            }
+        }
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->is_active = $request->boolean('is_active', true);
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+        $user->syncRoles($validated['roles']);
+
+        return redirect()->route('users.index')->with('success', 'Profil dan peran pengguna ' . $user->name . ' berhasil diperbarui.');
+    }
+
+    /**
+     * Toggle active/inactive status of a user.
+     */
+    public function toggleStatus(User $user)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403);
+        }
+
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
+        }
+
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return back()->with('success', "Akun {$user->name} berhasil {$statusText}.");
     }
 
     /**
@@ -94,15 +178,17 @@ class UserController extends Controller
     }
 
     /**
-     * Delete a user (Admin only).
+     * Delete a user (Super Admin only).
      */
     public function destroy(User $user)
     {
-        if (auth()->user()->role !== 'superadmin' || $user->id === auth()->id()) {
+        if (!auth()->user()->isSuperAdmin() || $user->id === auth()->id()) {
             abort(403, 'Anda tidak dapat menghapus akun Anda sendiri atau Anda bukan Super Admin.');
         }
 
+        $user->roles()->detach();
         $user->delete();
+
         return back()->with('success', 'User telah dihapus.');
     }
 }
