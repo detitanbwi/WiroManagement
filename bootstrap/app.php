@@ -21,8 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle CSRF Token Mismatch & Session Expired (HTTP 419)
         $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            // Only regenerate the CSRF token — do NOT invalidate the session.
+            // Invalidating here caused a vicious loop: each redirect started a
+            // brand-new session whose token never matched the next POST request.
             if ($request->hasSession()) {
-                $request->session()->invalidate();
                 $request->session()->regenerateToken();
             }
 
@@ -36,7 +38,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
             if ($e->getStatusCode() === 419) {
                 if ($request->hasSession()) {
-                    $request->session()->invalidate();
                     $request->session()->regenerateToken();
                 }
 
