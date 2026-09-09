@@ -91,17 +91,49 @@
         </p>
     </div>
 
-    <!-- Auto-refresh token if tab stays idle for over 45 minutes -->
+    <!-- Robust CSRF token refresh: fetch a fresh token before every submit & on tab focus -->
     <script>
-        const pageLoadTime = Date.now();
-        document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'visible') {
-                // If page has been idle for more than 45 minutes, silently reload to get a fresh CSRF token
-                if (Date.now() - pageLoadTime > 45 * 60 * 1000) {
+        (function() {
+            const form = document.getElementById('loginForm');
+            const pageLoadTime = Date.now();
+
+            // Fetch a fresh CSRF token from a lightweight endpoint
+            async function refreshCsrfToken() {
+                try {
+                    const response = await fetch('{{ route("login") }}', {
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin'
+                    });
+                    const html = await response.text();
+                    const match = html.match(/name="_token"\s+value="([^"]+)"/);
+                    if (match && match[1]) {
+                        const tokenInput = form.querySelector('input[name="_token"]');
+                        if (tokenInput) tokenInput.value = match[1];
+                    }
+                } catch (e) {
+                    // If fetch fails, just reload the page to get a new token
                     window.location.reload();
                 }
             }
-        });
+
+            // Before every form submit, ensure the CSRF token is fresh
+            form.addEventListener('submit', async function(e) {
+                // Only refresh if page has been open > 5 minutes
+                if (Date.now() - pageLoadTime > 5 * 60 * 1000) {
+                    e.preventDefault();
+                    await refreshCsrfToken();
+                    form.submit();
+                }
+            });
+
+            // On tab re-focus after being idle > 10 minutes, silently refresh token
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible' && Date.now() - pageLoadTime > 10 * 60 * 1000) {
+                    refreshCsrfToken();
+                }
+            });
+        })();
     </script>
 </body>
 </html>
