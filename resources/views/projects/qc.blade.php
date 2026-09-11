@@ -2177,6 +2177,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ target_id: targetId, position: targetId === null ? 'inside' : position })
@@ -2227,6 +2228,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({}) // Assignee empty for now, defaults to Todo
@@ -2399,6 +2401,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({
@@ -2442,6 +2445,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
                 });
@@ -2667,6 +2671,7 @@ function qcDashboard() {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify(payload)
@@ -2676,6 +2681,7 @@ function qcDashboard() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify(payload)
@@ -2690,10 +2696,20 @@ function qcDashboard() {
                     await this.fetchProjectTestCases();
                     this.closeNewTestCaseModal();
                 } else {
-                    this.showError('Gagal menyimpan test case.');
+                    let errorMsg = 'Gagal menyimpan test case.';
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.errors) {
+                            errorMsg = Object.values(errorData.errors).flat().join(', ');
+                        } else if (errorData.message) {
+                            errorMsg = errorData.message;
+                        }
+                    } catch (e) {}
+                    this.showError(errorMsg);
                 }
             } catch (error) {
                 console.error('Error submitting new test case:', error);
+                this.showError('Terjadi kesalahan jaringan. Silakan coba lagi.');
             } finally {
                 this.isSubmittingTestCase = false;
             }
@@ -2768,7 +2784,7 @@ function qcDashboard() {
             try {
                 const response = await fetch(`/api/qc/tasks/${taskId}`, {
                     method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
                 if (response.ok) {
                     this.closeTaskModal();
@@ -2786,7 +2802,7 @@ function qcDashboard() {
             try {
                 const response = await fetch(`/api/qc/test-cases/${testCaseId}`, {
                     method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
                 if (response.ok) {
                     await this.fetchProjectTestCases();
@@ -2803,7 +2819,7 @@ function qcDashboard() {
             try {
                 const response = await fetch(`/api/qc/bugs/${bugId}`, {
                     method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
                 if (response.ok) {
                     if (this.viewingBug && this.viewingBug.id === bugId) {
@@ -3028,6 +3044,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ column_id: columnId })
@@ -3141,6 +3158,7 @@ function qcDashboard() {
                 const response = await fetch(`/api/qc/tasks/${this.activeTask.id}/comments`, {
                     method: 'POST',
                     headers: {
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: formData
@@ -3186,6 +3204,7 @@ function qcDashboard() {
                 const response = await fetch(`/api/qc/comments/${commentId}`, {
                     method: 'DELETE',
                     headers: {
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
                 });
