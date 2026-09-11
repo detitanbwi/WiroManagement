@@ -7,7 +7,7 @@
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Finance Overview</h1>
-            <p class="text-sm text-gray-500">Monitoring pengeluaran personal dan perusahaan.</p>
+            <p class="text-sm text-gray-500">Monitoring personal and company operational expenses.</p>
         </div>
     </div>
 
@@ -60,7 +60,7 @@
     <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Financial Overview</h2>
         <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-            <p class="text-gray-400 italic">Visualisasi data pengeluaran (Chart) akan muncul di sini saat data tersedia.</p>
+            <p class="text-gray-400 italic">Expense data visualization chart will appear here as transactions are recorded.</p>
         </div>
     </div>
 </div>

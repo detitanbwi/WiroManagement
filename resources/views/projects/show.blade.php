@@ -8,9 +8,9 @@
     <div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-start space-y-4 md:space-y-0">
         <div>
             <nav class="flex text-sm text-gray-500 mb-2">
-                <a href="{{ route('projects.index') }}" class="hover:text-primary">Proyek</a>
+                <a href="{{ route('projects.index') }}" class="hover:text-primary">Projects</a>
                 <span class="mx-2">/</span>
-                <span class="text-gray-800 font-medium">Detail</span>
+                <span class="text-gray-800 font-medium">Details</span>
             </nav>
             <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ $project->title }}</h1>
             <p class="text-sm md:text-base text-gray-600 mt-1">Client: <span class="font-semibold text-gray-900">{{ $project->client->name }}</span> {{ $project->client->company_name ? "({$project->client->company_name})" : '' }}</p>
@@ -18,13 +18,13 @@
         <div class="flex flex-wrap items-center gap-2 md:space-x-3">
             @canany(['projects.qc', 'qc.view'])
             <a href="{{ route('projects.qc', $project) }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold text-[10px] md:text-xs uppercase tracking-widest shadow-sm transition">
-                Papan QA / QC
+                QA / QC Board
             </a>
             @endcanany
 
             @can('projects.edit')
             <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-[10px] md:text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
-                Edit Proyek
+                Edit Project
             </a>
             @endcan
 
@@ -54,7 +54,7 @@
                 ['label' => 'Quotation', 'statuses' => ['draft', 'quotation_sent']],
                 ['label' => 'Approved', 'statuses' => ['approved']],
                 ['label' => 'Development', 'statuses' => ['in_progress']],
-                ['label' => 'Audit', 'statuses' => []], // Placeholder logic
+                ['label' => 'Audit', 'statuses' => []],
                 ['label' => 'Completed', 'statuses' => ['completed']]
             ];
             
@@ -96,9 +96,9 @@
     @canany(['projects.view_financial', 'finance.view'])
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
-            <p class="text-[10px] text-blue-100 font-bold uppercase tracking-wider">Total Kontrak</p>
+            <p class="text-[10px] text-blue-100 font-bold uppercase tracking-wider">Total Contract</p>
             <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->contract_value, 0, ',', '.') }}</p>
-            <p class="text-[10px] text-blue-100 mt-2 italic line-clamp-1">Quotation / Invoice Utama</p>
+            <p class="text-[10px] text-blue-100 mt-2 italic line-clamp-1">Main Quotation / Invoice</p>
         </div>
         <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-purple-600 to-fuchsia-500 text-white">
             <p class="text-[10px] text-purple-100 font-bold uppercase tracking-wider">Extra (CR)</p>
@@ -106,23 +106,23 @@
             <p class="text-[10px] text-purple-100 mt-2 italic">{{ $project->changeRequests()->count() }} CR Items</p>
         </div>
         <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-teal-500 to-emerald-500 text-white">
-            <p class="text-[10px] text-teal-100 font-bold uppercase tracking-wider">Terbayar</p>
+            <p class="text-[10px] text-teal-100 font-bold uppercase tracking-wider">Collected (Paid)</p>
             <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->paid_amount, 0, ',', '.') }}</p>
             <div class="w-full bg-white/20 rounded-full h-1 mt-3">
                 <div class="bg-white h-1 rounded-full" style="width: {{ $project->grand_total > 0 ? ($project->paid_amount / $project->grand_total) * 100 : 0 }}%"></div>
             </div>
         </div>
         <div class="p-4 rounded-lg shadow-md bg-gradient-to-br {{ $project->balance_due > 0 ? 'from-rose-500 to-red-500' : 'from-emerald-500 to-teal-500' }} text-white">
-            <p class="text-[10px] text-white/80 font-bold uppercase tracking-wider">Tagihan Sisa</p>
+            <p class="text-[10px] text-white/80 font-bold uppercase tracking-wider">Balance Due</p>
             <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->balance_due, 0, ',', '.') }}</p>
             <p class="text-[10px] font-bold mt-2 uppercase text-white/90">
-                {{ $project->balance_due > 0 ? 'Belum lunas' : 'Lunas' }}
+                {{ $project->balance_due > 0 ? 'Unpaid' : 'Paid' }}
             </p>
         </div>
         <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-amber-500 to-orange-400 text-white">
-            <p class="text-[10px] text-amber-100 font-bold uppercase tracking-wider">Pengeluaran</p>
+            <p class="text-[10px] text-amber-100 font-bold uppercase tracking-wider">Expenses</p>
             <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->total_expenses, 0, ',', '.') }}</p>
-            <p class="text-[10px] text-amber-100 mt-2 italic">Total biaya operasional</p>
+            <p class="text-[10px] text-amber-100 mt-2 italic">Total operational costs</p>
         </div>
     </div>
     @endcanany
@@ -135,19 +135,19 @@
             @canany(['invoices.manage', 'finance.view'])
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-blue-600 flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-500 text-white">
-                    <h3 class="text-lg font-bold text-white shadow-sm">Tagihan (Invoices)</h3>
+                    <h3 class="text-lg font-bold text-white shadow-sm">Invoices</h3>
                     @can('invoices.manage')
-                    <a href="{{ route('projects.invoices.create', $project) }}" class="text-sm font-bold text-blue-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">+ Buat Invoice</a>
+                    <a href="{{ route('projects.invoices.create', $project) }}" class="text-sm font-bold text-blue-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">+ New Invoice</a>
                     @endcan
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Invoice</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice No.</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 text-sm">
@@ -167,20 +167,20 @@
                                 </td>
                                 <td class="px-6 py-4 text-right flex justify-end items-center space-x-2">
                                     @can('invoices.manage')
-                                    <a href="{{ route('invoices.show', $invoice) }}" class="text-primary font-bold hover:underline">Detail</a>
+                                    <a href="{{ route('invoices.show', $invoice) }}" class="text-primary font-bold hover:underline">View</a>
                                     <span class="text-gray-300">|</span>
-                                    <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline" onsubmit="return confirm('Hapus invoice ini? Semua data pembayaran terkait juga akan terhapus.')">
+                                    <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline" onsubmit="return confirm('Delete this invoice? All associated payment records will also be deleted.')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 font-bold hover:underline">Hapus</button>
+                                        <button type="submit" class="text-red-600 font-bold hover:underline">Delete</button>
                                     </form>
                                     @else
-                                    <span class="text-xs text-gray-400 italic">Lihat Saja</span>
+                                    <span class="text-xs text-gray-400 italic">View Only</span>
                                     @endcan
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 italic">Belum ada invoice.</td></tr>
+                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">No invoices found.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -192,19 +192,19 @@
             @canany(['quotations.manage', 'finance.view'])
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-teal-600 flex justify-between items-center bg-gradient-to-r from-teal-600 to-emerald-500 text-white">
-                    <h3 class="text-lg font-bold text-white shadow-sm">Penawaran (Quotations)</h3>
+                    <h3 class="text-lg font-bold text-white shadow-sm">Quotations</h3>
                     @can('quotations.manage')
-                    <a href="{{ route('projects.quotations.create', $project) }}" class="text-sm font-bold text-teal-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">+ Buat Quotation</a>
+                    <a href="{{ route('projects.quotations.create', $project) }}" class="text-sm font-bold text-teal-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors">+ New Quotation</a>
                     @endcan
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Quotation</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quotation No.</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 text-sm">
@@ -225,19 +225,19 @@
                                         <span class="mx-1 text-gray-300">|</span>
                                         <a href="{{ route('quotations.edit', $quotation) }}" class="text-amber-600 font-bold hover:underline">Edit</a>
                                         <span class="mx-1 text-gray-300">|</span>
-                                        <form action="{{ route('quotations.destroy', $quotation) }}" method="POST" class="inline" onsubmit="return confirm('Hapus penawaran ini?')">
+                                        <form action="{{ route('quotations.destroy', $quotation) }}" method="POST" class="inline" onsubmit="return confirm('Delete this quotation?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-600 font-bold hover:underline">Hapus</button>
+                                            <button type="submit" class="text-red-600 font-bold hover:underline">Delete</button>
                                         </form>
                                     @endif
                                     @else
-                                    <span class="text-xs text-gray-400 italic">Lihat Saja</span>
+                                    <span class="text-xs text-gray-400 italic">View Only</span>
                                     @endcan
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">Belum ada quotation.</td></tr>
+                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">No quotations found.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -251,33 +251,38 @@
                 openAddExpense: false, 
                 editExpense: null,
                 rawAmount: 0,
+                isPaid: 1,
+                expenseDate: '{{ date('Y-m-d') }}',
                 formatThousand(val) {
                     if (!val || val === '0') return '0';
                     return new Intl.NumberFormat('id-ID').format(val);
                 },
                 parseNumber(val) {
-                    let num = val.replace(/\D/g, '');
+                    let num = val.toString().replace(/\D/g, '');
                     return num ? parseInt(num) : 0;
                 },
                 resetForm() {
                     this.editExpense = null;
                     this.rawAmount = 0;
+                    this.isPaid = 1;
+                    this.expenseDate = '{{ date('Y-m-d') }}';
                 }
             }">
                 <div class="px-6 py-4 border-b border-amber-500 flex justify-between items-center bg-gradient-to-r from-amber-500 to-orange-400 text-white">
-                    <h3 class="text-lg font-bold text-white shadow-sm">Pengeluaran Proyek</h3>
+                    <h3 class="text-lg font-bold text-white shadow-sm">Project Expenses</h3>
                     @can('expenses.manage')
-                    <button @click="resetForm(); openAddExpense = true" class="text-xs font-bold text-amber-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm uppercase tracking-widest transition-colors">+ Tambah Pengeluaran</button>
+                    <button @click="resetForm(); openAddExpense = true" class="text-xs font-bold text-amber-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm uppercase tracking-widest transition-colors">+ Add Expense</button>
                     @endcan
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 text-sm">
@@ -285,31 +290,44 @@
                             @forelse($project->expenses as $expense)
                             @php $totalExpenses += $expense->amount; @endphp
                             <tr>
-                                <td class="px-6 py-4">{{ $expense->date->format('d/m/Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($expense->is_paid)
+                                        <span class="px-2.5 py-1 inline-flex text-xs leading-4 font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            Paid
+                                        </span>
+                                    @else
+                                        <span class="px-2.5 py-1 inline-flex text-xs leading-4 font-semibold rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                            Unpaid
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                                    {{ $expense->is_paid && $expense->date ? $expense->date->format('d/m/Y') : '-' }}
+                                </td>
                                 <td class="px-6 py-4 font-medium">{{ $expense->description }}</td>
                                 <td class="px-6 py-4 font-bold text-gray-900">Rp {{ number_format($expense->amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 text-right flex justify-end space-x-2">
                                     @can('expenses.manage')
-                                    <button @click="editExpense = {{ json_encode($expense) }}; rawAmount = editExpense.amount; openAddExpense = true" class="text-amber-600 font-bold hover:underline">Edit</button>
+                                    <button @click="editExpense = {{ json_encode($expense) }}; rawAmount = editExpense.amount; isPaid = editExpense.is_paid ? 1 : 0; expenseDate = (editExpense.date ? editExpense.date.split('T')[0] : '{{ date('Y-m-d') }}'); openAddExpense = true" class="text-amber-600 font-bold hover:underline">Edit</button>
                                     <span class="text-gray-300">|</span>
-                                    <form action="{{ route('expenses.destroy', $expense) }}" method="POST" class="inline" onsubmit="return confirm('Hapus pengeluaran ini?')">
+                                    <form action="{{ route('expenses.destroy', $expense) }}" method="POST" class="inline" onsubmit="return confirm('Delete this expense?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 font-bold hover:underline">Hapus</button>
+                                        <button type="submit" class="text-red-600 font-bold hover:underline">Delete</button>
                                     </form>
                                     @else
-                                    <span class="text-xs text-gray-400 italic">Lihat Saja</span>
+                                    <span class="text-xs text-gray-400 italic">View Only</span>
                                     @endcan
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">Belum ada data pengeluaran.</td></tr>
+                            <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 italic">No expenses recorded.</td></tr>
                             @endforelse
                         </tbody>
                         @if($totalExpenses > 0)
                         <tfoot class="bg-gray-50">
                             <tr>
-                                <td colspan="2" class="px-6 py-3 text-right font-black text-gray-700 text-xs uppercase tracking-widest">TOTAL PENGELUARAN</td>
+                                <td colspan="3" class="px-6 py-3 text-right font-black text-gray-700 text-xs uppercase tracking-widest">TOTAL EXPENSES</td>
                                 <td class="px-6 py-3 font-black text-red-600 text-lg">Rp {{ number_format($totalExpenses, 0, ',', '.') }}</td>
                                 <td></td>
                             </tr>
@@ -332,14 +350,14 @@
                                         <input type="hidden" name="_method" value="PUT">
                                     </template>
                                     <div class="bg-white px-4 pt-5 pb-4 sm:p-8 sm:pb-4">
-                                        <h3 class="text-xl leading-6 font-black text-gray-900 mb-6 uppercase tracking-widest" id="modal-title" x-text="editExpense ? 'Edit Pengeluaran' : 'Tambah Pengeluaran'"></h3>
+                                        <h3 class="text-xl leading-6 font-black text-gray-900 mb-6 uppercase tracking-widest" id="modal-title" x-text="editExpense ? 'Edit Expense' : 'Add Expense'"></h3>
                                         <div class="space-y-6">
                                             <div>
-                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Keterangan Pengeluaran</label>
+                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Expense Description</label>
                                                 <input type="text" name="description" required :value="editExpense ? editExpense.description : ''" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-4 border font-medium">
                                             </div>
                                             <div>
-                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Jumlah Nominal (Rp)</label>
+                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Amount (Rp)</label>
                                                 <div class="relative">
                                                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                                         <span class="text-gray-400 font-bold">Rp</span>
@@ -352,14 +370,27 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Transaksi</label>
-                                                <input type="date" name="date" required :value="editExpense ? editExpense.date.split('T')[0] : '{{ date('Y-m-d') }}'" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-4 border font-bold text-gray-700">
+                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Status</label>
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <label :class="isPaid == 1 ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'" class="flex items-center justify-center p-3 border rounded-xl cursor-pointer font-bold text-sm transition">
+                                                        <input type="radio" name="is_paid" value="1" x-model="isPaid" class="sr-only">
+                                                        <span>Paid</span>
+                                                    </label>
+                                                    <label :class="isPaid == 0 ? 'border-amber-500 bg-amber-50 text-amber-800 ring-2 ring-amber-500/20' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'" class="flex items-center justify-center p-3 border rounded-xl cursor-pointer font-bold text-sm transition">
+                                                        <input type="radio" name="is_paid" value="0" x-model="isPaid" class="sr-only">
+                                                        <span>Unpaid</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div x-show="isPaid == 1" x-transition>
+                                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Date</label>
+                                                <input type="date" name="date" x-model="expenseDate" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-4 border font-bold text-gray-700">
                                             </div>
                                         </div>
                                     </div>
                                     <div class="bg-gray-50 px-4 py-4 sm:px-8 sm:flex sm:flex-row-reverse gap-3">
-                                        <button type="submit" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-lg px-6 py-3 bg-primary text-sm font-black text-white uppercase tracking-widest hover:bg-blue-800 transition sm:w-auto">Simpan Data</button>
-                                        <button type="button" @click="openAddExpense = false" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-sm font-bold text-gray-700 uppercase tracking-widest hover:bg-gray-100 transition sm:mt-0 sm:w-auto">Batal</button>
+                                        <button type="submit" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-lg px-6 py-3 bg-primary text-sm font-black text-white uppercase tracking-widest hover:bg-blue-800 transition sm:w-auto">Save Expense</button>
+                                        <button type="button" @click="openAddExpense = false" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-sm font-bold text-gray-700 uppercase tracking-widest hover:bg-gray-100 transition sm:mt-0 sm:w-auto">Cancel</button>
                                     </div>
                                 </form>
                             </div>
@@ -376,25 +407,25 @@
             <!-- Client Card -->
             <div class="bg-white rounded-lg shadow-sm border border-indigo-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-indigo-600 to-blue-500 px-6 py-4 border-b border-indigo-600 text-white">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider shadow-sm">Informasi Client</h3>
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider shadow-sm">Client Information</h3>
                 </div>
                 <div class="p-6 space-y-4">
                     <div>
-                        <p class="text-xs text-gray-500">Nama PIC</p>
+                        <p class="text-xs text-gray-500">PIC Name</p>
                         <p class="font-bold text-gray-800">{{ $project->client->name }}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500">Perusahaan</p>
+                        <p class="text-xs text-gray-500">Company</p>
                         <p class="font-bold text-gray-800">{{ $project->client->company_name ?? '-' }}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500">Kontak</p>
+                        <p class="text-xs text-gray-500">Contact</p>
                         <p class="text-sm text-gray-800">{{ $project->client->email }}</p>
                         <p class="text-sm text-gray-800">{{ $project->client->phone }}</p>
                     </div>
                     @can('clients.view')
                     <div class="pt-4 border-t border-gray-100">
-                        <a href="{{ route('clients.show', $project->client) }}" class="text-xs font-bold text-primary uppercase hover:underline">Lihat Semua Proyek Client &rarr;</a>
+                        <a href="{{ route('clients.show', $project->client) }}" class="text-xs font-bold text-primary uppercase hover:underline">View All Client Projects &rarr;</a>
                     </div>
                     @endcan
                 </div>
@@ -403,15 +434,15 @@
             <!-- Timeline/Notes -->
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-gradient-to-r from-slate-600 to-gray-500 px-6 py-4 border-b border-slate-600 text-white">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider shadow-sm">Catatan Operasional</h3>
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider shadow-sm">Operational Notes</h3>
                 </div>
                 <div class="p-6 space-y-4">
                     <div class="text-sm text-gray-600 italic">
-                        "Pastikan semua deployment melalui approval engineer sebelum status diubah ke Completed."
+                        "Ensure all deployments undergo engineer approval before changing status to Completed."
                     </div>
                     <div class="flex items-center text-xs text-gray-400">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Terakhir diupdate: {{ $project->updated_at->diffForHumans() }}
+                        Last updated: {{ $project->updated_at->diffForHumans() }}
                     </div>
                 </div>
             </div>

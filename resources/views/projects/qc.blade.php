@@ -25,7 +25,7 @@
             </a>
             @else
             <a href="{{ route('projects.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors">
-                Daftar Proyek
+                Back to Projects
             </a>
             @endif
             @can('qc.manage_tasks')
@@ -249,19 +249,19 @@
                         <button @click="bugFilterTab = 'active'" 
                                 :class="{'border-amber-500 text-amber-800 font-bold': bugFilterTab === 'active', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'active'}"
                                 class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
-                            Bug Aktif (Open)
+                            Active Bugs (Open)
                             <span class="bg-amber-100 text-amber-800 py-0.5 px-2 rounded-full text-xs font-bold" x-text="projectBugs.filter(b => b.status !== 'resolved').length"></span>
                         </button>
                         <button @click="bugFilterTab = 'solved'" 
                                 :class="{'border-green-600 text-green-700 font-bold': bugFilterTab === 'solved', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'solved'}"
                                 class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
-                            Bug Solved / Resolved
+                            Resolved Bugs
                             <span class="bg-green-100 text-green-800 py-0.5 px-2 rounded-full text-xs font-bold" x-text="projectBugs.filter(b => b.status === 'resolved').length"></span>
                         </button>
                         <button @click="bugFilterTab = 'all'" 
                                 :class="{'border-red-600 text-red-700 font-bold': bugFilterTab === 'all', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'all'}"
                                 class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
-                            Semua Bug
+                            All Bugs
                             <span class="bg-gray-100 text-gray-700 py-0.5 px-2 rounded-full text-xs font-semibold" x-text="projectBugs.length"></span>
                         </button>
                     </nav>
@@ -270,16 +270,16 @@
                 <!-- Selection Action Toolbar -->
                 <div x-show="selectedBugIds.length > 0 && permissions.canManageBugs" x-cloak class="px-6 py-2.5 bg-blue-50 border-b border-blue-200 flex items-center justify-between flex-wrap gap-3">
                     <div class="flex items-center gap-3">
-                        <span class="inline-flex items-center justify-center bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full" x-text="selectedBugIds.length + ' Bug Terpilih'"></span>
-                        <span class="text-xs text-blue-900 font-medium">Pilih beberapa bug untuk digabungkan menjadi satu Kanban Task baru.</span>
+                        <span class="inline-flex items-center justify-center bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full" x-text="selectedBugIds.length + ' Selected Bugs'"></span>
+                        <span class="text-xs text-blue-900 font-medium">Select multiple bugs to merge into a single new Kanban Task.</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" @click="openBulkConvertModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold shadow-xs transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                            <span>Buat 1 Task Kanban (<span x-text="selectedBugIds.length"></span> Bug)</span>
+                            <span>Create 1 Kanban Task (<span x-text="selectedBugIds.length"></span> Bugs)</span>
                         </button>
                         <button type="button" @click="selectedBugIds = []" class="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md text-xs font-medium transition-colors">
-                            Batal
+                            Cancel
                         </button>
                     </div>
                 </div>
@@ -294,7 +294,7 @@
                                            @change="toggleSelectAllBugs($event)" 
                                            :checked="isAllBugsSelected" 
                                            x-effect="$el.indeterminate = isSomeBugsSelected"
-                                           title="Pilih Semua Bug"
+                                           title="Select All Bugs"
                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer">
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bug Details</th>
@@ -307,19 +307,19 @@
                             <!-- Per-Column Filters Row -->
                             <tr class="bg-gray-100/90 border-t border-gray-200 text-xs">
                                 <th scope="col" x-show="permissions.canManageBugs" class="px-2 py-2 text-center">
-                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="text-gray-400 hover:text-red-600 transition-colors p-1" title="Reset Semua Filter">
+                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="text-gray-400 hover:text-red-600 transition-colors p-1" title="Reset All Filters">
                                         <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </th>
                                 <th scope="col" class="px-6 py-2">
                                     <div class="relative">
-                                        <input type="text" x-model="bugFilters.details" placeholder="Filter kode / deskripsi..." class="w-full text-xs pl-7 pr-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
+                                        <input type="text" x-model="bugFilters.details" placeholder="Filter code / description..." class="w-full text-xs pl-7 pr-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
                                         <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                     </div>
                                 </th>
                                 <th scope="col" class="px-3 py-2">
                                     <select x-model="bugFilters.severity" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
-                                        <option value="">Semua</option>
+                                        <option value="">All</option>
                                         <option value="Critical">Critical</option>
                                         <option value="High">High</option>
                                         <option value="Medium">Medium</option>
@@ -328,7 +328,7 @@
                                 </th>
                                 <th scope="col" class="px-3 py-2">
                                     <select x-model="bugFilters.status" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
-                                        <option value="">Semua</option>
+                                        <option value="">All</option>
                                         <option value="open">Open</option>
                                         <option value="in_progress">In Progress</option>
                                         <option value="resolved">Resolved</option>
@@ -342,13 +342,13 @@
                                 </th>
                                 <th scope="col" class="px-6 py-2">
                                     <select x-model="bugFilters.task" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
-                                        <option value="">Semua Task</option>
+                                        <option value="">All Tasks</option>
                                         <option value="assigned">Assigned</option>
                                         <option value="unassigned">Unassigned</option>
                                     </select>
                                 </th>
                                 <th scope="col" class="px-6 py-2 text-right">
-                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="inline-flex items-center gap-1 text-[11px] text-red-600 hover:text-red-800 font-semibold px-2 py-1 rounded bg-red-50 hover:bg-red-100 border border-red-200 transition-colors" title="Reset Semua Filter Kolom">
+                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="inline-flex items-center gap-1 text-[11px] text-red-600 hover:text-red-800 font-semibold px-2 py-1 rounded bg-red-50 hover:bg-red-100 border border-red-200 transition-colors" title="Reset All Column Filters">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                         <span>Reset</span>
                                     </button>
@@ -387,18 +387,13 @@
                                             </div>
                                             <span class="text-sm font-medium text-gray-900 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors" 
                                                   @click="openViewBugModal(bug)" 
-                                                  title="Klik untuk membaca deskripsi lengkap" 
+                                                  title="Click to view details" 
                                                   x-text="bug.description"></span>
                                             <div class="flex items-center gap-3 text-xs text-gray-500 mt-1.5 flex-wrap">
-                                                <span x-text="'Dilaporkan: ' + (bug.created_at_human || bug.created_at)"></span>
+                                                <span x-text="'Reported: ' + (bug.created_at_human || bug.created_at)"></span>
                                                 <template x-if="bug.status === 'resolved' && bug.updated_at">
-                                                    <span class="text-green-700 font-medium" x-text="'Diselesaikan: ' + bug.updated_at"></span>
+                                                    <span class="text-green-700 font-medium" x-text="'Resolved: ' + bug.updated_at"></span>
                                                 </template>
-                                                <button type="button" 
-                                                        @click="openViewBugModal(bug)" 
-                                                        class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline inline-flex items-center gap-0.5">
-                                                    Lihat Detail Deskripsi &rarr;
-                                                </button>
                                             </div>
                                         </div>
                                     </td>
@@ -491,17 +486,17 @@
                         <template x-if="hasActiveBugFilters">
                             <div class="flex flex-col items-center justify-center gap-2 py-4">
                                 <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                                <span class="font-medium text-gray-600">Tidak ada bug yang cocok dengan kriteria filter yang dipilih.</span>
+                                <span class="font-medium text-gray-600">No bugs match the selected filter criteria.</span>
                                 <button type="button" @click="resetBugFilters()" class="text-xs text-primary hover:underline font-bold mt-1">
-                                    Reset Semua Filter Kolom
+                                    Reset All Column Filters
                                 </button>
                             </div>
                         </template>
                         <template x-if="!hasActiveBugFilters && bugFilterTab === 'solved'">
-                            <span>Belum ada bug yang berstatus Solved / Resolved.</span>
+                            <span>No resolved bugs yet.</span>
                         </template>
                         <template x-if="!hasActiveBugFilters && bugFilterTab === 'active'">
-                            <span class="text-green-600 font-semibold">Tidak ada bug aktif saat ini! Semua bug telah terselesaikan.</span>
+                            <span class="text-green-600 font-semibold">No active bugs right now! All bugs have been resolved.</span>
                         </template>
                         <template x-if="!hasActiveBugFilters && bugFilterTab === 'all'">
                             <span>No bugs reported yet. Great job!</span>
@@ -733,14 +728,14 @@
                             <template x-if="activeTask?.testCases && activeTask.testCases.length > 0">
                                 <div class="space-y-3">
                                     <div class="flex items-center justify-between pb-2 border-b border-gray-100">
-                                        <span class="text-xs text-gray-500 font-medium" x-text="activeTask.testCases.length + ' Test Cases terkait task ini'"></span>
+                                        <span class="text-xs text-gray-500 font-medium" x-text="activeTask.testCases.length + ' Test Cases linked to this task'"></span>
                                         <button x-show="permissions.canExecuteTests" type="button" 
                                                 @click="passAllTaskTestCases(activeTask.id)" 
                                                 :disabled="isPassingAllTests"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-md text-xs font-semibold shadow-xs transition-colors disabled:opacity-50">
                                             <svg x-show="isPassingAllTests" class="animate-spin h-3 w-3 text-green-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <svg x-show="!isPassingAllTests" class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                            <span>Pass Semua Test Case</span>
+                                            <span>Pass All Test Cases</span>
                                         </button>
                                     </div>
                                     <template x-for="tc in activeTask.testCases" :key="tc.id">
@@ -822,7 +817,7 @@
 
                                             <div class="mt-3 pt-2 border-t border-gray-100 flex justify-end">
                                                 <button type="button" @click="openViewBugModal(bug)" class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline inline-flex items-center gap-1">
-                                                    <span>Lihat Detail Deskripsi Bug &rarr;</span>
+                                                    <span>View Bug Details &rarr;</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -837,7 +832,7 @@
                             <div class="mb-4 p-3 bg-blue-50/80 border border-blue-200 rounded-lg flex items-center justify-between text-xs text-blue-900">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                    <span>Diskusi langsung antar <strong>Programmer</strong> dan <strong>QC</strong> terkait pengerjaan dan verifikasi task ini.</span>
+                                    <span>Direct discussion between <strong>Programmer</strong> and <strong>QC</strong> regarding task execution and verification.</span>
                                 </div>
                                 <button type="button" @click="fetchTaskComments(activeTask.id)" class="text-blue-700 hover:text-blue-900 font-semibold underline flex items-center gap-1 shrink-0">
                                     <svg class="w-3.5 h-3.5" :class="{'animate-spin': isLoadingComments}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -852,8 +847,8 @@
                                         <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 mx-auto flex items-center justify-center mb-3">
                                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                                         </div>
-                                        <h4 class="text-sm font-semibold text-gray-800">Belum ada percakapan</h4>
-                                        <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto">Mulai diskusi atau koordinasi antara Programmer dan tim QC dengan menulis komentar pertama di bawah.</p>
+                                        <h4 class="text-sm font-semibold text-gray-800">No conversations yet</h4>
+                                        <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto">Start a discussion or coordination between the Programmer and QC team by writing the first comment below.</p>
                                     </div>
                                 </template>
 
@@ -896,7 +891,7 @@
                                                             @click="deleteTaskComment(c.id)" 
                                                             :disabled="deletingCommentId === c.id"
                                                             class="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors" 
-                                                            title="Hapus Komentar">
+                                                            title="Delete Comment">
                                                         <svg x-show="deletingCommentId !== c.id" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                         <svg x-show="deletingCommentId === c.id" class="w-3.5 h-3.5 animate-spin text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                                     </button>
@@ -912,10 +907,10 @@
                                                     <template x-if="isImageAttachment(c.attachment_path)">
                                                         <div class="mt-1">
                                                             <a :href="'/storage/' + c.attachment_path" target="_blank" class="inline-block group relative rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-all shadow-xs">
-                                                                <img :src="'/storage/' + c.attachment_path" class="max-h-48 max-w-xs object-cover rounded-lg group-hover:scale-102 transition-transform duration-200" alt="Lampiran">
+                                                                <img :src="'/storage/' + c.attachment_path" class="max-h-48 max-w-xs object-cover rounded-lg group-hover:scale-102 transition-transform duration-200" alt="Attachment">
                                                                 <span class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold gap-1 transition-opacity">
                                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                                                    Buka Gambar
+                                                                    View Image
                                                                 </span>
                                                             </a>
                                                         </div>
@@ -924,7 +919,7 @@
                                                         <a :href="'/storage/' + c.attachment_path" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700 border border-gray-200 hover:border-blue-200 rounded-lg text-xs font-medium transition-colors shadow-xs">
                                                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
                                                             <span x-text="getFilename(c.attachment_path)"></span>
-                                                            <span class="text-[10px] text-gray-400 font-normal">&darr; Unduh</span>
+                                                            <span class="text-[10px] text-gray-400 font-normal">&darr; Download</span>
                                                         </a>
                                                     </template>
                                                 </div>
@@ -943,7 +938,7 @@
                                         <span class="font-medium truncate" x-text="newCommentFile?.name"></span>
                                         <span class="text-gray-500 text-[10px]" x-text="formatFileSize(newCommentFile?.size)"></span>
                                     </div>
-                                    <button type="button" @click="removeCommentFile()" class="text-gray-400 hover:text-red-600 p-0.5 rounded transition-colors ml-2 shrink-0" title="Batal lampiran">
+                                    <button type="button" @click="removeCommentFile()" class="text-gray-400 hover:text-red-600 p-0.5 rounded transition-colors ml-2 shrink-0" title="Remove attachment">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </div>
@@ -952,7 +947,7 @@
                                     <textarea x-model="newCommentText"
                                               @keydown.ctrl.enter="submitTaskComment()"
                                               @keydown.meta.enter="submitTaskComment()"
-                                              placeholder="Tulis pesan atau komentar untuk programmer / tim QC... (Ctrl + Enter untuk kirim)"
+                                              placeholder="Write a message or comment for developer / QC team... (Ctrl + Enter to send)"
                                               rows="3"
                                               class="w-full border border-gray-300 rounded-xl shadow-inner focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm px-3.5 py-2.5 outline-none resize-none pr-28 pb-10 transition-colors"></textarea>
                                     
@@ -1281,9 +1276,9 @@
                 <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <div>
                         <h3 class="text-lg leading-6 font-bold text-gray-900">
-                            Buat 1 Task Kanban dari <span x-text="selectedBugIds.length"></span> Bug
+                            Create 1 Kanban Task from <span x-text="selectedBugIds.length"></span> Bugs
                         </h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Semua bug terpilih akan digabungkan ke dalam 1 kartu task baru di Kanban Board.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">All selected bugs will be merged into 1 new task card on the Kanban Board.</p>
                     </div>
                     <button @click="isBulkTaskModalOpen = false" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
                         <span class="sr-only">Close</span>
@@ -1296,7 +1291,7 @@
                         <div class="space-y-4">
                             <!-- Selected Bugs List Preview -->
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Daftar Bug Terpilih (<span x-text="selectedBugIds.length"></span>)</label>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Selected Bugs List (<span x-text="selectedBugIds.length"></span>)</label>
                                 <div class="max-h-36 overflow-y-auto space-y-1.5 p-2 bg-gray-50 rounded-lg border border-gray-200 text-xs">
                                     <template x-for="b in getSelectedBugs()" :key="b.id">
                                         <div class="flex items-center justify-between p-2 bg-white rounded border border-gray-200 shadow-2xs">
@@ -1307,7 +1302,7 @@
                                                 </template>
                                                 <span class="text-gray-800 truncate" x-text="b.description"></span>
                                             </div>
-                                            <button type="button" @click="toggleBugSelection(b.id)" class="text-gray-400 hover:text-red-500 p-1 shrink-0 ml-2" title="Hapus dari pilihan">
+                                            <button type="button" @click="toggleBugSelection(b.id)" class="text-gray-400 hover:text-red-500 p-1 shrink-0 ml-2" title="Remove from selection">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                             </button>
                                         </div>
@@ -1316,8 +1311,8 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Task Kanban <span class="text-red-500">*</span></label>
-                                <input type="text" x-model="bulkTask.title" required placeholder="Contoh: Perbaikan kumpulan bug ..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kanban Task Title <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="bulkTask.title" required placeholder="e.g. Bug fixes collection ..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1331,7 +1326,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kolom Awal</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Initial Column</label>
                                     <select x-model="bulkTask.column_id" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
                                         <option value="todo">To Do</option>
                                         <option value="in_progress">In Progress</option>
@@ -1341,14 +1336,14 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Tambahan</label>
-                                <textarea rows="3" x-model="bulkTask.description" placeholder="Catatan perbaikan / deskripsi gabungan..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono text-xs"></textarea>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Additional Description</label>
+                                <textarea rows="3" x-model="bulkTask.description" placeholder="Fix notes / merged description..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono text-xs"></textarea>
                             </div>
                         </div>
                         
                         <div class="mt-6 flex justify-end space-x-3">
                             <button type="button" @click="isBulkTaskModalOpen = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                                Batal
+                                Cancel
                             </button>
                             <button type="submit" :disabled="isSubmittingBulkConvert || selectedBugIds.length === 0" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                                 <svg x-show="isSubmittingBulkConvert" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -2191,7 +2186,7 @@ function qcDashboard() {
                     }
                 } else {
                     const data = await response.json();
-                    this.showError(data.message || 'Gagal memindahkan test case.');
+                    this.showError(data.message || 'Failed to move test case.');
                 }
             } catch (error) {
                 console.error('Error moving test case:', error);
@@ -2242,14 +2237,14 @@ function qcDashboard() {
                         this.viewingBug = this.projectBugs.find(b => b.id === bugId) || this.viewingBug;
                     }
                     this.isKanbanExpanded = true;
-                    this.showSuccess('Task baru (' + (resData.task?.code || '') + ') berhasil dibuat di Kanban Board!');
+                    this.showSuccess('New task (' + (resData.task?.code || '') + ') successfully created in Kanban Board!');
                 } else {
                     const data = await response.json();
-                    this.showError(data.message || 'Gagal mengubah bug menjadi task.');
+                    this.showError(data.message || 'Failed to convert bug to task.');
                 }
             } catch (error) {
                 console.error("Error converting bug to task:", error);
-                this.showError('Terjadi kesalahan saat memproses permintaan.');
+                this.showError('An error occurred while processing request.');
             } finally {
                 this.convertingBugId = null;
             }
@@ -2422,14 +2417,14 @@ function qcDashboard() {
                     this.selectedBugIds = [];
                     this.isBulkTaskModalOpen = false;
                     this.isKanbanExpanded = true;
-                    this.showSuccess(`Task baru (${data.task.code}) berhasil dibuat dari ${data.count} bug!`);
+                    this.showSuccess(`New task (${data.task.code}) successfully created from ${data.count} bugs!`);
                 } else {
                     const err = await response.json();
-                    this.showError(err.message || 'Gagal membuat task dari bug terpilih.');
+                    this.showError(err.message || 'Failed to create task from selected bugs.');
                 }
             } catch (error) {
                 console.error("Error bulk converting bugs to task:", error);
-                this.showError('Terjadi kesalahan saat membuat task.');
+                this.showError('An error occurred while creating task.');
             } finally {
                 this.isSubmittingBulkConvert = false;
             }
@@ -2437,7 +2432,7 @@ function qcDashboard() {
 
         async passAllTaskTestCases(taskId) {
             if (!this.permissions.canExecuteTests || this.isPassingAllTests) return;
-            if (!confirm('Apakah Anda yakin ingin menandai semua Test Case untuk task ini menjadi PASSED dan menyelesaikan bug terkait?')) return;
+            if (!confirm('Are you sure you want to mark all Test Cases for this task as PASSED and resolve linked bugs?')) return;
             
             this.isPassingAllTests = true;
             try {
@@ -2461,13 +2456,13 @@ function qcDashboard() {
                             this.activeTask = updatedTask;
                         }
                     }
-                    this.showSuccess('Semua test case berhasil dinyatakan PASSED dan bug terkait telah terselesaikan!');
+                    this.showSuccess('All test cases marked as PASSED and linked bugs have been resolved!');
                 } else {
-                    this.showError('Gagal memperbarui status test cases.');
+                    this.showError('Failed to update test cases status.');
                 }
             } catch (error) {
                 console.error('Error passing all test cases:', error);
-                this.showError('Terjadi kesalahan saat memproses permintaan.');
+                this.showError('An error occurred while processing request.');
             } finally {
                 this.isPassingAllTests = false;
             }
@@ -2930,9 +2925,9 @@ function qcDashboard() {
                         
                         if (result === 'failed') {
                             const bugCode = data.bug ? data.bug.code : '';
-                            this.showSuccess(`Test Case gagal. Bug tracker (${bugCode}) berhasil dihubungkan!`);
+                            this.showSuccess(`Test Case failed. Bug tracker (${bugCode}) successfully linked!`);
                         } else {
-                            this.showSuccess('Test Case berhasil (Passed) dan bug terkait telah diselesaikan.');
+                            this.showSuccess('Test Case passed and linked bug has been resolved.');
                         }
                         
                         this.closeRunTestModal();
@@ -2953,11 +2948,11 @@ function qcDashboard() {
                         }
                     } else {
                         const errorData = await response.json().catch(() => ({}));
-                        this.showError(errorData.message || 'Gagal memperbarui status test case.');
+                        this.showError(errorData.message || 'Failed to update test case status.');
                     }
                 } catch (error) {
                     console.error('Error submitting test result:', error);
-                    this.showError('Terjadi kesalahan saat memproses test execution.');
+                    this.showError('An error occurred while processing test execution.');
                 } finally {
                     this.isSubmittingTest = false;
                 }
@@ -2982,13 +2977,13 @@ function qcDashboard() {
             return false;
         },
 
-        openNewTaskModal() {
+        async openNewTaskModal(columnId = 'todo') {
             if (!this.permissions.canManageTasks) return;
-            this.newTask = {
+            this.newTaskForm = {
                 title: '',
                 description: '',
                 assignee_id: '',
-                column_id: 'todo'
+                column_id: columnId
             };
             this.isNewTaskModalOpen = true;
         },
@@ -2998,39 +2993,29 @@ function qcDashboard() {
         },
 
         async submitNewTask() {
-            if (!this.permissions.canManageTasks || this.isSubmitting) return;
-            this.isSubmitting = true;
-
+            if (!this.permissions.canManageTasks || this.isSubmittingTask) return;
+            this.isSubmittingTask = true;
             try {
-                const formData = new FormData();
-                formData.append('title', this.newTask.title);
-                formData.append('description', this.newTask.description);
-                formData.append('assignee_id', this.newTask.assignee_id);
-                formData.append('column_id', this.newTask.column_id);
-                
-                const taskFileInput = document.getElementById('task_attachment');
-                if (taskFileInput && taskFileInput.files[0]) {
-                    formData.append('attachment', taskFileInput.files[0]);
-                }
-
                 const response = await fetch(`/api/projects/${this.projectId}/qc/tasks`, {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: formData
+                    body: JSON.stringify(this.newTaskForm)
                 });
 
                 if (response.ok) {
                     await this.fetchTasks();
-                    this.closeNewTaskModal();
+                    this.isNewTaskModalOpen = false;
                 } else {
-                    this.showError('Gagal menyimpan task baru.');
+                    this.showError('Failed to save new task.');
                 }
             } catch (error) {
-                console.error('Error submitting new task:', error);
+                console.error('Error creating task:', error);
             } finally {
-                this.isSubmitting = false;
+                this.isSubmittingTask = false;
             }
         },
         
@@ -3040,8 +3025,8 @@ function qcDashboard() {
             this.movingToColumn = columnId;
             
             try {
-                const response = await fetch(`/api/qc/tasks/${taskId}/move`, {
-                    method: 'POST',
+                const response = await fetch(`/api/qc/tasks/${taskId}/column`, {
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
@@ -3066,7 +3051,7 @@ function qcDashboard() {
                     }
 
                     if (columnId === 'done') {
-                        this.showSuccess('Task selesai! Semua test case terkait telah dinyatakan PASSED dan bug terselesaikan.');
+                        this.showSuccess('Task completed! All linked test cases marked as PASSED and bugs resolved.');
                     }
                 }
             } catch (error) {
@@ -3185,11 +3170,11 @@ function qcDashboard() {
                     });
                 } else {
                     const err = await response.json();
-                    this.showError(err.message || 'Gagal mengirim komentar.');
+                    this.showError(err.message || 'Failed to send comment.');
                 }
             } catch (error) {
                 console.error("Error submitting comment:", error);
-                this.showError('Terjadi kesalahan saat mengirim komentar.');
+                this.showError('An error occurred while sending comment.');
             } finally {
                 this.isSubmittingComment = false;
             }
@@ -3197,7 +3182,7 @@ function qcDashboard() {
 
         async deleteTaskComment(commentId) {
             if (!this.permissions.canComment) return;
-            if (!confirm('Apakah Anda yakin ingin menghapus komentar ini?')) return;
+            if (!confirm('Are you sure you want to delete this comment?')) return;
             this.deletingCommentId = commentId;
 
             try {
@@ -3218,14 +3203,14 @@ function qcDashboard() {
                     if (cardTask) {
                         cardTask.comments_count = this.activeTaskComments.length;
                     }
-                    this.showSuccess('Komentar berhasil dihapus.');
+                    this.showSuccess('Comment successfully deleted.');
                 } else {
                     const err = await response.json();
-                    this.showError(err.message || 'Gagal menghapus komentar.');
+                    this.showError(err.message || 'Failed to delete comment.');
                 }
             } catch (error) {
                 console.error("Error deleting comment:", error);
-                this.showError('Terjadi kesalahan saat menghapus komentar.');
+                this.showError('An error occurred while deleting comment.');
             } finally {
                 this.deletingCommentId = null;
             }

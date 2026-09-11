@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
-@section('title', 'Buat Quotation Baru')
+@section('title', 'Create New Quotation')
 
 @section('content')
 <div class="max-w-4xl mx-auto">
     <div class="mb-6">
         <a href="{{ route('projects.show', $project) }}" class="text-sm text-gray-500 hover:text-primary flex items-center">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            Kembali ke Detail Proyek
+            Back to Project Details
         </a>
-        <h1 class="text-2xl font-bold text-gray-800 mt-2">Buat Quotation Baru</h1>
-        <p class="text-gray-500">Proyek: <span class="font-bold">{{ $project->title }}</span></p>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2">Create New Quotation</h1>
+        <p class="text-gray-500">Project: <span class="font-bold">{{ $project->title }}</span></p>
     </div>
 
     <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
@@ -19,7 +19,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="col-span-1">
-                    <label for="quotation_number" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">No. Quotation</label>
+                    <label for="quotation_number" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Quotation No.</label>
                     @php
                         $projectYear = $project->created_at ? $project->created_at->format('Y') : date('Y');
                         $projectSeq = \App\Models\Project::whereYear('created_at', $projectYear)->where('id', '<=', $project->id)->count();
@@ -34,23 +34,23 @@
                 </div>
 
                 <div class="col-span-1">
-                    <label for="due_date" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Berlaku Sampai (Due Date)</label>
+                    <label for="due_date" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Valid Until (Due Date)</label>
                     <input type="date" name="due_date" id="due_date" value="{{ old('due_date', date('Y-m-d', strtotime('+30 days'))) }}" required
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
                     @error('due_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="col-span-1">
-                    <label for="warranty_days" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Garansi (Hari)</label>
+                    <label for="warranty_days" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Warranty (Days)</label>
                     <input type="number" name="warranty_days" id="warranty_days" value="{{ old('warranty_days', 0) }}" required
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
-                    <p class="mt-1 text-[10px] text-gray-400">Isi 0 jika tidak ada garansi.</p>
+                    <p class="mt-1 text-[10px] text-gray-400">Set to 0 if no warranty is provided.</p>
                     @error('warranty_days') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="col-span-1">
-                    <label for="working_duration" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Durasi Pengerjaan</label>
-                    <input type="text" name="working_duration" id="working_duration" value="{{ old('working_duration') }}" required placeholder="Contoh: 14 Hari Kerja"
+                    <label for="working_duration" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Estimated Duration</label>
+                    <input type="text" name="working_duration" id="working_duration" value="{{ old('working_duration') }}" required placeholder="e.g. 14 Working Days"
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                     @error('working_duration') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -60,8 +60,8 @@
                     <select name="status" id="status" required
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                         <option value="draft" {{ old('status') == 'draft' ? 'selected' : '' }}>DRAFT</option>
-                        <option value="issued" {{ old('status') == 'issued' ? 'selected' : '' }}>ISSUED (DIKIRIM)</option>
-                        <option value="approved" {{ old('status') == 'approved' ? 'selected' : '' }}>APPROVED (DISETUJUI)</option>
+                        <option value="issued" {{ old('status') == 'issued' ? 'selected' : '' }}>ISSUED</option>
+                        <option value="approved" {{ old('status') == 'approved' ? 'selected' : '' }}>APPROVED</option>
                     </select>
                     @error('status') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -76,7 +76,7 @@
                         return val.replace(/\D/g, '') || '0';
                     }
                 }">
-                    <label for="display_total" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Total Nilai Penawaran (Rp)</label>
+                    <label for="display_total" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Total Quotation Value (Rp)</label>
                     <div class="relative mt-1 rounded-md shadow-sm">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <span class="text-gray-500 sm:text-sm font-bold">Rp</span>
@@ -91,7 +91,7 @@
                 </div>
 
                 <div class="col-span-2">
-                    <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Deskripsi Pekerjaan / Fitur</label>
+                    <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Scope of Work / Description</label>
                     <div class="bg-white">
                         <textarea name="description" id="editor-description" style="height: 250px;">{!! old('description', $project->description) !!}</textarea>
                     </div>
@@ -99,22 +99,25 @@
                 </div>
 
                 <div class="col-span-2">
-                    <label for="attachment_pdf" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Attachment PDF (Opsional)</label>
+                    <label for="attachment_pdf" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Attachment PDF (Optional)</label>
                     <input type="file" name="attachment_pdf" id="attachment_pdf" accept="application/pdf"
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
-                    <p class="mt-1 text-[10px] text-gray-400">Pilih file PDF (Maks. 10MB) jika ada lampiran tambahan.</p>
+                    <p class="mt-1 text-[10px] text-gray-400">Upload a PDF file (Max 10MB) if there are additional attachments.</p>
                     @error('attachment_pdf') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
 
             <div class="mt-8 flex justify-end space-x-3">
                 <a href="{{ route('projects.show', $project) }}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 uppercase tracking-widest text-xs font-bold">
-                    Batal
+                    Cancel
                 </a>
                 <button type="submit" class="px-6 py-2 bg-primary border border-transparent rounded-md font-bold text-sm text-white uppercase tracking-widest hover:bg-blue-700 transition">
-                    Simpan Quotation
+                    Save Quotation
                 </button>
             </div>
+        </form>
+    </div>
+</div>
         </form>
     </div>
 </div>

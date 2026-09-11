@@ -13,8 +13,15 @@ class ProjectExpenseController extends Controller
         $validated = $request->validate([
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
-            'date' => 'required|date',
+            'is_paid' => 'required|boolean',
+            'date' => 'nullable|date',
         ]);
+
+        if ($validated['is_paid']) {
+            $validated['date'] = $validated['date'] ?? now()->toDateString();
+        } else {
+            $validated['date'] = null;
+        }
 
         $project->expenses()->create($validated);
 
@@ -26,8 +33,15 @@ class ProjectExpenseController extends Controller
         $validated = $request->validate([
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
-            'date' => 'required|date',
+            'is_paid' => 'required|boolean',
+            'date' => 'nullable|date',
         ]);
+
+        if ($validated['is_paid']) {
+            $validated['date'] = $validated['date'] ?? now()->toDateString();
+        } else {
+            $validated['date'] = null;
+        }
 
         $expense->update($validated);
 

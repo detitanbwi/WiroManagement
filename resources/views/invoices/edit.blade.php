@@ -33,10 +33,10 @@
     <div class="mb-6">
         <a href="{{ route('invoices.show', $invoice) }}" class="text-sm text-gray-500 hover:text-primary flex items-center">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            Kembali ke Detail Invoice
+            Back to Invoice Details
         </a>
         <h1 class="text-2xl font-bold text-gray-800 mt-2 uppercase tracking-widest">Edit Invoice - {{ $invoice->invoice_number }}</h1>
-        <p class="text-gray-500">Proyek: <span class="font-bold text-gray-700">{{ $invoice->project->title }}</span></p>
+        <p class="text-gray-500">Project: <span class="font-bold text-gray-700">{{ $invoice->project->title }}</span></p>
     </div>
 
     <form action="{{ route('invoices.update', $invoice) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
@@ -46,21 +46,21 @@
         <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">No. Invoice</label>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Invoice No.</label>
                     <input type="text" name="invoice_number" value="{{ old('invoice_number', $invoice->invoice_number) }}" required
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Terbit</label>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Issue Date</label>
                     <input type="date" name="issued_date" value="{{ old('issued_date', $invoice->issued_date->format('Y-m-d')) }}" required
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
                 </div>
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tanggal Jatuh Tempo (Due Date)</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Due Date</label>
                         <label class="inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="has_due_date" value="1" x-model="hasDueDate" class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4">
-                            <span class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Aktif</span>
+                            <span class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Active</span>
                         </label>
                     </div>
                     <div x-show="hasDueDate" x-transition>
@@ -69,7 +69,7 @@
                             class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
                     </div>
                     <div x-show="!hasDueDate" class="text-xs text-gray-400 italic p-3 border border-dashed rounded bg-gray-50">
-                        Tanpa Tanggal Jatuh Tempo
+                        No Due Date
                     </div>
                 </div>
                 <div>
@@ -77,18 +77,18 @@
                     <select name="status" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
                         <option value="draft" {{ old('status', $invoice->status) == 'draft' ? 'selected' : '' }}>DRAFT</option>
                         <option value="issued" {{ old('status', $invoice->status) == 'issued' ? 'selected' : '' }}>ISSUED</option>
-                        <option value="paid" {{ old('status', $invoice->status) == 'paid' ? 'selected' : '' }}>PAID (LUNAS)</option>
+                        <option value="paid" {{ old('status', $invoice->status) == 'paid' ? 'selected' : '' }}>PAID</option>
                     </select>
                 </div>
             </div>
 
             <div class="mb-4">
-                <h3 class="text-xs font-black text-gray-800 uppercase tracking-[0.2em] mb-4 pb-2 border-b">Item Pekerjaan</h3>
+                <h3 class="text-xs font-black text-gray-800 uppercase tracking-[0.2em] mb-4 pb-2 border-b">Line Items</h3>
                 <div class="space-y-4">
                     <template x-for="(item, index) in items" :key="index">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-lg border border-gray-100">
                             <div class="col-span-1 md:col-span-6">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Deskripsi Pekerjaan</label>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Item Description</label>
                                 <textarea :name="'items['+index+'][description]'" x-model="item.description" rows="2" required
                                     class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border resize-y"></textarea>
                             </div>
@@ -99,7 +99,7 @@
                                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border text-center">
                                 </div>
                                 <div class="flex-[2] md:col-span-4">
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Harga (Rp)</label>
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Price (Rp)</label>
                                     <div class="relative">
                                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <span class="text-gray-400 text-xs font-bold">Rp</span>
@@ -115,7 +115,7 @@
                             <div class="col-span-1 md:col-span-1 flex justify-end md:justify-center">
                                 <button type="button" @click="removeItem(index)" class="mt-0 md:mt-6 text-red-500 hover:text-red-700 flex items-center text-[10px] font-bold uppercase md:block">
                                     <svg class="w-5 h-5 md:mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    <span class="md:hidden ml-1">Hapus</span>
+                                    <span class="md:hidden ml-1">Delete</span>
                                 </button>
                             </div>
                         </div>
@@ -123,7 +123,7 @@
                 </div>
                 <button type="button" @click="addItem()" class="mt-4 inline-flex items-center text-xs font-bold text-primary hover:text-blue-700 uppercase tracking-widest">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Tambah Baris Baru
+                    + Add Line Item
                 </button>
             </div>
 
@@ -135,7 +135,7 @@
                     </div>
                     
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 text-right">Pajak / Lainnya (+)</label>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 text-right">Tax / Other (+)</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-400 text-xs font-bold">Rp</span>
@@ -149,7 +149,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 text-right">Diskon (-)</label>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 text-right">Discount (-)</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-400 text-xs font-bold">Rp</span>
@@ -172,20 +172,20 @@
         </div>
 
         <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-8">
-            <h3 class="text-xs font-black text-gray-800 uppercase tracking-[0.2em] mb-4 pb-2 border-b">Informasi Tambahan</h3>
+            <h3 class="text-xs font-black text-gray-800 uppercase tracking-[0.2em] mb-4 pb-2 border-b">Additional Information</h3>
             <div class="space-y-6">
                 <div>
-                    <label for="notes" class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Catatan Invoice</label>
+                    <label for="notes" class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Invoice Notes</label>
                     <textarea name="notes" id="notes" rows="3" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">{{ old('notes', $invoice->notes) }}</textarea>
                 </div>
                 <div>
-                    <label for="attachment_pdf" class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Lampiran Dokumen (PDF)</label>
+                    <label for="attachment_pdf" class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Document Attachment (PDF)</label>
                     <input type="file" name="attachment_pdf" id="attachment_pdf" accept="application/pdf"
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
-                    <p class="mt-1 text-[10px] text-gray-400 font-bold uppercase">Biarkan kosong jika tidak ingin mengganti lampiran.</p>
+                    <p class="mt-1 text-[10px] text-gray-400 font-bold uppercase">Leave empty if you do not want to replace the attachment.</p>
                     @if($invoice->attachment_pdf)
                         <div class="mt-2 inline-flex items-center p-2 bg-blue-50 rounded border border-blue-100">
-                            <a href="{{ asset('storage/' . $invoice->attachment_pdf) }}" target="_blank" class="text-[10px] font-black text-blue-600 uppercase hover:underline">Lampiran Saat Ini (Lihat)</a>
+                            <a href="{{ asset('storage/' . $invoice->attachment_pdf) }}" target="_blank" class="text-[10px] font-black text-blue-600 uppercase hover:underline">Current Attachment (View)</a>
                         </div>
                     @endif
                 </div>
@@ -194,10 +194,10 @@
 
         <div class="flex justify-end space-x-3">
             <a href="{{ route('invoices.show', $invoice) }}" class="px-6 py-3 border border-gray-300 rounded-md shadow-sm text-xs font-black text-gray-700 bg-white hover:bg-gray-50 uppercase tracking-widest">
-                Batal
+                Cancel
             </a>
             <button type="submit" class="px-10 py-3 bg-primary border border-transparent rounded-md font-black text-xs text-white uppercase tracking-[0.2em] hover:bg-blue-800 transition shadow-lg">
-                Simpan Perubahan
+                Save Changes
             </button>
         </div>
     </form>

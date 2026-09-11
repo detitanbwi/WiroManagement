@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
-@section('title', 'Buat Invoice Baru')
+@section('title', 'Create New Invoice')
 
 @section('content')
 <div class="max-w-7xl mx-auto">
     <div class="mb-6">
         <a href="{{ route('projects.show', $project) }}" class="text-sm text-gray-500 hover:text-primary flex items-center">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            Kembali ke Detail Proyek
+            Back to Project Details
         </a>
-        <h1 class="text-2xl font-bold text-gray-800 mt-2">Buat Invoice Baru</h1>
-        <p class="text-gray-500">Proyek: <span class="font-bold">{{ $project->title }}</span></p>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2">Create New Invoice</h1>
+        <p class="text-gray-500">Project: <span class="font-bold">{{ $project->title }}</span></p>
     </div>
 
     <form action="{{ route('projects.invoices.store', $project) }}" method="POST" x-data="invoiceForm()" enctype="multipart/form-data">
@@ -19,15 +19,15 @@
             <!-- Main Form -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 uppercase tracking-widest text-xs">Rincian Pekerjaan</h3>
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 uppercase tracking-widest text-xs">Line Items</h3>
                     
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="hidden md:table-header-group bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Description</th>
                                     <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-16">Qty</th>
-                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-40">Harga (Rp)</th>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider w-40">Price (Rp)</th>
                                     <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider w-32">Total</th>
                                     <th class="px-2 py-3 w-10"></th>
                                 </tr>
@@ -35,9 +35,9 @@
                             <tbody class="divide-y divide-gray-200">
                                 <template x-for="(item, index) in items" :key="index">
                                     <tr class="flex flex-col md:table-row border-b md:border-b-0 py-4 md:py-0 space-y-3 md:space-y-0">
-                                        <!-- Deskripsi -->
+                                        <!-- Description -->
                                         <td class="px-2 md:py-3 block md:table-cell">
-                                            <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Deskripsi Pekerjaan</label>
+                                            <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Item Description</label>
                                             <textarea :name="'items['+index+'][description]'" x-model="item.description" rows="2" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border resize-y"></textarea>
                                         </td>
                                         
@@ -48,9 +48,9 @@
                                                 <input type="number" :name="'items['+index+'][qty]'" x-model.number="item.qty" @input="calculateTotal()" required class="block w-full md:w-16 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm text-center p-3 border">
                                             </td>
                                             
-                                            <!-- Harga -->
+                                            <!-- Price -->
                                             <td class="px-2 md:py-3 block md:table-cell flex-[2] md:flex-none">
-                                                <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Harga Satuan</label>
+                                                <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase mb-1">Unit Price</label>
                                                 <div class="relative">
                                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                         <span class="text-gray-400 text-xs font-bold">Rp</span>
@@ -67,7 +67,7 @@
                                         <!-- Total -->
                                         <td class="px-4 md:py-3 block md:table-cell text-right md:text-right">
                                             <div class="flex justify-between md:block items-center">
-                                                <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase">Subtotal Item</label>
+                                                <label class="md:hidden block text-[10px] font-bold text-gray-400 uppercase">Item Subtotal</label>
                                                 <span class="text-sm font-bold text-gray-900">
                                                     Rp <span x-text="numberFormat(item.qty * item.price)"></span>
                                                 </span>
@@ -78,7 +78,7 @@
                                         <td class="px-2 md:py-3 block md:table-cell text-right md:text-center pt-2 md:pt-0">
                                             <button type="button" @click="removeItem(index)" class="inline-flex items-center text-red-400 hover:text-red-600 transition text-xs font-bold md:p-0">
                                                 <svg class="w-5 h-5 mr-1 md:mr-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                <span class="md:hidden">Hapus Baris</span>
+                                                <span class="md:hidden">Delete Row</span>
                                             </button>
                                         </td>
                                     </tr>
@@ -89,32 +89,32 @@
                     
                     <div class="mt-4">
                         <button type="button" @click="addItem()" class="inline-flex items-center px-4 py-2 border border-dashed border-gray-300 shadow-sm text-xs font-bold uppercase tracking-widest rounded-md text-gray-500 bg-white hover:bg-gray-50 transition w-full justify-center">
-                            + Tambah Baris Pekerjaan
+                            + Add Line Item
                         </button>
                     </div>
                 </div>
 
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-                    <label for="notes" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Catatan Invoice (Opsional)</label>
-                    <textarea name="notes" id="notes" rows="3" placeholder="Misal: Nomor rekening, instruksi pembayaran, dll." class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border"></textarea>
+                    <label for="notes" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Invoice Notes (Optional)</label>
+                    <textarea name="notes" id="notes" rows="3" placeholder="e.g. Bank account details, payment instructions, etc." class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border"></textarea>
                 </div>
 
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-                    <label for="attachment_pdf" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Attachment PDF (Opsional)</label>
+                    <label for="attachment_pdf" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Attachment PDF (Optional)</label>
                     <input type="file" name="attachment_pdf" id="attachment_pdf" accept="application/pdf"
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
-                    <p class="mt-1 text-[10px] text-gray-400 font-medium">Pilih file PDF (Maks. 10MB) jika ada lampiran tambahan.</p>
+                    <p class="mt-1 text-[10px] text-gray-400 font-medium">Upload a PDF file (Max 10MB) if there are additional attachments.</p>
                 </div>
             </div>
 
             <!-- Sidebar Info -->
             <div class="space-y-6">
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 uppercase tracking-widest text-xs">Informasi Invoice</h3>
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 uppercase tracking-widest text-xs">Invoice Information</h3>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">No. Invoice</label>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Invoice No.</label>
                             @php
                                 $projectYear = $project->created_at ? $project->created_at->format('Y') : date('Y');
                                 $projectSeq = \App\Models\Project::whereYear('created_at', $projectYear)->where('id', '<=', $project->id)->count();
@@ -126,22 +126,22 @@
                             <input type="text" name="invoice_number" required value="{{ $defaultInvoiceNumber }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tanggal Terbit</label>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Issue Date</label>
                             <input type="date" name="issued_date" required value="{{ date('Y-m-d') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
                         </div>
                         <div>
                             <div class="flex items-center justify-between mb-2">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Jatuh Tempo</label>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Due Date</label>
                                 <label class="inline-flex items-center cursor-pointer">
                                     <input type="checkbox" name="has_due_date" value="1" x-model="hasDueDate" class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4">
-                                    <span class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Aktif</span>
+                                    <span class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Active</span>
                                 </label>
                             </div>
                             <div x-show="hasDueDate" x-transition>
                                 <input type="date" name="due_date" :required="hasDueDate" :disabled="!hasDueDate" value="{{ date('Y-m-d', strtotime('+7 days')) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
                             </div>
                             <div x-show="!hasDueDate" class="text-xs text-gray-400 italic p-3 border border-dashed rounded bg-gray-50">
-                                Tanpa Tanggal Jatuh Tempo
+                                No Due Date
                             </div>
                         </div>
                     </div>
@@ -151,7 +151,7 @@
                     <div class="absolute top-0 right-0 p-3">
                         <svg class="w-12 h-12 text-primary opacity-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
                     </div>
-                    <h3 class="font-bold text-gray-800 mb-6 border-b pb-2 uppercase tracking-widest text-xs">Ringkasan Biaya</h3>
+                    <h3 class="font-bold text-gray-800 mb-6 border-b pb-2 uppercase tracking-widest text-xs">Cost Summary</h3>
                     <div class="space-y-4">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-500 font-bold uppercase tracking-tighter">Subtotal</span>
@@ -159,7 +159,7 @@
                         </div>
                         
                         <div class="space-y-1">
-                            <label class="block text-[10px] font-black text-gray-400 uppercase">Pajak / Biaya Lain (+)</label>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase">Tax / Other (+)</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span class="text-gray-400 text-xs font-bold">Rp</span>
@@ -173,7 +173,7 @@
                         </div>
 
                         <div class="space-y-1">
-                            <label class="block text-[10px] font-black text-gray-400 uppercase">Diskon (-)</label>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase">Discount (-)</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span class="text-gray-400 text-xs font-bold">Rp</span>
@@ -194,7 +194,7 @@
                     
                     <button type="submit" class="w-full mt-8 bg-primary text-white font-bold py-4 rounded-xl hover:bg-blue-800 transition shadow-lg shadow-blue-100 uppercase tracking-widest text-xs flex items-center justify-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Terbitkan Invoice
+                        Issue Invoice
                     </button>
                 </div>
             </div>
@@ -207,7 +207,7 @@
         return {
             hasDueDate: true,
             items: [{
-                description: 'Layanan Pengembangan Software',
+                description: 'Software Development Services',
                 qty: 1,
                 price: 0
             }],

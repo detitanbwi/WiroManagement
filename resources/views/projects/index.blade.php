@@ -1,14 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Proyek')
+@section('title', 'Projects')
 
 @section('content')
 <div x-data="{ showDeleteModal: false, deleteUrl: '' }" class="max-w-7xl mx-auto">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Daftar Proyek</h1>
+        <h1 class="text-2xl font-bold text-gray-800">Projects</h1>
         @can('projects.create')
-        <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
-            Buat Proyek Baru
+        <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-lg font-bold text-xs text-white uppercase tracking-wider hover:bg-blue-700 active:bg-blue-900 transition-all shadow-md hover:shadow-lg">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Project
         </a>
         @endcan
     </div>
@@ -18,12 +19,14 @@
             <table class="min-w-full divide-y divide-gray-100">
                 <thead class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white">
                     <tr>
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Judul Proyek / Client</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Project Title / Client</th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Status</th>
                         @canany(['projects.view_financial', 'finance.view'])
-                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Financial</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Project Value</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Expenses</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Nett</th>
                         @endcanany
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-indigo-50 uppercase tracking-wider">Aksi</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-indigo-50 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-transparent divide-y divide-gray-100">
@@ -55,15 +58,23 @@
                                 Due: Rp {{ number_format($project->balance_due, 0, ',', '.') }}
                             </div>
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="font-medium text-amber-600">Rp {{ number_format($project->total_expenses, 0, ',', '.') }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="font-bold {{ $project->nett >= 0 ? 'text-emerald-600' : 'text-red-600' }}">
+                                Rp {{ number_format($project->nett, 0, ',', '.') }}
+                            </div>
+                        </td>
                         @endcanany
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex justify-end space-x-2 items-center">
                                 @can('projects.manage')
-                                <a href="{{ route('projects.show', $project) }}" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors font-medium">Kelola</a>
+                                <a href="{{ route('projects.show', $project) }}" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors font-medium">Manage</a>
                                 @endcan
 
                                 @canany(['projects.qc', 'qc.view'])
-                                <a href="{{ route('projects.qc', $project) }}" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors font-medium">Fitur QC</a>
+                                <a href="{{ route('projects.qc', $project) }}" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors font-medium">QC Module</a>
                                 @endcanany
 
                                 @can('projects.edit')
@@ -71,7 +82,7 @@
                                 @endcan
 
                                 @can('projects.delete')
-                                <button type="button" @click="showDeleteModal = true; deleteUrl = '{{ route('projects.destroy', $project) }}'" class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition-colors font-medium border-none cursor-pointer">Hapus</button>
+                                <button type="button" @click="showDeleteModal = true; deleteUrl = '{{ route('projects.destroy', $project) }}'" class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition-colors font-medium border-none cursor-pointer">Delete</button>
                                 @endcan
                             </div>
                         </td>
@@ -81,10 +92,10 @@
                         @php
                             $canSeeFinancial = auth()->user()->canany(['projects.view_financial', 'finance.view']);
                         @endphp
-                        <td colspan="{{ $canSeeFinancial ? 4 : 3 }}" class="px-6 py-12 whitespace-nowrap text-center text-gray-500">
+                        <td colspan="{{ $canSeeFinancial ? 6 : 3 }}" class="px-6 py-12 whitespace-nowrap text-center text-gray-500">
                             <div class="flex flex-col items-center justify-center">
                                 <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                                Belum ada proyek terdaftar.
+                                No projects found.
                             </div>
                         </td>
                     </tr>
@@ -112,9 +123,9 @@
                                 </svg>
                             </div>
                             <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                                <h3 class="text-lg font-bold leading-6 text-gray-900" id="modal-title">Hapus Proyek</h3>
+                                <h3 class="text-lg font-bold leading-6 text-gray-900" id="modal-title">Delete Project</h3>
                                 <div class="mt-2">
-                                    <p class="text-sm text-gray-500">Apakah Anda yakin ingin menghapus proyek ini? Pastikan tidak ada invoice yang belum lunas. <span class="font-semibold text-gray-700">Tindakan ini tidak dapat dibatalkan.</span></p>
+                                    <p class="text-sm text-gray-500">Are you sure you want to delete this project? Make sure there are no unpaid invoices. <span class="font-semibold text-gray-700">This action cannot be undone.</span></p>
                                 </div>
                             </div>
                         </div>
@@ -123,9 +134,9 @@
                         <form :action="deleteUrl" method="POST" class="m-0 p-0 inline w-full sm:w-auto">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-red-500">Ya, Hapus Proyek</button>
+                            <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-red-500">Yes, Delete Project</button>
                         </form>
-                        <button type="button" @click="showDeleteModal = false" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-gray-200">Batal</button>
+                        <button type="button" @click="showDeleteModal = false" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-gray-200">Cancel</button>
                     </div>
                 </div>
             </div>

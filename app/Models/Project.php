@@ -107,4 +107,9 @@ class Project extends Model
     {
         return $this->expenses()->sum('amount');
     }
+
+    public function getNettAttribute()
+    {
+        return $this->grand_total - $this->total_expenses;
+    }
 }

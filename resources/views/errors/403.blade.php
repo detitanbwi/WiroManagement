@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>403 - Akses Ditolak | Wirodev Internal</title>
+    <title>403 - Access Denied | Wirodev Internal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -32,20 +32,20 @@
         </div>
 
         <div class="inline-block px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-widest mb-3">
-            Error 403 &bull; Akses Dibatasi
+            Error 403 &bull; Restricted Access
         </div>
 
         <h1 class="text-3xl font-black tracking-tight text-white mb-3">
-            Akses Ditolak
+            Access Denied
         </h1>
 
         <p class="text-slate-400 text-sm leading-relaxed mb-8 max-w-md mx-auto">
-            {{ $exception?->getMessage() ?: 'Akun Anda tidak memiliki peran atau izin (role) yang diperlukan untuk mengakses modul/halaman ini.' }}
+            {{ $exception?->getMessage() ?: 'Your account does not have the required role or permissions to access this module/page.' }}
         </p>
 
         @auth
         <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 mb-8 text-left max-w-md mx-auto backdrop-blur-xs">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Informasi Akun Anda</div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Account Information</div>
             <div class="flex items-center justify-between">
                 <div>
                     <div class="text-sm font-bold text-white">{{ auth()->user()->name }}</div>
@@ -65,16 +65,16 @@
         <div class="flex items-center justify-center gap-3">
             <a href="{{ route('dashboard') }}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-primary hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-blue-900/50 transition">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                Kembali ke Dashboard
+                Back to Dashboard
             </a>
 
             <a href="javascript:history.back()" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs uppercase tracking-wider transition">
-                Halaman Sebelumnya
+                Previous Page
             </a>
         </div>
 
         <div class="mt-12 text-slate-500 text-xs">
-            &copy; 2026 Wirodev Ecosystem. Hubungi Super Admin jika membutuhkan eskalasi peran.
+            &copy; 2026 Wirodev Ecosystem. Please contact a Super Admin if you need role escalation.
         </div>
     </div>
 </body>

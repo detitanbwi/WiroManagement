@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Quotation')
+@section('title', 'Quotation Details')
 
 <style>
     .rich-text-content ul { list-style-type: disc !important; padding-left: 2rem !important; }
@@ -42,35 +42,35 @@
         <div>
             <a href="{{ route('projects.show', $quotation->project) }}" class="text-sm text-gray-500 hover:text-primary flex items-center">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                Kembali ke Proyek
+                Back to Project
             </a>
             <h1 class="text-2xl font-bold text-gray-800 mt-2">Quotation: {{ $quotation->quotation_number }}</h1>
         </div>
         <div class="flex flex-wrap items-center gap-2">
             @if($quotation->status == 'draft')
                 @can('quotations.manage')
-                <a href="{{ route('quotations.edit', $quotation) }}" class="inline-flex items-center px-4 py-2 bg-amber-500 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-amber-600 transition shadow-sm">
+                <a href="{{ route('quotations.edit', $quotation) }}" class="inline-flex items-center px-4 py-2 bg-amber-500 border border-transparent rounded-lg font-bold text-xs text-white uppercase tracking-wider hover:bg-amber-600 transition shadow-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    EDIT DRAFT
+                    Edit Draft
                 </a>
                 @endcan
             @endif
 
             @if($quotation->status == 'approved')
                 @canany(['quotations.manage', 'invoices.manage'])
-                <form action="{{ route('quotations.convert', $quotation) }}" method="POST" onsubmit="return confirm('Konversi penawaran ini menjadi Invoice?')">
+                <form action="{{ route('quotations.convert', $quotation) }}" method="POST" onsubmit="return confirm('Convert this quotation to an invoice?')">
                     @csrf
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none transition ease-in-out duration-150 shadow-sm">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-bold text-xs text-white uppercase tracking-wider hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none transition shadow-sm">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        KONVERSI KE INVOICE
+                        Convert to Invoice
                     </button>
                 </form>
                 @endcanany
             @endif
             @canany(['quotations.manage', 'finance.view'])
-            <a href="{{ route('documents.quotation.pdf', $quotation) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring ring-red-300 transition ease-in-out duration-150 shadow-sm">
+            <a href="{{ route('documents.quotation.pdf', $quotation) }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg font-bold text-xs uppercase tracking-wider transition-all shadow-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                CETAK PDF
+                Print PDF
             </a>
             @endcanany
         </div>
@@ -91,44 +91,44 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 border-t pt-6">
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Diterbitkan Untuk:</p>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Issued To:</p>
                 <p class="font-bold text-gray-800">{{ $quotation->project->client->name }}</p>
                 <p class="text-sm text-gray-600">{{ $quotation->project->client->company_name }}</p>
             </div>
             <div class="text-left sm:text-right">
-                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Detail Penawaran:</p>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Quotation Details:</p>
                 <p class="text-sm text-gray-600">No: <span class="font-bold text-gray-800">{{ $quotation->quotation_number }}</span></p>
-                <p class="text-sm text-gray-600">Tanggal: <span class="font-bold text-gray-800">{{ $quotation->created_at->format('d F Y') }}</span></p>
+                <p class="text-sm text-gray-600">Date: <span class="font-bold text-gray-800">{{ $quotation->created_at->format('d F Y') }}</span></p>
             </div>
         </div>
 
         <div class="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden mb-8">
             <div class="px-6 py-4 border-b border-gray-200 bg-white">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Rincian Investasi & Pengembangan</h3>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Investment &amp; Scope of Work</h3>
             </div>
             <div class="p-8 bg-white">
                 <div class="mb-8">
                     <h4 class="text-lg font-bold text-gray-800 mb-3">{{ $quotation->project->title }}</h4>
                     <div class="rich-text-content text-sm text-gray-600 leading-relaxed">
-                        {!! $quotation->description ?? 'Penawaran harga resmi untuk pengembangan proyek yang tertera.' !!}
+                        {!! $quotation->description ?? 'Official quotation for the stated project development scope.' !!}
                     </div>
                 </div>
 
                 <div class="flex flex-col md:flex-row md:items-end justify-between pt-8 border-t border-gray-100 gap-6">
                     <div class="space-y-4">
                         <div>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Durasi Pengerjaan</p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Estimated Duration</p>
                             <p class="text-sm font-bold text-gray-700">{{ $quotation->working_duration }}</p>
                         </div>
                         @if ($quotation->warranty_days > 0)
                             <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Garansi Layanan</p>
-                                <p class="text-sm font-bold text-gray-700">{{ $quotation->warranty_days }} Hari</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Service Warranty</p>
+                                <p class="text-sm font-bold text-gray-700">{{ $quotation->warranty_days }} Days</p>
                             </div>
                         @endif
                     </div>
                     <div class="text-right">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Nilai Investasi (Subtotal)</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Investment (Subtotal)</p>
                         <p class="text-3xl font-black text-primary">Rp {{ number_format($quotation->total_amount, 0, ',', '.') }}</p>
                     </div>
                 </div>
@@ -142,20 +142,20 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-gray-800">Lampiran Tambahan</p>
-                        <p class="text-xs text-gray-500">File PDF Lampiran Quotation</p>
+                        <p class="text-sm font-bold text-gray-800">Additional Attachment</p>
+                        <p class="text-xs text-gray-500">Quotation PDF Attachment File</p>
                     </div>
                 </div>
                 <a href="{{ asset('storage/' . $quotation->attachment_pdf) }}" target="_blank" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-50 flex items-center shadow-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    DOWNLOAD
+                    Download
                 </a>
             </div>
         @endif
 
         <div class="flex justify-end mt-12">
             <div class="w-64 text-center">
-                <p class="text-xs text-gray-500 mb-16">Mengetahui,</p>
+                <p class="text-xs text-gray-500 mb-16">Approved by,</p>
                 <p class="font-bold text-gray-800 underline">Administration</p>
                 <p class="text-[10px] text-gray-400 uppercase">Wirodev Finance</p>
             </div>

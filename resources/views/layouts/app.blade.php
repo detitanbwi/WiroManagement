@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -144,14 +144,14 @@
                             @can('finance.bank_accounts')
                             <li>
                                 <a href="{{ route('finance.bank-accounts') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.bank-accounts') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
-                                    Bank Account
+                                    Bank Accounts
                                 </a>
                             </li>
                             @endcan
                             @can('finance.transactions')
                             <li>
                                 <a href="{{ route('finance.transactions') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.transactions') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
-                                    Transaksi
+                                    Transactions
                                 </a>
                             </li>
                             @endcan
@@ -191,7 +191,7 @@
                             <svg class="w-5 h-5 mr-3 {{ request()->routeIs('roles.*') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                             </svg>
-                            Peran & Izin (RBAC)
+                            Roles & Permissions (RBAC)
                         </a>
                     </li>
                     @endcan
@@ -225,7 +225,7 @@
                             <svg class="w-4 h-4 mr-3 text-red-400 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                             </svg>
-                            Keluar Sistem
+                            Log Out
                         </button>
                     </form>
                 </div>
@@ -255,11 +255,22 @@
 
             <!-- Page Content -->
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-indigo-50/90 via-blue-50/60 to-teal-50/70 p-3 sm:p-4 md:p-6 relative">
-                <!-- Notification Toast (Auto-dismiss) -->
+                <!-- Notification Toast (Auto-dismiss & No Back-Navigation Stacking) -->
                 @if(session('success') || session('error'))
                     <div x-data="{ show: true }" 
                          x-show="show" 
-                         x-init="setTimeout(() => show = false, 4000)"
+                         x-init="
+                            if (window.performance && window.performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {
+                                show = false;
+                            } else {
+                                setTimeout(() => show = false, 4000);
+                            }
+                            window.addEventListener('pageshow', (event) => {
+                                if (event.persisted) {
+                                    show = false;
+                                }
+                            });
+                         "
                          x-transition:enter="transition ease-out duration-300"
                          x-transition:enter-start="opacity-0 transform translate-x-8"
                          x-transition:enter-end="opacity-100 transform translate-x-0"
@@ -278,7 +289,7 @@
                             </div>
                             <div class="ml-3 flex-1">
                                 <p class="text-xs sm:text-sm font-bold text-gray-900 leading-none">
-                                    {{ session('success') ? 'Sukses!' : 'Perhatian!' }}
+                                    {{ session('success') ? 'Success!' : 'Attention!' }}
                                 </p>
                                 <p class="mt-1 text-xs sm:text-sm text-gray-500">
                                     {{ session('success') ?? session('error') }}
