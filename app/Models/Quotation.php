@@ -34,13 +34,11 @@ class Quotation extends Model
     public static function generateNextNumber(Project $project): string
     {
         $projectYear = $project->created_at ? $project->created_at->format('Y') : date('Y');
-        $projectSeq = Project::whereYear('created_at', $projectYear)->where('id', '<=', $project->id)->count();
-        $projectRef = str_pad($projectSeq > 0 ? $projectSeq : $project->id, 3, '0', STR_PAD_LEFT);
+        $projectRef = $project->getProjectRef();
         $prefix = "QUO/WIRODEV/{$projectYear}/{$projectRef}/";
 
-        // Query all existing numbers matching this prefix or belonging to this project
-        $existing = self::where('quotation_number', 'LIKE', "{$prefix}%")
-            ->orWhere('project_id', $project->id)
+        // Query existing quotations belonging to this project
+        $existing = $project->quotations()
             ->pluck('quotation_number')
             ->toArray();
 
@@ -54,7 +52,7 @@ class Quotation extends Model
             }
         }
 
-        $nextSeq = max($maxSeq + 1, self::where('project_id', $project->id)->count() + 1);
+        $nextSeq = $maxSeq + 1;
         $candidate = $prefix . str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
 
         // Ensure candidate is globally unique in the table

@@ -112,4 +112,69 @@ class Project extends Model
     {
         return $this->grand_total - $this->total_expenses;
     }
+
+    /**
+     * Get or determine the unique 3-digit project reference code for this project.
+     * e.g. '001', '012', '013'
+     */
+    public function getProjectRef(): string
+    {
+        $year = $this->created_at ? $this->created_at->format('Y') : date('Y');
+
+        // 1. If project has existing quotation with standard format, reuse that ref
+        $quo = $this->quotations()->where('quotation_number', 'LIKE', "%/WIRODEV/{$year}/%")->first();
+        if ($quo && preg_match('/\/WIRODEV\/\d{4}\/(\d{3})\//', $quo->quotation_number, $m)) {
+            return $m[1];
+        }
+
+        // 2. If project has existing invoice with standard format, reuse that ref
+        $inv = $this->invoices()->where('invoice_number', 'LIKE', "%/WIRODEV/{$year}/%")->first();
+        if ($inv && preg_match('/\/WIRODEV\/\d{4}\/(\d{3})\//', $inv->invoice_number, $m)) {
+            return $m[1];
+        }
+
+        // 3. Find the highest project ref allocated for this year across all existing docs
+        $maxRef = 0;
+        $lastDocProjectId = 0;
+
+        $allQuos = Quotation::where('quotation_number', 'LIKE', "%/WIRODEV/{$year}/%")->get();
+        foreach ($allQuos as $q) {
+            if (preg_match('/\/WIRODEV\/\d{4}\/(\d{3})\//', $q->quotation_number, $m)) {
+                $ref = (int)$m[1];
+                if ($ref > $maxRef) {
+                    $maxRef = $ref;
+                }
+                if ($q->project_id > $lastDocProjectId) {
+                    $lastDocProjectId = $q->project_id;
+                }
+            }
+        }
+
+        $allInvs = Invoice::where('invoice_number', 'LIKE', "%/WIRODEV/{$year}/%")->get();
+        foreach ($allInvs as $i) {
+            if (preg_match('/\/WIRODEV\/\d{4}\/(\d{3})\//', $i->invoice_number, $m)) {
+                $ref = (int)$m[1];
+                if ($ref > $maxRef) {
+                    $maxRef = $ref;
+                }
+                if ($i->project_id > $lastDocProjectId) {
+                    $lastDocProjectId = $i->project_id;
+                }
+            }
+        }
+
+        if ($maxRef > 0 && $lastDocProjectId > 0 && $this->id > $lastDocProjectId) {
+            $offset = self::whereYear('created_at', $year)
+                ->where('id', '>', $lastDocProjectId)
+                ->where('id', '<=', $this->id)
+                ->count();
+            $candidateRef = $maxRef + $offset;
+        } else {
+            $candidateRef = self::whereYear('created_at', $year)
+                ->where('id', '<=', $this->id)
+                ->count();
+        }
+
+        return str_pad(max(1, $candidateRef), 3, '0', STR_PAD_LEFT);
+    }
 }
