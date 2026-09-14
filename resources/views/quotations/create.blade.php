@@ -21,12 +21,7 @@
                 <div class="col-span-1">
                     <label for="quotation_number" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Quotation No.</label>
                     @php
-                        $projectYear = $project->created_at ? $project->created_at->format('Y') : date('Y');
-                        $projectSeq = \App\Models\Project::whereYear('created_at', $projectYear)->where('id', '<=', $project->id)->count();
-                        $projectRef = str_pad($projectSeq, 3, '0', STR_PAD_LEFT);
-                        $quoSeq = \App\Models\Quotation::where('project_id', $project->id)->count() + 1;
-                        $quoRef = str_pad($quoSeq, 2, '0', STR_PAD_LEFT);
-                        $defaultNo = "QUO/WIRODEV/" . $projectYear . "/" . $projectRef . "/" . $quoRef;
+                        $defaultNo = \App\Models\Quotation::generateNextNumber($project);
                     @endphp
                     <input type="text" name="quotation_number" id="quotation_number" value="{{ old('quotation_number', $defaultNo) }}" required
                         class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
@@ -73,18 +68,19 @@
                         return new Intl.NumberFormat('id-ID').format(val);
                     },
                     parseNumber(val) {
-                        return val.replace(/\D/g, '') || '0';
+                        let num = val.replace(/\D/g, '');
+                        return num ? parseInt(num) : 0;
                     }
                 }">
                     <label for="display_total" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Total Quotation Value (Rp)</label>
                     <div class="relative mt-1 rounded-md shadow-sm">
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <span class="text-gray-500 sm:text-sm font-bold">Rp</span>
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                            <span class="text-gray-400 font-bold sm:text-sm">Rp</span>
                         </div>
                         <input type="text" id="display_total" 
                             :value="formatThousand(rawTotal)"
                             @input="rawTotal = parseNumber($event.target.value)"
-                            class="block w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary pl-10 sm:text-sm p-3 border font-black text-primary text-lg" placeholder="0">
+                            class="block w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary pl-12 sm:text-lg p-4 border font-black text-primary" placeholder="0">
                         <input type="hidden" name="total_amount" :value="rawTotal">
                     </div>
                     @error('total_amount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -93,7 +89,7 @@
                 <div class="col-span-2">
                     <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Scope of Work / Description</label>
                     <div class="bg-white">
-                        <textarea name="description" id="editor-description" style="height: 250px;">{!! old('description', $project->description) !!}</textarea>
+                        <textarea name="description" id="editor-description" style="height: 250px;">{!! old('description', $settings['quotation_notes'] ?? '') !!}</textarea>
                     </div>
                     @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -112,12 +108,9 @@
                     Cancel
                 </a>
                 <button type="submit" class="px-6 py-2 bg-primary border border-transparent rounded-md font-bold text-sm text-white uppercase tracking-widest hover:bg-blue-700 transition">
-                    Save Quotation
+                    Save
                 </button>
             </div>
-        </form>
-    </div>
-</div>
         </form>
     </div>
 </div>

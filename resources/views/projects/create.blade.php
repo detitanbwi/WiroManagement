@@ -38,7 +38,7 @@
                     @error('title') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="status" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Initial Status</label>
                         <select name="status" id="status" required class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
@@ -54,12 +54,6 @@
                         <label for="start_date" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Start Date</label>
                         <input type="date" name="start_date" id="start_date" value="{{ old('start_date') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
                         @error('start_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label for="end_date" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Target Completion</label>
-                        <input type="date" name="end_date" id="end_date" value="{{ old('end_date') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border">
-                        @error('end_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </div>

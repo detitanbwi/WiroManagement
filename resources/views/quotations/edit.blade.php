@@ -113,7 +113,7 @@
                     Cancel
                 </a>
                 <button type="submit" class="px-6 py-2 bg-primary border border-transparent rounded-md font-bold text-sm text-white uppercase tracking-widest hover:bg-blue-700 transition shadow-md">
-                    Update Quotation
+                    Save
                 </button>
             </div>
         </form>

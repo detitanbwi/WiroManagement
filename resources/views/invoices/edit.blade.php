@@ -197,7 +197,7 @@
                 Cancel
             </a>
             <button type="submit" class="px-10 py-3 bg-primary border border-transparent rounded-md font-black text-xs text-white uppercase tracking-[0.2em] hover:bg-blue-800 transition shadow-lg">
-                Save Changes
+                Save
             </button>
         </div>
     </form>

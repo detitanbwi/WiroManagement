@@ -116,18 +116,15 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Invoice No.</label>
                             @php
-                                $projectYear = $project->created_at ? $project->created_at->format('Y') : date('Y');
-                                $projectSeq = \App\Models\Project::whereYear('created_at', $projectYear)->where('id', '<=', $project->id)->count();
-                                $projectRef = str_pad($projectSeq, 3, '0', STR_PAD_LEFT);
-                                $invSeq = \App\Models\Invoice::where('project_id', $project->id)->count() + 1;
-                                $invRef = str_pad($invSeq, 2, '0', STR_PAD_LEFT);
-                                $defaultInvoiceNumber = "INV/WIRODEV/" . $projectYear . "/" . $projectRef . "/" . $invRef;
+                                $defaultInvoiceNumber = \App\Models\Invoice::generateNextNumber($project);
                             @endphp
-                            <input type="text" name="invoice_number" required value="{{ $defaultInvoiceNumber }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
+                            <input type="text" name="invoice_number" required value="{{ old('invoice_number', $defaultInvoiceNumber) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold">
+                            @error('invoice_number') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Issue Date</label>
-                            <input type="date" name="issued_date" required value="{{ date('Y-m-d') }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
+                            <input type="date" name="issued_date" required value="{{ old('issued_date', date('Y-m-d')) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-gray-700">
+                            @error('issued_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <div class="flex items-center justify-between mb-2">
@@ -138,11 +135,12 @@
                                 </label>
                             </div>
                             <div x-show="hasDueDate" x-transition>
-                                <input type="date" name="due_date" :required="hasDueDate" :disabled="!hasDueDate" value="{{ date('Y-m-d', strtotime('+7 days')) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
+                                <input type="date" name="due_date" :required="hasDueDate" :disabled="!hasDueDate" value="{{ old('due_date', date('Y-m-d', strtotime('+7 days'))) }}" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-3 border font-bold text-red-600">
                             </div>
                             <div x-show="!hasDueDate" class="text-xs text-gray-400 italic p-3 border border-dashed rounded bg-gray-50">
                                 No Due Date
                             </div>
+                            @error('due_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -186,7 +184,7 @@
                             </div>
                         </div>
 
-                        <div class="border-t-2 border-dashed border-gray-100 mt-4 pt-4 flex justify-between items-center">
+                        <div class="border-t border-gray-200 pt-3 flex justify-between items-center">
                             <span class="text-xs font-black text-gray-800 uppercase">Grand Total</span>
                             <span class="text-xl font-black text-primary">Rp <span x-text="numberFormat(total)"></span></span>
                         </div>
@@ -194,7 +192,7 @@
                     
                     <button type="submit" class="w-full mt-8 bg-primary text-white font-bold py-4 rounded-xl hover:bg-blue-800 transition shadow-lg shadow-blue-100 uppercase tracking-widest text-xs flex items-center justify-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Issue Invoice
+                        Save
                     </button>
                 </div>
             </div>
