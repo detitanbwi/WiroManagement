@@ -315,7 +315,18 @@ class User extends Authenticatable
             return true;
         }
 
-        return in_array($permissionName, $this->getPermissionNames(), true);
+        if (in_array($permissionName, $this->getPermissionNames(), true)) {
+            return true;
+        }
+
+        // Safe fallback for qc.comments: anyone who can access QC board or internal user can comment
+        if ($permissionName === 'qc.comments') {
+            return in_array('qc.view', $this->getPermissionNames(), true)
+                || in_array('projects.qc', $this->getPermissionNames(), true)
+                || $this->isInternal();
+        }
+
+        return false;
     }
 
     /**
@@ -331,6 +342,13 @@ class User extends Authenticatable
 
         foreach ($permissionNames as $perm) {
             if (in_array($perm, $allPermissionNames, true)) {
+                return true;
+            }
+            if ($perm === 'qc.comments' && (
+                in_array('qc.view', $allPermissionNames, true)
+                || in_array('projects.qc', $allPermissionNames, true)
+                || $this->isInternal()
+            )) {
                 return true;
             }
         }

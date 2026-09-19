@@ -76,6 +76,7 @@ class QcController extends Controller
                 'title' => $task->title,
                 'description' => $task->description,
                 'assignee' => $task->assignee ? $task->assignee->name : 'Unassigned',
+                'assignee_id' => $task->assignee_id,
                 'column_id' => $task->column_id,
                 'attachment_path' => $task->attachment_path,
                 'hasActiveBug' => $hasActiveBug,
@@ -171,7 +172,7 @@ class QcController extends Controller
                         ] : null,
                         'created_at' => $comment->created_at ? $comment->created_at->format('d M Y, H:i') : null,
                         'created_at_human' => $comment->created_at ? $comment->created_at->diffForHumans() : null,
-                        'can_delete' => auth()->id() === $comment->user_id || in_array(auth()->user()?->role, ['superadmin', 'admin']),
+                        'can_delete' => auth()->id() === $comment->user_id || (auth()->user() && auth()->user()->hasAnyRole(['superadmin', 'admin'])),
                     ];
                 })->values()
             ];
@@ -190,6 +191,17 @@ class QcController extends Controller
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240' // 10MB max
         ]);
 
+        // Staff role can only create tasks up to ready_for_qc
+        if (auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc'])) {
+            $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
+            if (!in_array($request->column_id, $allowedStaffColumns)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Role Staff hanya dapat membuat task pada kolom To Do, In Progress, atau Ready for QC.',
+                ], 403);
+            }
+        }
+
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
             $attachmentPath = $request->file('attachment')->store('attachments/tasks', 'public');
@@ -205,7 +217,65 @@ class QcController extends Controller
             'attachment_path' => $attachmentPath
         ]);
 
-        return response()->json(['success' => true, 'task' => $task]);
+        return response()->json([
+            'success' => true,
+            'task' => $task->load('assignee')
+        ]);
+    }
+
+    public function updateTask(Request $request, ProjectTask $task)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'assignee_id' => 'nullable|exists:users,id',
+            'column_id' => 'required|in:todo,in_progress,ready_for_qc,qc_in_progress,done',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240' // 10MB max
+        ]);
+
+        // Staff role can only edit tasks within allowed columns (todo, in_progress, ready_for_qc)
+        if (auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc'])) {
+            $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
+            if (!in_array($task->column_id, $allowedStaffColumns) || !in_array($request->column_id, $allowedStaffColumns)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Role Staff hanya dapat mengedit task pada kolom To Do, In Progress, atau Ready for QC.',
+                ], 403);
+            }
+        }
+
+        // Marking as done requires execute tests permission
+        if ($request->column_id === 'done' && $task->column_id !== 'done') {
+            if (!auth()->user()->can('qc.execute_tests')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Anda tidak memiliki izin untuk menandai Pass QC.',
+                ], 403);
+            }
+        }
+
+        $data = [
+            'title' => $request->title,
+            'description' => $request->description,
+            'assignee_id' => $request->assignee_id,
+            'column_id' => $request->column_id,
+        ];
+
+        if ($request->hasFile('attachment')) {
+            $data['attachment_path'] = $request->file('attachment')->store('attachments/tasks', 'public');
+        }
+
+        $task->update($data);
+
+        // When a task is marked as done (passed QC), update all associated test cases to passed and resolve bugs
+        if ($request->column_id === 'done') {
+            $this->markTaskTestCasesAsPassed($task);
+        }
+
+        return response()->json([
+            'success' => true,
+            'task' => $task->fresh()->load('assignee')
+        ]);
     }
 
     public function updateTaskColumn(Request $request, ProjectTask $task)
@@ -220,6 +290,17 @@ class QcController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Akses ditolak. Anda tidak memiliki izin untuk menandai Pass QC.',
+                ], 403);
+            }
+        }
+
+        // Staff role can only move tasks up to ready_for_qc
+        if (auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc'])) {
+            $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
+            if (!in_array($task->column_id, $allowedStaffColumns) || !in_array($request->column_id, $allowedStaffColumns)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Role Staff hanya dapat mengubah posisi task hingga Ready for QC.',
                 ], 403);
             }
         }
@@ -747,6 +828,13 @@ class QcController extends Controller
 
     public function destroyTask(ProjectTask $task)
     {
+        if (auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Role Staff tidak memiliki izin untuk menghapus task.',
+            ], 403);
+        }
+
         if ($task->attachment_path) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($task->attachment_path);
         }
@@ -779,7 +867,7 @@ class QcController extends Controller
                 ] : null,
                 'created_at' => $comment->created_at ? $comment->created_at->format('d M Y, H:i') : null,
                 'created_at_human' => $comment->created_at ? $comment->created_at->diffForHumans() : null,
-                'can_delete' => auth()->id() === $comment->user_id || in_array(auth()->user()?->role, ['superadmin', 'admin']),
+                'can_delete' => auth()->id() === $comment->user_id || (auth()->user() && auth()->user()->hasAnyRole(['superadmin', 'admin'])),
             ];
         });
 
@@ -827,7 +915,7 @@ class QcController extends Controller
 
     public function destroyTaskComment(TaskComment $comment)
     {
-        if (auth()->id() !== $comment->user_id && !in_array(auth()->user()?->role, ['superadmin', 'admin'])) {
+        if (auth()->id() !== $comment->user_id && !(auth()->user() && auth()->user()->hasAnyRole(['superadmin', 'admin']))) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 

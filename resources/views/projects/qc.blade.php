@@ -52,27 +52,80 @@
                 <div class="flex h-full space-x-6 min-w-max pb-4">
                     <!-- Columns mapped via Alpine -->
             <template x-for="column in columns" :key="column.id">
-                <div class="w-80 flex flex-col max-h-full bg-gray-100/50 rounded-xl border border-gray-200 shrink-0">
+                <div class="w-80 flex flex-col max-h-full bg-gray-100/50 rounded-xl border border-gray-200 shrink-0 transition-all duration-150"
+                     :class="{
+                         'ring-2 ring-blue-500 bg-blue-50/50 border-blue-400 shadow-md': dragOverColumn === column.id && draggedTask?.column_id !== column.id,
+                         'opacity-90': dragOverColumn === column.id && draggedTask?.column_id === column.id
+                     }"
+                     @dragover.prevent="handleTaskDragOver(column.id, $event)"
+                     @dragleave="handleTaskDragLeave(column.id, $event)"
+                     @drop.prevent="dropTaskOnColumn(column.id)">
                     <div class="px-4 py-3 border-b border-gray-200/80 bg-gray-100 rounded-t-xl shrink-0 flex justify-between items-center">
                         <h3 class="font-semibold text-gray-700 text-sm tracking-wide" x-text="column.title"></h3>
-                        <span class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full font-medium" x-text="getTasksByColumn(column.id).length"></span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full font-medium" x-text="getTasksByColumn(column.id).length"></span>
+                            <button 
+                                x-show="permissions.canManageTasks && (!permissions.isStaffOnly || (column.id !== 'qc_in_progress' && column.id !== 'done'))"
+                                @click.stop="openNewTaskModal(column.id)"
+                                type="button"
+                                :title="'Add task to ' + column.title"
+                                class="p-1 hover:bg-gray-200 text-gray-500 hover:text-gray-800 rounded transition-colors"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            </button>
+                        </div>
                     </div>
                     
-                    <div class="p-3 flex-1 overflow-y-auto space-y-3">
+                    <div class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[140px]">
+                        <!-- Drop indicator placeholder when dragging over column -->
+                        <div x-show="dragOverColumn === column.id && draggedTask?.column_id !== column.id"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             class="border-2 border-dashed border-blue-400 bg-blue-50/70 rounded-lg p-3 text-center text-xs font-semibold text-blue-600">
+                            Drop to move to <span x-text="column.title"></span>
+                        </div>
+
                         <template x-for="task in getTasksByColumn(column.id)" :key="task.id">
                             <!-- Task Card -->
                             <div 
+                                :draggable="permissions.canManageTasks && (!permissions.isStaffOnly || (task.column_id !== 'qc_in_progress' && task.column_id !== 'done'))"
+                                @dragstart="startTaskDrag(task, $event)"
+                                @dragend="endTaskDrag()"
                                 @click="openTaskModal(task)"
-                                class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:border-gray-300 hover:shadow transition-all group cursor-pointer"
+                                class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:border-gray-300 hover:shadow transition-all group select-none"
+                                :class="{
+                                    'cursor-grab active:cursor-grabbing': permissions.canManageTasks && (!permissions.isStaffOnly || (task.column_id !== 'qc_in_progress' && task.column_id !== 'done')),
+                                    'cursor-pointer': !permissions.canManageTasks || (permissions.isStaffOnly && (task.column_id === 'qc_in_progress' || task.column_id === 'done')),
+                                    'opacity-40 scale-95 border-dashed border-blue-300': draggedTask?.id === task.id
+                                }"
                             >
                                 <div class="flex justify-between items-start mb-1.5">
-                                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider font-mono" x-text="task.code"></span>
-                                    <template x-if="task.hasActiveBug">
-                                        <span class="inline-flex items-center gap-1 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded border border-red-200">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                            BLOCKED
-                                        </span>
-                                    </template>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg x-show="permissions.canManageTasks" class="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 cursor-grab shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Drag to move task">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                                        </svg>
+                                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider font-mono" x-text="task.code"></span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button 
+                                            x-show="permissions.canManageTasks && (!permissions.isStaffOnly || (task.column_id !== 'qc_in_progress' && task.column_id !== 'done'))"
+                                            @click.stop="openEditTaskModal(task)"
+                                            type="button"
+                                            class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 p-0.5 hover:bg-blue-50 rounded transition-all"
+                                            title="Edit Task"
+                                        >
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
+                                        <template x-if="task.hasActiveBug">
+                                            <span class="inline-flex items-center gap-1 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded border border-red-200">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                                BLOCKED
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
                                 <h4 class="text-sm font-semibold text-gray-900 mb-2 leading-snug line-clamp-2" x-text="task.title"></h4>
                                 <template x-if="task.source_test_case">
@@ -89,13 +142,15 @@
                                         <span class="text-xs text-gray-500 font-medium truncate max-w-[110px]" x-text="task.assignee"></span>
                                     </div>
 
-                                    <!-- Comment Counter Badge -->
-                                    <template x-if="task.comments_count > 0">
-                                        <div class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" title="Komentar / Percakapan">
-                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                            <span x-text="task.comments_count"></span>
-                                        </div>
-                                    </template>
+                                    <!-- Comment Counter & Discussion Button -->
+                                    <button type="button" 
+                                            @click.stop="openTaskModal(task, 'comments')"
+                                            class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-all cursor-pointer"
+                                            :class="task.comments_count > 0 ? 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100' : 'text-gray-400 bg-gray-50 border-gray-200 hover:bg-gray-100 hover:text-gray-600'"
+                                            title="Diskusi & Komentar">
+                                        <svg class="w-3.5 h-3.5" :class="task.comments_count > 0 ? 'text-blue-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                        <span x-text="task.comments_count || 0"></span>
+                                    </button>
                                 </div>
                             </div>
                         </template>
@@ -591,22 +646,22 @@
                                             <svg x-show="movingToColumn === 'in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'in_progress' ? 'Moving...' : '&larr; Back to In Progress'"></span>
                                         </button>
-                                        <button @click="updateTaskColumn(activeTask.id, 'qc_in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 transition-colors">
+                                        <button x-show="!permissions.isStaffOnly" @click="updateTaskColumn(activeTask.id, 'qc_in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 transition-colors">
                                             <svg x-show="movingToColumn === 'qc_in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'qc_in_progress' ? 'Moving...' : 'Start QC Process &rarr;'"></span>
                                         </button>
                                     </div>
                                 </template>
                                 
-                                <template x-if="activeTask?.column_id === 'qc_in_progress'">
+                                <template x-if="activeTask?.column_id === 'qc_in_progress' && !permissions.isStaffOnly">
                                     <div class="flex gap-2">
                                         <button @click="updateTaskColumn(activeTask.id, 'ready_for_qc')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                             <svg x-show="movingToColumn === 'ready_for_qc'" class="animate-spin mr-1.5 h-3 w-3 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'ready_for_qc' ? 'Moving...' : '&larr; Back to Ready for QC'"></span>
                                         </button>
-                                        <button @click="updateTaskColumn(activeTask.id, 'in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded shadow-sm text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
-                                            <svg x-show="movingToColumn === 'in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                            <span x-text="movingToColumn === 'in_progress' ? 'Moving...' : '&#x21BA; Return to Developer'"></span>
+                                        <button @click="updateTaskColumn(activeTask.id, 'todo')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded shadow-sm text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
+                                            <svg x-show="movingToColumn === 'todo'" class="animate-spin mr-1.5 h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <span x-text="movingToColumn === 'todo' ? 'Moving...' : '&#x21BA; Return to Developer'"></span>
                                         </button>
                                         <button x-show="permissions.canExecuteTests" @click="updateTaskColumn(activeTask.id, 'done')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3.5 py-1.5 border border-transparent text-xs font-bold rounded shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors">
                                             <svg x-show="movingToColumn === 'done'" class="animate-spin mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -615,7 +670,7 @@
                                     </div>
                                 </template>
                                 
-                                <template x-if="activeTask?.column_id === 'done'">
+                                <template x-if="activeTask?.column_id === 'done' && !permissions.isStaffOnly">
                                     <button @click="updateTaskColumn(activeTask.id, 'qc_in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                         <svg x-show="movingToColumn === 'qc_in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                         <span x-text="movingToColumn === 'qc_in_progress' ? 'Moving...' : '&larr; Reopen (Back to QC)'"></span>
@@ -624,7 +679,18 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button x-show="permissions.canManageTasks" @click="deleteTask(activeTask.id)" type="button" class="bg-red-50 p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors focus:outline-none" title="Delete Task">
+                            <button 
+                                x-show="permissions.canManageTasks && (!permissions.isStaffOnly || (activeTask?.column_id !== 'qc_in_progress' && activeTask?.column_id !== 'done'))"
+                                @click="openEditTaskModal(activeTask)"
+                                type="button" 
+                                class="bg-blue-50 p-1.5 rounded-md text-blue-600 hover:text-blue-800 hover:bg-blue-100 transition-colors focus:outline-none" 
+                                title="Edit Task"
+                            >
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button x-show="permissions.canManageTasks && !permissions.isStaffOnly" @click="deleteTask(activeTask.id)" type="button" class="bg-red-50 p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors focus:outline-none" title="Delete Task">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                             <button @click="closeTaskModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
@@ -1182,7 +1248,7 @@
                  class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200">
                 
                 <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title" x-text="editingTaskId ? 'Edit Task' : 'Create New Task'">
                         Create New Task
                     </h3>
                     <button @click="closeNewTaskModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
@@ -1220,15 +1286,26 @@
                                     <option value="todo">To Do</option>
                                     <option value="in_progress">In Progress</option>
                                     <option value="ready_for_qc">Ready for QC</option>
+                                    @if(!auth()->user()->hasRole('staff') || auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc']))
                                     <option value="qc_in_progress">QC in Progress</option>
                                     <option value="done">Done</option>
+                                    @endif
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Attachment (Optional)</label>
+                                <template x-if="editingTaskId && existingAttachment">
+                                    <div class="mb-2 flex items-center justify-between text-xs text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded border border-blue-200">
+                                        <div class="flex items-center gap-1.5 truncate">
+                                            <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                            <span class="text-gray-600">Lampiran saat ini:</span>
+                                            <a :href="'/storage/' + existingAttachment" target="_blank" class="font-semibold underline hover:text-blue-900 truncate" x-text="existingAttachment.split('/').pop()"></a>
+                                        </div>
+                                    </div>
+                                </template>
                                 <input type="file" id="task_attachment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md shadow-sm outline-none cursor-pointer">
-                                <p class="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOCX up to 10MB</p>
+                                <p class="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOCX up to 10MB <span x-show="editingTaskId && existingAttachment" class="text-gray-400">(Kosongkan jika tidak ingin mengganti)</span></p>
                             </div>
                         </div>
 
@@ -1236,9 +1313,9 @@
                             <button type="button" @click="closeNewTaskModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                                 Cancel
                             </button>
-                            <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmitting" :class="{'opacity-50 cursor-not-allowed': isSubmitting}">
-                                <span x-show="!isSubmitting">Save Task</span>
-                                <span x-show="isSubmitting">Saving...</span>
+                            <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmittingTask" :class="{'opacity-50 cursor-not-allowed': isSubmittingTask}">
+                                <span x-show="!isSubmittingTask" x-text="editingTaskId ? 'Update Task' : 'Save Task'">Save Task</span>
+                                <span x-show="isSubmittingTask" x-text="editingTaskId ? 'Updating...' : 'Saving...'">Saving...</span>
                             </button>
                         </div>
                     </form>
@@ -1990,7 +2067,8 @@ function qcDashboard() {
             canManageTestCases: {{ auth()->user()->can('qc.manage_test_cases') ? 'true' : 'false' }},
             canExecuteTests: {{ auth()->user()->can('qc.execute_tests') ? 'true' : 'false' }},
             canManageBugs: {{ auth()->user()->can('qc.manage_bugs') ? 'true' : 'false' }},
-            canComment: {{ auth()->user()->can('qc.comments') ? 'true' : 'false' }},
+            canComment: {{ (auth()->user()->can('qc.comments') || auth()->user()->can('qc.view') || auth()->user()->can('projects.qc') || auth()->user()->isInternal()) ? 'true' : 'false' }},
+            isStaffOnly: {{ auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc']) ? 'true' : 'false' }},
         },
         columns: [
             { id: 'todo', title: 'To Do' },
@@ -2053,7 +2131,9 @@ function qcDashboard() {
         projectId: '{{ $project->id }}',
 
         isNewTaskModalOpen: false,
-        isSubmitting: false,
+        editingTaskId: null,
+        existingAttachment: null,
+        isSubmittingTask: false,
         isMovingTask: false,
         movingToColumn: null,
         newTask: {
@@ -2196,6 +2276,68 @@ function qcDashboard() {
                 this.dragOverTarget = null;
                 this.dragOverPosition = null;
             }
+        },
+
+        // Kanban Task Drag and Drop State & Methods
+        draggedTask: null,
+        dragOverColumn: null,
+
+        startTaskDrag(task, event) {
+            if (!this.permissions.canManageTasks) return;
+            if (this.permissions.isStaffOnly && (task.column_id === 'qc_in_progress' || task.column_id === 'done')) {
+                return;
+            }
+            this.draggedTask = task;
+            event.dataTransfer.effectAllowed = 'move';
+            try {
+                event.dataTransfer.setData('text/plain', String(task.id));
+            } catch (e) {}
+        },
+
+        handleTaskDragOver(columnId, event) {
+            if (!this.permissions.canManageTasks || !this.draggedTask) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            this.dragOverColumn = columnId;
+        },
+
+        handleTaskDragLeave(columnId, event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                if (this.dragOverColumn === columnId) {
+                    this.dragOverColumn = null;
+                }
+            }
+        },
+
+        endTaskDrag() {
+            this.draggedTask = null;
+            this.dragOverColumn = null;
+        },
+
+        async dropTaskOnColumn(targetColumnId) {
+            if (!this.permissions.canManageTasks || !this.draggedTask) return;
+            const taskToMove = this.draggedTask;
+            const currentColumn = taskToMove.column_id;
+            this.endTaskDrag();
+
+            if (currentColumn === targetColumnId) {
+                return;
+            }
+
+            if (this.permissions.isStaffOnly) {
+                const allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
+                if (!allowedStaffColumns.includes(currentColumn) || !allowedStaffColumns.includes(targetColumnId)) {
+                    this.showError('Akses ditolak. Role Staff hanya dapat mengubah posisi task hingga Ready for QC.');
+                    return;
+                }
+            }
+
+            if (targetColumnId === 'done' && !this.permissions.canExecuteTests) {
+                this.showError('Akses ditolak. Anda tidak memiliki izin untuk menandai Pass QC.');
+                return;
+            }
+
+            await this.updateTaskColumn(taskToMove.id, targetColumnId);
         },
 
         init() {
@@ -2746,10 +2888,16 @@ function qcDashboard() {
             }
         },
 
-        openTaskModal(task) {
+        openTaskModal(task, initialTab = null) {
             this.activeTask = task;
             this.activeTaskComments = task.comments || [];
-            this.activeTab = 'test_cases';
+            if (initialTab) {
+                this.activeTab = initialTab;
+            } else if (task.testCases && task.testCases.length > 0) {
+                this.activeTab = 'test_cases';
+            } else {
+                this.activeTab = 'details';
+            }
             this.isTaskModalOpen = true;
             this.newCommentText = '';
             this.newCommentFile = null;
@@ -2766,10 +2914,10 @@ function qcDashboard() {
             }, 300);
         },
 
-        openTaskModalById(taskId) {
+        openTaskModalById(taskId, initialTab = null) {
             const task = this.tasks.find(t => t.id === taskId);
             if (task) {
-                this.openTaskModal(task);
+                this.openTaskModal(task, initialTab);
             }
         },
 
@@ -2979,41 +3127,101 @@ function qcDashboard() {
 
         async openNewTaskModal(columnId = 'todo') {
             if (!this.permissions.canManageTasks) return;
-            this.newTaskForm = {
+            if (this.permissions.isStaffOnly && (columnId === 'qc_in_progress' || columnId === 'done')) {
+                columnId = 'todo';
+            }
+            this.editingTaskId = null;
+            this.existingAttachment = null;
+            this.newTask = {
                 title: '',
                 description: '',
                 assignee_id: '',
                 column_id: columnId
             };
+            const fileInput = document.getElementById('task_attachment');
+            if (fileInput) fileInput.value = '';
+            this.isNewTaskModalOpen = true;
+        },
+
+        openEditTaskModal(task) {
+            if (!this.permissions.canManageTasks) return;
+            if (this.permissions.isStaffOnly && (task.column_id === 'qc_in_progress' || task.column_id === 'done')) {
+                this.showError('Role Staff tidak dapat mengedit task pada kolom QC in Progress atau Done.');
+                return;
+            }
+            this.editingTaskId = task.id;
+            this.existingAttachment = task.attachment_path || null;
+            this.newTask = {
+                title: task.title || '',
+                description: task.description || '',
+                assignee_id: task.assignee_id ? String(task.assignee_id) : '',
+                column_id: task.column_id || 'todo'
+            };
+            const fileInput = document.getElementById('task_attachment');
+            if (fileInput) fileInput.value = '';
             this.isNewTaskModalOpen = true;
         },
 
         closeNewTaskModal() {
+            this.editingTaskId = null;
+            this.existingAttachment = null;
             this.isNewTaskModalOpen = false;
         },
 
         async submitNewTask() {
             if (!this.permissions.canManageTasks || this.isSubmittingTask) return;
+            if (!this.newTask.title || !this.newTask.title.trim()) {
+                this.showError('Judul task wajib diisi.');
+                return;
+            }
             this.isSubmittingTask = true;
             try {
-                const response = await fetch(`/api/projects/${this.projectId}/qc/tasks`, {
+                const formData = new FormData();
+                formData.append('title', this.newTask.title.trim());
+                if (this.newTask.description) {
+                    formData.append('description', this.newTask.description.trim());
+                }
+                if (this.newTask.assignee_id) {
+                    formData.append('assignee_id', this.newTask.assignee_id);
+                }
+                formData.append('column_id', this.newTask.column_id || 'todo');
+
+                const fileInput = document.getElementById('task_attachment');
+                if (fileInput && fileInput.files[0]) {
+                    formData.append('attachment', fileInput.files[0]);
+                }
+
+                const url = this.editingTaskId 
+                    ? `/api/qc/tasks/${this.editingTaskId}` 
+                    : `/api/projects/${this.projectId}/qc/tasks`;
+
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify(this.newTaskForm)
+                    body: formData
                 });
 
-                if (response.ok) {
+                const data = await response.json();
+                if (response.ok && data.success) {
                     await this.fetchTasks();
-                    this.isNewTaskModalOpen = false;
+                    if (this.editingTaskId && this.activeTask && this.activeTask.id === this.editingTaskId) {
+                        const updated = this.tasks.find(t => t.id === this.editingTaskId);
+                        if (updated) {
+                            this.activeTask = updated;
+                        }
+                    }
+                    const msg = this.editingTaskId ? 'Task berhasil diperbarui.' : 'Task berhasil dibuat.';
+                    this.closeNewTaskModal();
+                    this.showSuccess(msg);
                 } else {
-                    this.showError('Failed to save new task.');
+                    this.showError(data.message || 'Gagal menyimpan task.');
                 }
             } catch (error) {
-                console.error('Error creating task:', error);
+                console.error('Error creating/updating task:', error);
+                this.showError('Terjadi kesalahan saat menyimpan task.');
             } finally {
                 this.isSubmittingTask = false;
             }
@@ -3025,8 +3233,8 @@ function qcDashboard() {
             this.movingToColumn = columnId;
             
             try {
-                const response = await fetch(`/api/qc/tasks/${taskId}/column`, {
-                    method: 'PATCH',
+                const response = await fetch(`/api/qc/tasks/${taskId}/move`, {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
@@ -3052,10 +3260,16 @@ function qcDashboard() {
 
                     if (columnId === 'done') {
                         this.showSuccess('Task completed! All linked test cases marked as PASSED and bugs resolved.');
+                    } else {
+                        this.showSuccess(`Task successfully moved to ${this.getColumnTitle(columnId)}!`);
                     }
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    this.showError(errorData.message || 'Failed to update task column.');
                 }
             } catch (error) {
                 console.error('Error updating task column:', error);
+                this.showError('An error occurred while moving task.');
             } finally {
                 this.isMovingTask = false;
                 this.movingToColumn = null;

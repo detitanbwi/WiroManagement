@@ -82,8 +82,14 @@ Route::middleware(['auth', 'internal'])->group(function () {
         Route::post('api/projects/{project}/qc/tasks', [QcController::class, 'storeTask'])
             ->name('api.qc.tasks.store')
             ->middleware('permission:qc.manage_tasks');
-        Route::post('api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])
+        Route::match(['post', 'put', 'patch'], 'api/qc/tasks/{task}', [QcController::class, 'updateTask'])
+            ->name('api.qc.tasks.update')
+            ->middleware('permission:qc.manage_tasks');
+        Route::match(['post', 'patch'], 'api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])
             ->name('api.qc.tasks.move')
+            ->middleware('permission:qc.manage_tasks');
+        Route::match(['post', 'patch'], 'api/qc/tasks/{task}/column', [QcController::class, 'updateTaskColumn'])
+            ->name('api.qc.tasks.column')
             ->middleware('permission:qc.manage_tasks');
         Route::post('api/qc/tasks/{task}/pass-test-cases', [QcController::class, 'passTaskTestCases'])
             ->name('api.qc.tasks.pass-test-cases')
@@ -113,10 +119,10 @@ Route::middleware(['auth', 'internal'])->group(function () {
         Route::get('api/qc/tasks/{task}/comments', [QcController::class, 'getTaskComments'])->name('api.qc.tasks.comments');
         Route::post('api/qc/tasks/{task}/comments', [QcController::class, 'storeTaskComment'])
             ->name('api.qc.tasks.comments.store')
-            ->middleware('permission:qc.comments');
+            ->middleware('permission:qc.comments,qc.view,projects.qc');
         Route::delete('api/qc/comments/{comment}', [QcController::class, 'destroyTaskComment'])
             ->name('api.qc.comments.destroy')
-            ->middleware('permission:qc.comments');
+            ->middleware('permission:qc.comments,qc.view,projects.qc');
     });
 
     // Invoices, Quotations, and Documents (Permission-protected)

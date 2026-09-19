@@ -64,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
         // QA / QC Module mapped to granular permissions
         Gate::define('access-qc', fn (User $user) => $user->hasAnyPermission(['qc.view', 'projects.qc']));
         Gate::define('manage-qc', fn (User $user) => $user->hasAnyPermission(['qc.manage_tasks', 'qc.manage_test_cases', 'qc.manage_bugs']));
+        Gate::define('qc.comments', fn (User $user) => $user->isSuperAdmin() || $user->hasPermission('qc.comments') || $user->hasAnyPermission(['qc.view', 'projects.qc']) || $user->isInternal());
 
         // AI Pricing Estimator mapped to granular permissions
         Gate::define('use-ai-pricing', fn (User $user) => $user->hasPermission('ai_pricing.use'));

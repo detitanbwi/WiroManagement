@@ -89,15 +89,15 @@ class QcBugTrackerUiTest extends TestCase
 
         // Verify Tab order
         $content = $response->getContent();
-        $posActiveTab = strpos($content, 'Bug Aktif (Open)');
-        $posSolvedTab = strpos($content, 'Bug Solved / Resolved');
-        $posAllTab = strpos($content, 'Semua Bug');
+        $posActiveTab = strpos($content, 'Active Bugs (Open)');
+        $posSolvedTab = strpos($content, 'Resolved Bugs');
+        $posAllTab = strpos($content, 'All Bugs');
 
         $this->assertNotFalse($posActiveTab);
         $this->assertNotFalse($posSolvedTab);
         $this->assertNotFalse($posAllTab);
-        $this->assertTrue($posActiveTab < $posSolvedTab, 'Bug Aktif (Open) must precede Bug Solved / Resolved');
-        $this->assertTrue($posSolvedTab < $posAllTab, 'Bug Solved / Resolved must precede Semua Bug');
+        $this->assertTrue($posActiveTab < $posSolvedTab, 'Active Bugs (Open) must precede Resolved Bugs');
+        $this->assertTrue($posSolvedTab < $posAllTab, 'Resolved Bugs must precede All Bugs');
 
         // Verify separate Severity and Status headers
         $this->assertStringContainsString('Severity</th>', $content);
