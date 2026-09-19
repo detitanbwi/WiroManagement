@@ -1489,8 +1489,9 @@
                 
                 <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        <span x-show="editingTestCaseId">Edit Test Case</span>
-                        <span x-show="!editingTestCaseId" x-text="parentTestCase ? 'Add Sub Test Case' : 'Add Root Test Case'"></span>
+                        <span x-show="isDuplicatingTestCase">Duplicate Test Case</span>
+                        <span x-show="!isDuplicatingTestCase && editingTestCaseId">Edit Test Case</span>
+                        <span x-show="!isDuplicatingTestCase && !editingTestCaseId" x-text="parentTestCase ? 'Add Sub Test Case' : 'Add Root Test Case'"></span>
                     </h3>
                     <button @click="closeNewTestCaseModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
                         <span class="sr-only">Close</span>
@@ -1502,7 +1503,7 @@
                     <template x-if="parentTestCase">
                         <div class="mb-4 p-3 bg-blue-50 border border-blue-100 rounded text-sm">
                             <span class="text-gray-500 font-medium">Parent:</span> 
-                            <span class="font-bold text-blue-800" x-text="parentTestCase.code + ' - ' + parentTestCase.title"></span>
+                            <span class="font-bold text-blue-800" x-text="parentTestCase.code ? (parentTestCase.code + ' - ' + parentTestCase.title) : ('TC #' + parentTestCase.id)"></span>
                         </div>
                     </template>
                     <form @submit.prevent="submitNewTestCase">
@@ -1604,7 +1605,7 @@
                                 Cancel
                             </button>
                             <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmittingTestCase" :class="{'opacity-50 cursor-not-allowed': isSubmittingTestCase}">
-                                <span x-show="!isSubmittingTestCase" x-text="editingTestCaseId ? 'Update Test Case' : 'Save Test Case'"></span>
+                                <span x-show="!isSubmittingTestCase" x-text="editingTestCaseId ? 'Update Test Case' : (isDuplicatingTestCase ? 'Duplicate Test Case' : 'Save Test Case')"></span>
                                 <span x-show="isSubmittingTestCase">Saving...</span>
                             </button>
                         </div>
@@ -2195,6 +2196,7 @@ function qcDashboard() {
         isNewTestCaseModalOpen: false,
         isSubmittingTestCase: false,
         editingTestCaseId: null,
+        isDuplicatingTestCase: false,
         parentTestCase: null,
         newTestCase: {
             title: '',
@@ -2750,6 +2752,20 @@ function qcDashboard() {
             return null;
         },
 
+        findParentTestCase(childId, cases = this.projectTestCases) {
+            if (!childId) return null;
+            for (let tc of cases) {
+                if (tc.children && tc.children.length > 0) {
+                    if (tc.children.some(c => c.id === childId)) {
+                        return tc;
+                    }
+                    const found = this.findParentTestCase(childId, tc.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        },
+
         openViewTestCaseModal(tcOrId) {
             if (!tcOrId) return;
             const tcId = typeof tcOrId === 'object' ? tcOrId.id : tcOrId;
@@ -2784,6 +2800,7 @@ function qcDashboard() {
             if (!this.permissions.canManageTestCases) return;
             this.parentTestCase = parentTC;
             this.editingTestCaseId = null;
+            this.isDuplicatingTestCase = false;
             this.newTestCase = {
                 title: '',
                 preconditions: '',
@@ -2803,6 +2820,7 @@ function qcDashboard() {
             if (!this.permissions.canManageTestCases) return;
             this.editingTestCaseId = tc.id;
             this.parentTestCase = null;
+            this.isDuplicatingTestCase = false;
             this.newTestCase = {
                 title: tc.title || '',
                 preconditions: tc.preconditions || '',
@@ -2821,7 +2839,21 @@ function qcDashboard() {
         duplicateTestCase(tc) {
             if (!this.permissions.canManageTestCases) return;
             this.editingTestCaseId = null;
-            this.parentTestCase = tc.parent_id ? {id: tc.parent_id} : null; // Keep the same parent if it's a child
+            this.isDuplicatingTestCase = true;
+            
+            // Resolve parent: first check tc.parent_id, then fallback to tree hierarchy search
+            let parent = null;
+            if (tc.parent_id) {
+                parent = this.findTestCaseById(tc.parent_id);
+            }
+            if (!parent) {
+                parent = this.findParentTestCase(tc.id);
+            }
+            if (!parent && tc.parent_id) {
+                parent = { id: tc.parent_id, code: 'Parent', title: '' };
+            }
+            this.parentTestCase = parent;
+
             this.newTestCase = {
                 title: tc.title ? tc.title + ' (Copy)' : '',
                 preconditions: tc.preconditions || '',
@@ -2841,6 +2873,7 @@ function qcDashboard() {
             this.isNewTestCaseModalOpen = false;
             setTimeout(() => {
                 this.editingTestCaseId = null;
+                this.isDuplicatingTestCase = false;
             }, 300);
         },
 
@@ -2887,11 +2920,16 @@ function qcDashboard() {
                 }
 
                 if (response.ok) {
-                    // Expand parent automatically so the user sees the newly added child (only if new)
-                    if (!this.editingTestCaseId && this.parentTestCase) {
-                        this.expandTestCase(this.projectTestCases, this.parentTestCase.id);
+                    const parentIdToExpand = this.parentTestCase ? this.parentTestCase.id : null;
+                    // Expand parent before fetching so that restoreExpandedState will keep it expanded
+                    if (!this.editingTestCaseId && parentIdToExpand) {
+                        this.expandTestCase(this.projectTestCases, parentIdToExpand);
                     }
                     await this.fetchProjectTestCases();
+                    // Also ensure parent is expanded in the new tree
+                    if (!this.editingTestCaseId && parentIdToExpand) {
+                        this.expandTestCase(this.projectTestCases, parentIdToExpand);
+                    }
                     this.closeNewTestCaseModal();
                 } else {
                     let errorMsg = 'Gagal menyimpan test case.';

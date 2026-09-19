@@ -15,7 +15,7 @@
                 @csrf
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="col-span-1">
+                    <div class="col-span-1 md:col-span-2">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Full Name</label>
                         <input type="text" name="name" value="{{ old('name', $user->name) }}" required
                             class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border">
@@ -23,10 +23,17 @@
                     </div>
 
                     <div class="col-span-1">
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Email Address</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Account Email (Login)</label>
                         <input type="email" name="email" value="{{ old('email', $user->email) }}" required
                             class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border">
                         @error('email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="col-span-1">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Personal Email <span class="text-xs text-gray-400 normal-case font-normal">(Informasi Tambahan)</span></label>
+                        <input type="email" name="personal_email" value="{{ old('personal_email', $user->personal_email) }}" placeholder="e.g. personal@gmail.com"
+                            class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border">
+                        @error('personal_email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="col-span-2 pt-4 border-t border-gray-100">

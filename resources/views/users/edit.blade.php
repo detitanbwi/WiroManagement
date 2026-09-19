@@ -28,7 +28,7 @@
                 <div>
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Account Information</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-gray-700 mb-2">Full Name <span class="text-rose-500">*</span></label>
                             <input type="text" name="name" value="{{ old('name', $user->name) }}" required
                                 class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
@@ -36,10 +36,17 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Email Address <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Account Email (Login) <span class="text-rose-500">*</span></label>
                             <input type="email" name="email" value="{{ old('email', $user->email) }}" required
                                 class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
                             @error('email') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Personal Email <span class="text-xs text-gray-400 font-normal">(Informasi Tambahan)</span></label>
+                            <input type="email" name="personal_email" value="{{ old('personal_email', $user->personal_email) }}" placeholder="personal.email@gmail.com"
+                                class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
+                            @error('personal_email') <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p> @enderror
                         </div>
 
                         <div>

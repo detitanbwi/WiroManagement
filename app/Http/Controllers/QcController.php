@@ -56,6 +56,7 @@ class QcController extends Controller
             $sourceBug = $task->bugs->first(fn($b) => $b->testCase !== null);
             $sourceTestCase = $sourceBug && $sourceBug->testCase ? [
                 'id' => $sourceBug->testCase->id,
+                'parent_id' => $sourceBug->testCase->parent_id,
                 'code' => $sourceBug->testCase->code,
                 'title' => $sourceBug->testCase->title,
                 'bug_code' => $sourceBug->code,
@@ -486,6 +487,7 @@ class QcController extends Controller
 
                 $formatted = [
                     'id' => $testCase->id,
+                    'parent_id' => $testCase->parent_id,
                     'code' => $testCase->code,
                     'title' => $testCase->title,
                     'preconditions' => $testCase->preconditions,
@@ -516,6 +518,7 @@ class QcController extends Controller
                         'project_task_id' => $activeBug->project_task_id,
                         'test_case' => [
                             'id' => $testCase->id,
+                            'parent_id' => $testCase->parent_id,
                             'code' => $testCase->code,
                             'title' => $testCase->title,
                             'status' => $testCase->status,
@@ -540,6 +543,7 @@ class QcController extends Controller
                             'updated_at' => $b->updated_at ? $b->updated_at->format('d M Y, H:i') : null,
                             'test_case' => [
                                 'id' => $testCase->id,
+                                'parent_id' => $testCase->parent_id,
                                 'code' => $testCase->code,
                                 'title' => $testCase->title,
                                 'status' => $testCase->status,

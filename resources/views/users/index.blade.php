@@ -45,6 +45,12 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-gray-500 font-mono">{{ $user->email }}</p>
+                                    @if($user->personal_email)
+                                        <div class="flex items-center gap-1 text-[11px] text-gray-400 font-mono mt-0.5" title="Personal Email (Info Tambahan)">
+                                            <svg class="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>
+                                            <span class="truncate max-w-[200px]">{{ $user->personal_email }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </td>

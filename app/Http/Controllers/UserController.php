@@ -48,6 +48,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'personal_email' => 'nullable|string|email|max:255',
             'password' => 'required|string|min:8|confirmed',
             'roles' => 'required|array|min:1',
             'roles.*' => 'exists:roles,slug',
@@ -57,6 +58,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'personal_email' => $validated['personal_email'] ?? null,
             'password' => Hash::make($validated['password']),
             'is_active' => $request->boolean('is_active', true),
         ]);
@@ -93,6 +95,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'personal_email' => 'nullable|string|email|max:255',
             'password' => 'nullable|string|min:8|confirmed',
             'roles' => 'required|array|min:1',
             'roles.*' => 'exists:roles,slug',
@@ -111,6 +114,7 @@ class UserController extends Controller
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        $user->personal_email = $validated['personal_email'] ?? null;
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
@@ -164,11 +168,13 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'personal_email' => 'nullable|string|email|max:255',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        $user->personal_email = $validated['personal_email'] ?? null;
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
