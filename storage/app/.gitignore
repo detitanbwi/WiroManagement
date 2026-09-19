@@ -1,6 +1,5 @@
 *
 !private/
 !public/
-!pricing_rules.json
 !.gitignore
 

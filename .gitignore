@@ -26,3 +26,8 @@ package-lock.json
 ~$*
 /graphify-out/
 
+# AI Pricing Datasets & Documents
+AI_Pricing_Dataset*
+AI_Pricing_Impl_Plan*
+pricing_calculator.html
+/storage/app/pricing_rules.json
