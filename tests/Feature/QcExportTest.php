@@ -63,6 +63,7 @@ class QcExportTest extends BaseTestCase
             'parent_id' => $tcParent->id,
             'code' => 'TC-CHILD-1',
             'title' => 'Verify Chart Data',
+            'app_version' => 'v1.0.0',
             'status' => 'passed',
             'steps' => ['Step 1', 'Step 2'],
             'priority' => 'High',
@@ -86,6 +87,7 @@ class QcExportTest extends BaseTestCase
             'project_task_id' => $task->id,
             'test_case_id' => $tcChild->id,
             'code' => 'BUG-TEST-1',
+            'app_version' => 'v1.0.0',
             'description' => 'Test bug description',
             'severity' => 'Critical',
             'status' => 'open',
@@ -117,19 +119,22 @@ class QcExportTest extends BaseTestCase
         $this->assertEquals('Kode TC', $tcSheet->getCell('B4')->getValue());
         $this->assertEquals('Modul / Parent', $tcSheet->getCell('C4')->getValue());
         $this->assertEquals('Sub Test Case / Skenario (Anak)', $tcSheet->getCell('D4')->getValue());
+        $this->assertEquals('Versi Aplikasi', $tcSheet->getCell('E4')->getValue());
 
         // Row 5: Parent 1
         $this->assertEquals('1', $tcSheet->getCell('A5')->getValue());
         $this->assertEquals('TC-PARENT-1', $tcSheet->getCell('B5')->getValue());
         $this->assertEquals('Modul Dashboard', $tcSheet->getCell('C5')->getValue());
         $this->assertEquals('-', $tcSheet->getCell('D5')->getValue());
+        $this->assertEquals('-', $tcSheet->getCell('E5')->getValue());
 
         // Row 6: Child 1 (directly below Parent 1, shifted one column right to Column D)
         $this->assertEquals('1.1', $tcSheet->getCell('A6')->getValue());
         $this->assertEquals('TC-CHILD-1', $tcSheet->getCell('B6')->getValue());
         $this->assertEquals('', $tcSheet->getCell('C6')->getValue());
         $this->assertStringContainsString('Verify Chart Data', $tcSheet->getCell('D6')->getValue());
-        $this->assertStringContainsString('Step 1', $tcSheet->getCell('K6')->getValue());
+        $this->assertEquals('v1.0.0', $tcSheet->getCell('E6')->getValue());
+        $this->assertStringContainsString('Step 1', $tcSheet->getCell('L6')->getValue());
 
         // Row 7: Parent 2 (after Child 1)
         $this->assertEquals('2', $tcSheet->getCell('A7')->getValue());
@@ -142,8 +147,11 @@ class QcExportTest extends BaseTestCase
         $this->assertNotNull($bugSheet);
         $this->assertStringContainsString('DEFECTS & BUG TRACKER', $bugSheet->getCell('A1')->getValue());
         $this->assertEquals('Kode Bug', $bugSheet->getCell('B4')->getValue());
+        $this->assertEquals('Versi Aplikasi', $bugSheet->getCell('C4')->getValue());
+        $this->assertEquals('Severity', $bugSheet->getCell('D4')->getValue());
         $this->assertEquals('BUG-TEST-1', $bugSheet->getCell('B5')->getValue());
-        $this->assertEquals('Critical', $bugSheet->getCell('C5')->getValue());
+        $this->assertEquals('v1.0.0', $bugSheet->getCell('C5')->getValue());
+        $this->assertEquals('Critical', $bugSheet->getCell('D5')->getValue());
     }
 
     public function test_qc_export_excel_route_downloads_file(): void

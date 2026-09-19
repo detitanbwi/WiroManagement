@@ -68,6 +68,7 @@ class QcController extends Controller
                 'priority' => $sourceBug->testCase->priority,
                 'test_type' => $sourceBug->testCase->test_type,
                 'automation_status' => $sourceBug->testCase->automation_status,
+                'app_version' => $sourceBug->testCase->app_version,
             ] : null;
 
             return [
@@ -93,6 +94,7 @@ class QcController extends Controller
                         'status' => $bug->status,
                         'actual_result' => $bug->actual_result,
                         'environment' => $bug->environment,
+                        'app_version' => $bug->app_version,
                         'attachment_path' => $bug->attachment_path,
                         'created_at' => $bug->created_at ? $bug->created_at->format('d M Y, H:i') : null,
                         'created_at_human' => $bug->created_at ? $bug->created_at->diffForHumans() : null,
@@ -103,6 +105,7 @@ class QcController extends Controller
                             'title' => $bug->testCase->title,
                             'status' => $bug->testCase->status,
                             'expected' => $bug->testCase->expected,
+                            'app_version' => $bug->testCase->app_version,
                         ] : null,
                     ];
                 }),
@@ -125,6 +128,7 @@ class QcController extends Controller
                         'priority' => $tc->priority,
                         'test_type' => $tc->test_type,
                         'automation_status' => $tc->automation_status,
+                        'app_version' => $tc->app_version,
                         'is_from_bug' => (bool)$task->bugs->firstWhere('test_case_id', $tc->id),
                         'bug_code' => $linkedBug ? $linkedBug->code : null,
                         'bug' => $linkedBug ? [
@@ -135,6 +139,7 @@ class QcController extends Controller
                             'description' => $linkedBug->description,
                             'actual_result' => $linkedBug->actual_result,
                             'environment' => $linkedBug->environment,
+                            'app_version' => $linkedBug->app_version,
                             'project_task_id' => $linkedBug->project_task_id,
                         ] : null,
                         'bugs' => $tcBugs->map(function($b) {
@@ -146,6 +151,7 @@ class QcController extends Controller
                                 'description' => $b->description,
                                 'actual_result' => $b->actual_result,
                                 'environment' => $b->environment,
+                                'app_version' => $b->app_version,
                                 'attachment_path' => $b->attachment_path,
                                 'created_at' => $b->created_at ? $b->created_at->format('d M Y, H:i') : null,
                                 'updated_at' => $b->updated_at ? $b->updated_at->format('d M Y, H:i') : null,
@@ -356,6 +362,7 @@ class QcController extends Controller
                 'severity' => 'nullable|string|in:Low,Medium,High,Critical',
                 'actual_result' => 'nullable|string',
                 'environment' => 'nullable|string',
+                'app_version' => 'nullable|string|max:100',
                 'create_task' => 'nullable|in:true,false,1,0', // FormData sends strings
                 'assignee_id' => 'nullable|exists:users,id',
                 'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240'
@@ -408,6 +415,7 @@ class QcController extends Controller
                     'severity' => $request->severity ?? $existingBug->severity,
                     'actual_result' => $request->actual_result,
                     'environment' => $request->environment,
+                    'app_version' => $request->app_version ?? $existingBug->app_version,
                     'attachment_path' => $attachmentPath ?? $existingBug->attachment_path,
                 ]);
                 $bug = $existingBug;
@@ -422,6 +430,7 @@ class QcController extends Controller
                     'severity' => $request->severity ?? 'Medium',
                     'actual_result' => $request->actual_result,
                     'environment' => $request->environment,
+                    'app_version' => $request->app_version,
                     'attachment_path' => $attachmentPath,
                     'status' => 'open'
                 ]);
@@ -488,6 +497,7 @@ class QcController extends Controller
                     'priority' => $testCase->priority,
                     'test_type' => $testCase->test_type,
                     'automation_status' => $testCase->automation_status,
+                    'app_version' => $testCase->app_version,
                     'is_expanded' => false, // For frontend Alpine state
                     'bug' => $activeBug ? [
                         'id' => $activeBug->id,
@@ -498,6 +508,7 @@ class QcController extends Controller
                         'steps_to_reproduce' => $activeBug->steps_to_reproduce,
                         'actual_result' => $activeBug->actual_result,
                         'environment' => $activeBug->environment,
+                        'app_version' => $activeBug->app_version,
                         'attachment_path' => $activeBug->attachment_path,
                         'created_at' => $activeBug->created_at ? $activeBug->created_at->format('d M Y, H:i') : null,
                         'created_at_human' => $activeBug->created_at ? $activeBug->created_at->diffForHumans() : null,
@@ -509,6 +520,7 @@ class QcController extends Controller
                             'title' => $testCase->title,
                             'status' => $testCase->status,
                             'expected' => $testCase->expected,
+                            'app_version' => $testCase->app_version,
                         ],
                     ] : null,
                     'bugs' => $testCase->bugs->map(function($b) use ($testCase) {
@@ -521,6 +533,7 @@ class QcController extends Controller
                             'steps_to_reproduce' => $b->steps_to_reproduce,
                             'actual_result' => $b->actual_result,
                             'environment' => $b->environment,
+                            'app_version' => $b->app_version,
                             'attachment_path' => $b->attachment_path,
                             'created_at' => $b->created_at ? $b->created_at->format('d M Y, H:i') : null,
                             'created_at_human' => $b->created_at ? $b->created_at->diffForHumans() : null,
@@ -531,6 +544,7 @@ class QcController extends Controller
                                 'title' => $testCase->title,
                                 'status' => $testCase->status,
                                 'expected' => $testCase->expected,
+                                'app_version' => $testCase->app_version,
                             ],
                             'project_task' => $b->projectTask ? [
                                 'id' => $b->projectTask->id,
@@ -562,7 +576,8 @@ class QcController extends Controller
             'complexity' => 'nullable|string|in:Low,Medium,High',
             'priority' => 'nullable|string|in:Low,Medium,High,Critical',
             'test_type' => 'nullable|string|in:Functional,UI/UX,API,Security,Performance,Edge Case',
-            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable'
+            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable',
+            'app_version' => 'nullable|string|max:100'
         ]);
 
         $testCase = TestCase::create([
@@ -578,6 +593,7 @@ class QcController extends Controller
             'priority' => $request->priority,
             'test_type' => $request->test_type,
             'automation_status' => $request->automation_status,
+            'app_version' => $request->app_version,
             'status' => 'pending'
         ]);
 
@@ -595,7 +611,8 @@ class QcController extends Controller
             'complexity' => 'nullable|string|in:Low,Medium,High',
             'priority' => 'nullable|string|in:Low,Medium,High,Critical',
             'test_type' => 'nullable|string|in:Functional,UI/UX,API,Security,Performance,Edge Case',
-            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable'
+            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable',
+            'app_version' => 'nullable|string|max:100'
         ]);
 
         $testCase->update([
@@ -607,7 +624,8 @@ class QcController extends Controller
             'complexity' => $request->complexity,
             'priority' => $request->priority,
             'test_type' => $request->test_type,
-            'automation_status' => $request->automation_status
+            'automation_status' => $request->automation_status,
+            'app_version' => $request->app_version
         ]);
 
         return response()->json(['success' => true, 'testCase' => $testCase]);
@@ -702,6 +720,7 @@ class QcController extends Controller
                 'status' => $bug->status,
                 'actual_result' => $bug->actual_result,
                 'environment' => $bug->environment,
+                'app_version' => $bug->app_version,
                 'attachment_path' => $bug->attachment_path,
                 'created_at' => $bug->created_at ? $bug->created_at->format('d M Y, H:i') : 'Unknown',
                 'created_at_human' => $bug->created_at ? $bug->created_at->diffForHumans() : 'Unknown',
@@ -712,6 +731,7 @@ class QcController extends Controller
                     'title' => $bug->testCase->title,
                     'status' => $bug->testCase->status,
                     'expected' => $bug->testCase->expected,
+                    'app_version' => $bug->testCase->app_version,
                 ] : null,
                 'project_task' => $bug->projectTask ? [
                     'id' => $bug->projectTask->id,

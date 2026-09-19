@@ -222,6 +222,9 @@
                             <span x-show="!tc.children || tc.children.length === 0" class="w-4 h-4 inline-block"></span>
                             
                             <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100" x-text="tc.code"></span>
+                            <template x-if="tc.app_version">
+                                <span class="text-xs font-mono font-medium text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200" :title="'Versi: ' + tc.app_version" x-text="tc.app_version"></span>
+                            </template>
                             <span class="text-sm font-medium text-gray-800" x-text="tc.title"></span>
                         </div>
                         <div class="flex items-center gap-3">
@@ -353,6 +356,7 @@
                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer">
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bug Details</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">Versi</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28">Severity</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28">Status</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Test Case</th>
@@ -370,6 +374,11 @@
                                     <div class="relative">
                                         <input type="text" x-model="bugFilters.details" placeholder="Filter code / description..." class="w-full text-xs pl-7 pr-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
                                         <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-2 py-2">
+                                    <div class="relative">
+                                        <input type="text" x-model="bugFilters.version" placeholder="Filter versi..." class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
                                     </div>
                                 </th>
                                 <th scope="col" class="px-3 py-2">
@@ -451,6 +460,15 @@
                                                 </template>
                                             </div>
                                         </div>
+                                    </td>
+                                    <!-- Separate Versi Column -->
+                                    <td class="px-3 py-4 whitespace-nowrap">
+                                        <template x-if="bug.app_version">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-purple-50 text-purple-700 border border-purple-200" x-text="bug.app_version"></span>
+                                        </template>
+                                        <template x-if="!bug.app_version">
+                                            <span class="text-xs text-gray-400 italic">-</span>
+                                        </template>
                                     </td>
                                     <!-- Separate Severity Column -->
                                     <td class="px-4 py-4 whitespace-nowrap">
@@ -809,6 +827,9 @@
                                             <div>
                                                 <div class="flex items-center gap-2 mb-1 flex-wrap">
                                                     <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100" x-text="tc.code"></span>
+                                                    <template x-if="tc.app_version">
+                                                        <span class="text-[10px] font-mono font-medium text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200" x-text="tc.app_version"></span>
+                                                    </template>
                                                     <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
                                                           :class="{
                                                             'bg-green-100 text-green-700 border border-green-200': tc.status === 'passed',
@@ -1158,7 +1179,7 @@
                                 <p class="text-xs text-gray-500 mt-1">Pre-filled with test steps. Edit if necessary.</p>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
                                     <select x-model="bugSeverity" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
@@ -1171,6 +1192,10 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Environment</label>
                                     <input type="text" x-model="bugEnvironment" placeholder="E.g. Chrome, Windows, Staging" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Versi Aplikasi</label>
+                                    <input type="text" x-model="bugAppVersion" placeholder="E.g. v1.0.0" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono">
                                 </div>
                             </div>
                             
@@ -1549,6 +1574,11 @@
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Versi Aplikasi</label>
+                                    <input type="text" x-model="newTestCase.app_version" placeholder="e.g. v1.0.0, v2.1.0-beta" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono">
+                                </div>
+
                                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                     <div class="flex justify-between items-center mb-3">
                                         <label class="block text-sm font-medium text-gray-700">Test Steps</label>
@@ -1718,6 +1748,9 @@
                     </div>
 
                     <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-purple-50 text-purple-700 border-purple-200 border" x-show="viewingTestCase?.app_version">
+                            <span class="mr-1 opacity-75">Versi:</span> <span class="font-mono" x-text="viewingTestCase?.app_version"></span>
+                        </span>
                         <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-gray-100 text-gray-700" x-show="viewingTestCase?.test_type">
                             <span class="mr-1 font-normal text-gray-500">Type:</span> <span x-text="viewingTestCase?.test_type"></span>
                         </span>
@@ -1829,6 +1862,10 @@
                                   }"
                                   x-text="viewingBug?.status"></span>
 
+                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-purple-200 bg-purple-50 text-purple-700 font-mono" 
+                                  x-show="viewingBug?.app_version"
+                                  x-text="'Versi: ' + viewingBug.app_version"></span>
+
                             <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border" 
                                   :class="{
                                       'bg-red-50 text-red-700 border-red-200': viewingBug?.severity === 'Critical' || viewingBug?.severity === 'High',
@@ -1884,13 +1921,22 @@
                         </div>
                     </div>
 
-                    <!-- Environment (if any) -->
-                    <div x-show="viewingBug?.environment">
-                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            Environment / Lingkungan Uji
-                        </h4>
-                        <div class="text-xs text-gray-700 bg-gray-100/80 px-3 py-2 rounded border border-gray-200 font-mono" x-text="viewingBug?.environment"></div>
+                    <!-- Environment & Versi Aplikasi -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" x-show="viewingBug?.environment || viewingBug?.app_version">
+                        <div x-show="viewingBug?.environment">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                Environment / Lingkungan Uji
+                            </h4>
+                            <div class="text-xs text-gray-700 bg-gray-100/80 px-3 py-2 rounded border border-gray-200 font-mono" x-text="viewingBug?.environment"></div>
+                        </div>
+                        <div x-show="viewingBug?.app_version">
+                            <h4 class="text-xs font-bold text-purple-700 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                                Versi Aplikasi
+                            </h4>
+                            <div class="text-xs text-purple-800 bg-purple-50 px-3 py-2 rounded border border-purple-200 font-mono font-semibold" x-text="viewingBug?.app_version"></div>
+                        </div>
                     </div>
 
                     <!-- Relations: Test Case & Kanban Task -->
@@ -2087,6 +2133,7 @@ function qcDashboard() {
         bugFilterTab: 'active', // Default: 'active' (Bug Aktif), 'solved', 'all'
         bugFilters: {
             details: '',
+            version: '',
             severity: '',
             status: '',
             testCase: '',
@@ -2124,6 +2171,7 @@ function qcDashboard() {
         bugSeverity: 'Medium',
         bugActualResult: '',
         bugEnvironment: '',
+        bugAppVersion: '',
         createKanbanTask: false,
         isSubmittingTest: false,
         bugAssigneeId: '',
@@ -2157,7 +2205,8 @@ function qcDashboard() {
             complexity: 'Low',
             priority: 'Medium',
             test_type: 'Functional',
-            automation_status: 'Manual'
+            automation_status: 'Manual',
+            app_version: ''
         },
 
         // View Test Case State
@@ -2406,6 +2455,7 @@ function qcDashboard() {
         get hasActiveBugFilters() {
             return !!(
                 (this.bugFilters.details && this.bugFilters.details.trim()) ||
+                (this.bugFilters.version && this.bugFilters.version.trim()) ||
                 this.bugFilters.severity ||
                 this.bugFilters.status ||
                 (this.bugFilters.testCase && this.bugFilters.testCase.trim()) ||
@@ -2416,6 +2466,7 @@ function qcDashboard() {
         resetBugFilters() {
             this.bugFilters = {
                 details: '',
+                version: '',
                 severity: '',
                 status: '',
                 testCase: '',
@@ -2440,6 +2491,12 @@ function qcDashboard() {
                     (b.code && b.code.toLowerCase().includes(q)) || 
                     (b.description && b.description.toLowerCase().includes(q))
                 );
+            }
+
+            // 2.5 Column: Versi
+            if (this.bugFilters.version && this.bugFilters.version.trim()) {
+                const v = this.bugFilters.version.toLowerCase().trim();
+                list = list.filter(b => b.app_version && b.app_version.toLowerCase().includes(v));
             }
 
             // 3. Column: Severity
@@ -2736,7 +2793,8 @@ function qcDashboard() {
                 complexity: 'Low',
                 priority: 'Medium',
                 test_type: 'Functional',
-                automation_status: 'Manual'
+                automation_status: 'Manual',
+                app_version: parentTC ? (parentTC.app_version || '') : ''
             };
             this.isNewTestCaseModalOpen = true;
         },
@@ -2754,7 +2812,8 @@ function qcDashboard() {
                 complexity: tc.complexity || 'Low',
                 priority: tc.priority || 'Medium',
                 test_type: tc.test_type || 'Functional',
-                automation_status: tc.automation_status || 'Manual'
+                automation_status: tc.automation_status || 'Manual',
+                app_version: tc.app_version || ''
             };
             this.isNewTestCaseModalOpen = true;
         },
@@ -2772,7 +2831,8 @@ function qcDashboard() {
                 complexity: tc.complexity || 'Low',
                 priority: tc.priority || 'Medium',
                 test_type: tc.test_type || 'Functional',
-                automation_status: tc.automation_status || 'Manual'
+                automation_status: tc.automation_status || 'Manual',
+                app_version: tc.app_version || ''
             };
             this.isNewTestCaseModalOpen = true;
         },
@@ -2798,6 +2858,7 @@ function qcDashboard() {
                 priority: this.newTestCase.priority,
                 test_type: this.newTestCase.test_type,
                 automation_status: this.newTestCase.automation_status,
+                app_version: this.newTestCase.app_version,
                 parent_id: this.parentTestCase ? this.parentTestCase.id : null
             };
 
@@ -2985,11 +3046,13 @@ function qcDashboard() {
                 this.bugActualResult = testCase.bug.actual_result || '';
                 this.bugSeverity = testCase.bug.severity || 'Medium';
                 this.bugEnvironment = testCase.bug.environment || '';
+                this.bugAppVersion = testCase.bug.app_version || testCase.app_version || '';
             } else {
                 this.bugDescription = '';
                 this.bugActualResult = '';
                 this.bugSeverity = 'Medium';
                 this.bugEnvironment = '';
+                this.bugAppVersion = testCase.app_version || '';
             }
             
             // Pre-fill steps to reproduce if test case has steps
@@ -3008,6 +3071,7 @@ function qcDashboard() {
         closeRunTestModal() {
             this.isRunTestOpen = false;
             this.isReportingBug = false;
+            this.bugAppVersion = '';
             setTimeout(() => {
                 this.activeTest = null;
             }, 300);
@@ -3027,6 +3091,7 @@ function qcDashboard() {
                         formData.append('severity', this.bugSeverity);
                         formData.append('actual_result', this.bugActualResult);
                         formData.append('environment', this.bugEnvironment);
+                        formData.append('app_version', this.bugAppVersion);
                         formData.append('create_task', this.createKanbanTask);
                         formData.append('assignee_id', this.bugAssigneeId);
                         

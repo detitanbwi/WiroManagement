@@ -166,18 +166,19 @@ class QcExportService
             'B' => ['label' => 'Kode TC', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
             'C' => ['label' => 'Modul / Parent', 'width' => 30, 'align' => Alignment::HORIZONTAL_LEFT],
             'D' => ['label' => 'Sub Test Case / Skenario (Anak)', 'width' => 38, 'align' => Alignment::HORIZONTAL_LEFT],
-            'E' => ['label' => 'Tipe Uji', 'width' => 15, 'align' => Alignment::HORIZONTAL_CENTER],
-            'F' => ['label' => 'Prioritas', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
-            'G' => ['label' => 'Kompleksitas', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
-            'H' => ['label' => 'Otomasi', 'width' => 16, 'align' => Alignment::HORIZONTAL_CENTER],
-            'I' => ['label' => 'Status Uji', 'width' => 15, 'align' => Alignment::HORIZONTAL_CENTER],
-            'J' => ['label' => 'Pra-Kondisi', 'width' => 30, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
-            'K' => ['label' => 'Langkah-Langkah Pengujian', 'width' => 45, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
-            'L' => ['label' => 'Hasil yang Diharapkan', 'width' => 40, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
-            'M' => ['label' => 'Test Data / Payload', 'width' => 30, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
-            'N' => ['label' => 'Terkait Task', 'width' => 22, 'align' => Alignment::HORIZONTAL_LEFT],
-            'O' => ['label' => 'Bug Terkait', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
-            'P' => ['label' => 'Tanggal Dibuat', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
+            'E' => ['label' => 'Versi Aplikasi', 'width' => 15, 'align' => Alignment::HORIZONTAL_CENTER],
+            'F' => ['label' => 'Tipe Uji', 'width' => 15, 'align' => Alignment::HORIZONTAL_CENTER],
+            'G' => ['label' => 'Prioritas', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
+            'H' => ['label' => 'Kompleksitas', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
+            'I' => ['label' => 'Otomasi', 'width' => 16, 'align' => Alignment::HORIZONTAL_CENTER],
+            'J' => ['label' => 'Status Uji', 'width' => 15, 'align' => Alignment::HORIZONTAL_CENTER],
+            'K' => ['label' => 'Pra-Kondisi', 'width' => 30, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
+            'L' => ['label' => 'Langkah-Langkah Pengujian', 'width' => 45, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
+            'M' => ['label' => 'Hasil yang Diharapkan', 'width' => 40, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
+            'N' => ['label' => 'Test Data / Payload', 'width' => 30, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
+            'O' => ['label' => 'Terkait Task', 'width' => 22, 'align' => Alignment::HORIZONTAL_LEFT],
+            'P' => ['label' => 'Bug Terkait', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
+            'Q' => ['label' => 'Tanggal Dibuat', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
         ];
 
         $passedCount = collect($testCases)->where('status', 'passed')->count();
@@ -229,23 +230,24 @@ class QcExportService
                 $sheet->getStyle("D{$row}")->getAlignment()->setIndent($tc->tree_level);
             }
 
-            $sheet->setCellValue("E{$row}", $tc->test_type ?: 'Functional');
-            $sheet->setCellValue("F{$row}", $tc->priority ?: 'Medium');
-            $sheet->setCellValue("G{$row}", $tc->complexity ?: 'Medium');
-            $sheet->setCellValue("H{$row}", $tc->automation_status ?: 'Manual');
-            $sheet->setCellValue("I{$row}", ucfirst($tc->status ?: 'Pending'));
-            $sheet->setCellValue("J{$row}", $tc->preconditions ?: '-');
-            $sheet->setCellValue("K{$row}", $stepsText);
-            $sheet->setCellValue("L{$row}", $tc->expected ?: '-');
-            $sheet->setCellValue("M{$row}", $tc->payload ?: '-');
-            $sheet->setCellValue("N{$row}", $taskText);
-            $sheet->setCellValue("O{$row}", $bugsText);
-            $sheet->setCellValue("P{$row}", $tc->created_at ? $tc->created_at->format('d/m/Y H:i') : '-');
+            $sheet->setCellValue("E{$row}", $tc->app_version ?: '-');
+            $sheet->setCellValue("F{$row}", $tc->test_type ?: 'Functional');
+            $sheet->setCellValue("G{$row}", $tc->priority ?: 'Medium');
+            $sheet->setCellValue("H{$row}", $tc->complexity ?: 'Medium');
+            $sheet->setCellValue("I{$row}", $tc->automation_status ?: 'Manual');
+            $sheet->setCellValue("J{$row}", ucfirst($tc->status ?: 'Pending'));
+            $sheet->setCellValue("K{$row}", $tc->preconditions ?: '-');
+            $sheet->setCellValue("L{$row}", $stepsText);
+            $sheet->setCellValue("M{$row}", $tc->expected ?: '-');
+            $sheet->setCellValue("N{$row}", $tc->payload ?: '-');
+            $sheet->setCellValue("O{$row}", $taskText);
+            $sheet->setCellValue("P{$row}", $bugsText);
+            $sheet->setCellValue("Q{$row}", $tc->created_at ? $tc->created_at->format('d/m/Y H:i') : '-');
 
             $sheet->getStyle("B{$row}")->getFont()->setBold(true);
 
             // Status Badge
-            $statusStyle = $sheet->getStyle("I{$row}");
+            $statusStyle = $sheet->getStyle("J{$row}");
             $statusStyle->getFont()->setBold(true);
             if ($tc->status === 'passed') {
                 $this->setCellFillAndText($statusStyle, 'DCFCE7', '166534');
@@ -257,21 +259,21 @@ class QcExportService
 
             // Priority styling
             if ($tc->priority === 'Critical') {
-                $prioStyle = $sheet->getStyle("F{$row}");
+                $prioStyle = $sheet->getStyle("G{$row}");
                 $this->setCellFillAndText($prioStyle, 'FEE2E2', '991B1B');
                 $prioStyle->getFont()->setBold(true);
             } elseif ($tc->priority === 'High') {
-                $prioStyle = $sheet->getStyle("F{$row}");
+                $prioStyle = $sheet->getStyle("G{$row}");
                 $this->setCellFillAndText($prioStyle, 'FFEDD5', 'C2410C');
             }
 
             // Distinguish Parent row visually with soft background
             if ($isParent) {
-                $sheet->getStyle("A{$row}:P{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+                $sheet->getStyle("A{$row}:Q{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
                 $sheet->getStyle("C{$row}")->getFont()->setBold(true);
-                $this->applyDataRowBorders($sheet, "A{$row}:P{$row}", false);
+                $this->applyDataRowBorders($sheet, "A{$row}:Q{$row}", false);
             } else {
-                $this->applyDataRowBorders($sheet, "A{$row}:P{$row}", ($index + 1) % 2 === 0);
+                $this->applyDataRowBorders($sheet, "A{$row}:Q{$row}", ($index + 1) % 2 === 0);
             }
 
             $row++;
@@ -342,17 +344,18 @@ class QcExportService
         $columns = [
             'A' => ['label' => 'No', 'width' => 6, 'align' => Alignment::HORIZONTAL_CENTER],
             'B' => ['label' => 'Kode Bug', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
-            'C' => ['label' => 'Severity', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
-            'D' => ['label' => 'Status', 'width' => 16, 'align' => Alignment::HORIZONTAL_CENTER],
-            'E' => ['label' => 'Deskripsi Defect / Bug', 'width' => 36, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
-            'F' => ['label' => 'Hasil Aktual (Actual Result)', 'width' => 36, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
-            'G' => ['label' => 'Langkah Reproduksi (Steps to Reproduce)', 'width' => 45, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
-            'H' => ['label' => 'Environment', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
-            'I' => ['label' => 'Asal Test Case', 'width' => 24, 'align' => Alignment::HORIZONTAL_LEFT],
-            'J' => ['label' => 'Ditugaskan pada Task', 'width' => 24, 'align' => Alignment::HORIZONTAL_LEFT],
-            'K' => ['label' => 'Lampiran', 'width' => 12, 'align' => Alignment::HORIZONTAL_CENTER],
-            'L' => ['label' => 'Tanggal Dilaporkan', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
-            'M' => ['label' => 'Terakhir Diperbarui', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
+            'C' => ['label' => 'Versi Aplikasi', 'width' => 15, 'align' => Alignment::HORIZONTAL_CENTER],
+            'D' => ['label' => 'Severity', 'width' => 14, 'align' => Alignment::HORIZONTAL_CENTER],
+            'E' => ['label' => 'Status', 'width' => 16, 'align' => Alignment::HORIZONTAL_CENTER],
+            'F' => ['label' => 'Deskripsi Defect / Bug', 'width' => 36, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
+            'G' => ['label' => 'Hasil Aktual (Actual Result)', 'width' => 36, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
+            'H' => ['label' => 'Langkah Reproduksi (Steps to Reproduce)', 'width' => 45, 'align' => Alignment::HORIZONTAL_LEFT, 'wrap' => true],
+            'I' => ['label' => 'Environment', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
+            'J' => ['label' => 'Asal Test Case', 'width' => 24, 'align' => Alignment::HORIZONTAL_LEFT],
+            'K' => ['label' => 'Ditugaskan pada Task', 'width' => 24, 'align' => Alignment::HORIZONTAL_LEFT],
+            'L' => ['label' => 'Lampiran', 'width' => 12, 'align' => Alignment::HORIZONTAL_CENTER],
+            'M' => ['label' => 'Tanggal Dilaporkan', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
+            'N' => ['label' => 'Terakhir Diperbarui', 'width' => 18, 'align' => Alignment::HORIZONTAL_CENTER],
         ];
 
         $openCount = $bugs->where('status', 'open')->count();
@@ -380,22 +383,23 @@ class QcExportService
 
             $sheet->setCellValue("A{$row}", $no);
             $sheet->setCellValue("B{$row}", $bug->code);
-            $sheet->setCellValue("C{$row}", $bug->severity ?: 'Medium');
-            $sheet->setCellValue("D{$row}", ucfirst(str_replace('_', ' ', $bug->status ?: 'open')));
-            $sheet->setCellValue("E{$row}", $bug->description ?: '-');
-            $sheet->setCellValue("F{$row}", $bug->actual_result ?: '-');
-            $sheet->setCellValue("G{$row}", $bug->steps_to_reproduce ?: '-');
-            $sheet->setCellValue("H{$row}", $bug->environment ?: '-');
-            $sheet->setCellValue("I{$row}", $tcText);
-            $sheet->setCellValue("J{$row}", $taskText);
-            $sheet->setCellValue("K{$row}", $bug->attachment_path ? 'Ada' : '-');
-            $sheet->setCellValue("L{$row}", $bug->created_at ? $bug->created_at->format('d/m/Y H:i') : '-');
-            $sheet->setCellValue("M{$row}", $bug->updated_at ? $bug->updated_at->format('d/m/Y H:i') : '-');
+            $sheet->setCellValue("C{$row}", $bug->app_version ?: '-');
+            $sheet->setCellValue("D{$row}", $bug->severity ?: 'Medium');
+            $sheet->setCellValue("E{$row}", ucfirst(str_replace('_', ' ', $bug->status ?: 'open')));
+            $sheet->setCellValue("F{$row}", $bug->description ?: '-');
+            $sheet->setCellValue("G{$row}", $bug->actual_result ?: '-');
+            $sheet->setCellValue("H{$row}", $bug->steps_to_reproduce ?: '-');
+            $sheet->setCellValue("I{$row}", $bug->environment ?: '-');
+            $sheet->setCellValue("J{$row}", $tcText);
+            $sheet->setCellValue("K{$row}", $taskText);
+            $sheet->setCellValue("L{$row}", $bug->attachment_path ? 'Ada' : '-');
+            $sheet->setCellValue("M{$row}", $bug->created_at ? $bug->created_at->format('d/m/Y H:i') : '-');
+            $sheet->setCellValue("N{$row}", $bug->updated_at ? $bug->updated_at->format('d/m/Y H:i') : '-');
 
             $sheet->getStyle("B{$row}")->getFont()->setBold(true);
 
             // Severity Badge
-            $sevStyle = $sheet->getStyle("C{$row}");
+            $sevStyle = $sheet->getStyle("D{$row}");
             $sevStyle->getFont()->setBold(true);
             if ($bug->severity === 'Critical') {
                 $this->setCellFillAndText($sevStyle, 'FEE2E2', '991B1B');
@@ -408,7 +412,7 @@ class QcExportService
             }
 
             // Status Badge
-            $statusStyle = $sheet->getStyle("D{$row}");
+            $statusStyle = $sheet->getStyle("E{$row}");
             $statusStyle->getFont()->setBold(true);
             if ($bug->status === 'resolved') {
                 $this->setCellFillAndText($statusStyle, 'DCFCE7', '166534');
@@ -418,7 +422,7 @@ class QcExportService
                 $this->setCellFillAndText($statusStyle, 'FEE2E2', '991B1B');
             }
 
-            $this->applyDataRowBorders($sheet, "A{$row}:M{$row}", $no % 2 === 0);
+            $this->applyDataRowBorders($sheet, "A{$row}:N{$row}", $no % 2 === 0);
 
             $row++;
             $no++;
