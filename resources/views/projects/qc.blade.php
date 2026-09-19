@@ -3,6 +3,15 @@
 @section('title', 'QA/QC Dashboard - ' . $project->title)
 
 @section('content')
+@php
+    $currentUser = auth()->user();
+    $isProjectStaffOnly = !$currentUser->isSuperAdmin() 
+        && !$currentUser->hasAnyRole(['superadmin', 'admin']) 
+        && (
+            ($currentUser->hasProjectRole($project, 'staff') && !$currentUser->hasAnyProjectRole($project, ['pm', 'qc']))
+            || ($currentUser->hasRole('staff') && !$currentUser->hasAnyRole(['pm', 'qc', 'admin', 'superadmin']))
+        );
+@endphp
 <div class="h-full flex flex-col bg-gray-50" x-data="qcDashboard()">
     <!-- Header -->
     <div class="px-6 py-4 border-b border-gray-200 bg-white flex justify-between items-center shrink-0">
@@ -1311,7 +1320,7 @@
                                     <option value="todo">To Do</option>
                                     <option value="in_progress">In Progress</option>
                                     <option value="ready_for_qc">Ready for QC</option>
-                                    @if(!auth()->user()->hasRole('staff') || auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc']))
+                                    @if(!$isProjectStaffOnly)
                                     <option value="qc_in_progress">QC in Progress</option>
                                     <option value="done">Done</option>
                                     @endif
@@ -2110,12 +2119,12 @@
 function qcDashboard() {
     return {
         permissions: {
-            canManageTasks: {{ auth()->user()->can('qc.manage_tasks') ? 'true' : 'false' }},
-            canManageTestCases: {{ auth()->user()->can('qc.manage_test_cases') ? 'true' : 'false' }},
-            canExecuteTests: {{ auth()->user()->can('qc.execute_tests') ? 'true' : 'false' }},
-            canManageBugs: {{ auth()->user()->can('qc.manage_bugs') ? 'true' : 'false' }},
-            canComment: {{ (auth()->user()->can('qc.comments') || auth()->user()->can('qc.view') || auth()->user()->can('projects.qc') || auth()->user()->isInternal()) ? 'true' : 'false' }},
-            isStaffOnly: {{ auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc']) ? 'true' : 'false' }},
+            canManageTasks: {{ auth()->user()->can('qc.manage_tasks', $project) ? 'true' : 'false' }},
+            canManageTestCases: {{ auth()->user()->can('qc.manage_test_cases', $project) ? 'true' : 'false' }},
+            canExecuteTests: {{ auth()->user()->can('qc.execute_tests', $project) ? 'true' : 'false' }},
+            canManageBugs: {{ auth()->user()->can('qc.manage_bugs', $project) ? 'true' : 'false' }},
+            canComment: {{ (auth()->user()->can('qc.comments', $project) || auth()->user()->can('qc.view', $project) || auth()->user()->can('projects.qc', $project) || auth()->user()->isInternal()) ? 'true' : 'false' }},
+            isStaffOnly: {{ $isProjectStaffOnly ? 'true' : 'false' }},
         },
         columns: [
             { id: 'todo', title: 'To Do' },

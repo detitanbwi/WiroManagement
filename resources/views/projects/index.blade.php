@@ -73,9 +73,9 @@
                                 <a href="{{ route('projects.show', $project) }}" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors font-medium">Manage</a>
                                 @endcan
 
-                                @canany(['projects.qc', 'qc.view'])
+                                @if(auth()->user()->canAccessProjectQc($project))
                                 <a href="{{ route('projects.qc', $project) }}" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors font-medium">QC Module</a>
-                                @endcanany
+                                @endif
 
                                 @can('projects.edit')
                                 <a href="{{ route('projects.edit', $project) }}" class="px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-gray-200 rounded-md transition-colors font-medium">Edit</a>
@@ -95,7 +95,8 @@
                         <td colspan="{{ $canSeeFinancial ? 6 : 3 }}" class="px-6 py-12 whitespace-nowrap text-center text-gray-500">
                             <div class="flex flex-col items-center justify-center">
                                 <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                                No projects found.
+                                <span class="text-sm font-semibold text-gray-500">No projects found.</span>
+                                <span class="text-xs text-gray-400 mt-1">Belum ada proyek yang ditugaskan kepada Anda.</span>
                             </div>
                         </td>
                     </tr>

@@ -23,9 +23,28 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Super Admin bypass & dynamic permission check from database
-        Gate::before(function (User $user, string $ability) {
+        Gate::before(function (User $user, string $ability, $models = []) {
             if ($user->isSuperAdmin()) {
                 return true;
+            }
+
+            $models = is_array($models) ? $models : [$models];
+
+            // Extract project context if provided directly or from current route
+            $project = null;
+            if (!empty($models)) {
+                $target = $models[0] ?? null;
+                if ($target instanceof \App\Models\Project) {
+                    $project = $target;
+                } elseif ($target instanceof \App\Models\ProjectTask || $target instanceof \App\Models\TestCase) {
+                    $project = $target->project;
+                }
+            }
+
+            if ($project === null && request()->route('project') instanceof \App\Models\Project) {
+                $project = request()->route('project');
+            } elseif ($project === null && is_numeric(request()->route('project'))) {
+                $project = \App\Models\Project::find(request()->route('project'));
             }
 
             static $allPermissions = null;
@@ -39,10 +58,10 @@ class AppServiceProvider extends ServiceProvider
 
             // If ability corresponds to a system permission, strictly evaluate user permission
             if (isset($allPermissions[$ability])) {
-                return $user->hasPermission($ability);
+                return $user->hasPermission($ability, $project);
             }
 
-            if ($user->hasPermission($ability)) {
+            if ($user->hasPermission($ability, $project)) {
                 return true;
             }
 

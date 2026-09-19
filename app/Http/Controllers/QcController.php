@@ -188,6 +188,41 @@ class QcController extends Controller
         return response()->json($formattedTasks);
     }
 
+    /**
+     * Check if the authenticated user has only Staff/Developer role in the project.
+     */
+    protected function isStaffOnlyUser(Project $project): bool
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin() || $user->hasAnyRole(['superadmin', 'admin'])) {
+            return false;
+        }
+
+        $member = $project->getMember($user);
+        if ($member && !empty($member->getRoleSlugs())) {
+            $roles = $member->getRoleSlugs();
+            // If they have PM or QC project roles, they are not restricted
+            if (array_intersect($roles, ['pm', 'qc'])) {
+                return false;
+            }
+            // If they have Staff role and no PM/QC roles, they are restricted
+            if (in_array('staff', $roles)) {
+                return true;
+            }
+        }
+
+        // Fallback to global roles
+        if ($user->hasRole('staff') && !$user->hasAnyRole(['pm', 'qc'])) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function storeTask(Request $request, Project $project)
     {
         $request->validate([
@@ -199,7 +234,7 @@ class QcController extends Controller
         ]);
 
         // Staff role can only create tasks up to ready_for_qc
-        if (auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc'])) {
+        if ($this->isStaffOnlyUser($project)) {
             $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
             if (!in_array($request->column_id, $allowedStaffColumns)) {
                 return response()->json([
@@ -241,7 +276,7 @@ class QcController extends Controller
         ]);
 
         // Staff role can only edit tasks within allowed columns (todo, in_progress, ready_for_qc)
-        if (auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc'])) {
+        if ($this->isStaffOnlyUser($task->project)) {
             $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
             if (!in_array($task->column_id, $allowedStaffColumns) || !in_array($request->column_id, $allowedStaffColumns)) {
                 return response()->json([
@@ -302,7 +337,7 @@ class QcController extends Controller
         }
 
         // Staff role can only move tasks up to ready_for_qc
-        if (auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc'])) {
+        if ($this->isStaffOnlyUser($task->project)) {
             $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
             if (!in_array($task->column_id, $allowedStaffColumns) || !in_array($request->column_id, $allowedStaffColumns)) {
                 return response()->json([
@@ -852,7 +887,7 @@ class QcController extends Controller
 
     public function destroyTask(ProjectTask $task)
     {
-        if (auth()->user()->hasRole('staff') && !auth()->user()->hasAnyRole(['superadmin', 'admin', 'pm', 'qc'])) {
+        if ($this->isStaffOnlyUser($task->project)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Akses ditolak. Role Staff tidak memiliki izin untuk menghapus task.',

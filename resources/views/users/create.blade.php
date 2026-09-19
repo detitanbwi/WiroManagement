@@ -10,7 +10,7 @@
             Back to Users
         </a>
         <h1 class="text-2xl font-black text-gray-800 tracking-tight">Add New User</h1>
-        <p class="text-gray-500 text-sm">Register a new staff account and configure one or more roles (multi-role) simultaneously.</p>
+        <p class="text-gray-500 text-sm">Register a new staff account. Project positions and roles are assigned directly within each project.</p>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -55,44 +55,6 @@
                             <input type="password" name="password_confirmation" required placeholder="Repeat password above"
                                 class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
                         </div>
-                    </div>
-                </div>
-
-                <!-- Multi-Role Selection -->
-                <div class="border-t border-gray-100 pt-6">
-                    <div class="flex items-center justify-between mb-3">
-                        <div>
-                            <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Role Assignment (Multi-Role) <span class="text-rose-500">*</span></h3>
-                            <p class="text-xs text-gray-500 mt-0.5">Select one or more roles assigned to this user (e.g., PM and QC).</p>
-                        </div>
-                        <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">Multi-Select Enabled</span>
-                    </div>
-
-                    @error('roles')
-                        <div class="mb-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
-                            {{ $message }}
-                        </div>
-                    @enderror
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                        @foreach($roles as $role)
-                        <label class="relative flex items-start p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer transition has-checked:border-primary has-checked:bg-blue-50/50 has-checked:ring-1 has-checked:ring-primary">
-                            <div class="flex items-center h-5">
-                                <input type="checkbox" name="roles[]" value="{{ $role->slug }}"
-                                    {{ (is_array(old('roles')) && in_array($role->slug, old('roles'))) || (!old('roles') && $role->slug === 'staff') ? 'checked' : '' }}
-                                    class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                            </div>
-                            <div class="ml-3.5 flex-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm font-bold text-gray-900">{{ $role->name }}</span>
-                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border {{ $role->badge_classes }}">
-                                        {{ $role->slug }}
-                                    </span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1 leading-relaxed">{{ $role->description }}</p>
-                            </div>
-                        </label>
-                        @endforeach
                     </div>
                 </div>
 

@@ -61,6 +61,30 @@ class Project extends Model
         return $this->hasMany(ChangeRequest::class);
     }
 
+    /**
+     * Scope a query to only include projects visible to the given user.
+     */
+    public function scopeVisibleTo($query, User $user)
+    {
+        if ($user->isSuperAdmin() || $user->isAdmin()) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->whereHas('members', function ($sub) use ($user) {
+                $sub->where('user_id', $user->id);
+            })->orWhere('pm_id', $user->id);
+        });
+    }
+
+    /**
+     * Check if a specific user has permission to access the QC module of this project.
+     */
+    public function canUserAccessQc(User $user): bool
+    {
+        return $user->canAccessProjectQc($this);
+    }
+
     public function expenses()
     {
         return $this->hasMany(ProjectExpense::class);
@@ -69,6 +93,66 @@ class Project extends Model
     public function tasks()
     {
         return $this->hasMany(ProjectTask::class);
+    }
+
+    public function members()
+    {
+        return $this->hasMany(ProjectMember::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'project_user')->withTimestamps();
+    }
+
+    /**
+     * Assign a user to this project with one or more roles.
+     *
+     * @param User|int $user
+     * @param array<string|Role> $roles
+     */
+    public function assignMember(User|int $user, array $roles): ProjectMember
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+
+        $member = ProjectMember::firstOrCreate([
+            'project_id' => $this->id,
+            'user_id' => $userId,
+        ]);
+
+        $member->syncRoles($roles);
+        return $member;
+    }
+
+    /**
+     * Remove a member from this project.
+     */
+    public function removeMember(User|int $user): void
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+        $this->members()->where('user_id', $userId)->delete();
+    }
+
+    /**
+     * Get the project member record for a given user.
+     */
+    public function getMember(User|int $user): ?ProjectMember
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+
+        if ($this->relationLoaded('members')) {
+            return $this->members->firstWhere('user_id', $userId);
+        }
+
+        return $this->members()->where('user_id', $userId)->first();
+    }
+
+    /**
+     * Check if a user is assigned as a member of this project.
+     */
+    public function hasMember(User|int $user): bool
+    {
+        return $this->getMember($user) !== null;
     }
 
     // Ledger Logic

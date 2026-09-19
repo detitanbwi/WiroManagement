@@ -19,7 +19,7 @@ class UserController extends Controller
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk melihat daftar pengguna.');
         }
 
-        $users = User::with('roles')->latest()->get();
+        $users = User::with(['roles', 'projects'])->latest()->get();
         return view('users.index', compact('users'));
     }
 
@@ -32,8 +32,7 @@ class UserController extends Controller
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk menambah pengguna.');
         }
 
-        $roles = Role::where('slug', '!=', 'client')->get();
-        return view('users.create', compact('roles'));
+        return view('users.create');
     }
 
     /**
@@ -50,8 +49,6 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'personal_email' => 'nullable|string|email|max:255',
             'password' => 'required|string|min:8|confirmed',
-            'roles' => 'required|array|min:1',
-            'roles.*' => 'exists:roles,slug',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -60,12 +57,11 @@ class UserController extends Controller
             'email' => $validated['email'],
             'personal_email' => $validated['personal_email'] ?? null,
             'password' => Hash::make($validated['password']),
+            'role' => null,
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        $user->syncRoles($validated['roles']);
-
-        return redirect()->route('users.index')->with('success', 'Pengguna ' . $user->name . ' berhasil didaftarkan dengan ' . count($validated['roles']) . ' peran.');
+        return redirect()->route('users.index')->with('success', 'Pengguna ' . $user->name . ' berhasil didaftarkan.');
     }
 
     /**
@@ -77,10 +73,7 @@ class UserController extends Controller
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengedit pengguna.');
         }
 
-        $roles = Role::where('slug', '!=', 'client')->get();
-        $userRoleSlugs = $user->getRoleSlugs();
-
-        return view('users.edit', compact('user', 'roles', 'userRoleSlugs'));
+        return view('users.edit', compact('user'));
     }
 
     /**
@@ -97,19 +90,11 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'personal_email' => 'nullable|string|email|max:255',
             'password' => 'nullable|string|min:8|confirmed',
-            'roles' => 'required|array|min:1',
-            'roles.*' => 'exists:roles,slug',
             'is_active' => 'nullable|boolean',
         ]);
 
-        // Proteksi: Tidak bisa mencabut Super Admin dari diri sendiri jika login sebagai user tsb
-        if ($user->id === auth()->id()) {
-            if (!in_array('superadmin', $validated['roles'], true)) {
-                return back()->with('error', 'Anda tidak dapat mencabut peran Super Admin dari akun Anda sendiri.');
-            }
-            if (!$request->boolean('is_active', true)) {
-                return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
-            }
+        if ($user->id === auth()->id() && !$request->boolean('is_active', true)) {
+            return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
         }
 
         $user->name = $validated['name'];
@@ -122,9 +107,6 @@ class UserController extends Controller
 
         $user->is_active = $request->boolean('is_active', true);
         $user->save();
-
-        $user->syncRoles($validated['roles']);
-        $user->clearPermissionCache();
 
         return redirect()->route('users.index')->with('success', 'Data pengguna ' . $user->name . ' berhasil diperbarui.');
     }

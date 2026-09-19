@@ -15,7 +15,7 @@
                 <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">Your Account</span>
             @endif
         </div>
-        <p class="text-gray-500 text-sm mt-0.5">Update profile information and assign multiple roles for this account.</p>
+        <p class="text-gray-500 text-sm mt-0.5">Perbarui informasi profil dan status akun pengguna.</p>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -61,55 +61,6 @@
                             <input type="password" name="password_confirmation" placeholder="Repeat new password"
                                 class="block w-full border-gray-200 rounded-xl focus:ring-primary focus:border-primary p-3 border text-sm">
                         </div>
-                    </div>
-                </div>
-
-                <!-- Multi-Role Selection -->
-                <div class="border-t border-gray-100 pt-6">
-                    <div class="flex items-center justify-between mb-3">
-                        <div>
-                            <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Role Assignment (Multi-Role) <span class="text-rose-500">*</span></h3>
-                            <p class="text-xs text-gray-500 mt-0.5">Check one or more roles to combine permissions (e.g., PM and QC).</p>
-                        </div>
-                        <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">Multi-Role Active</span>
-                    </div>
-
-                    @error('roles')
-                        <div class="mb-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
-                            {{ $message }}
-                        </div>
-                    @enderror
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                        @foreach($roles as $role)
-                        @php
-                            $isChecked = is_array(old('roles')) 
-                                ? in_array($role->slug, old('roles')) 
-                                : in_array($role->slug, $userRoleSlugs);
-                            $isDisabled = ($user->id === auth()->id() && $role->slug === 'superadmin');
-                        @endphp
-                        <label class="relative flex items-start p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer transition has-checked:border-primary has-checked:bg-blue-50/50 has-checked:ring-1 has-checked:ring-primary {{ $isDisabled ? 'opacity-90 bg-gray-50' : '' }}">
-                            <div class="flex items-center h-5">
-                                <input type="checkbox" name="roles[]" value="{{ $role->slug }}"
-                                    {{ $isChecked ? 'checked' : '' }}
-                                    class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                            </div>
-                            <div class="ml-3.5 flex-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm font-bold text-gray-900">{{ $role->name }}</span>
-                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border {{ $role->badge_classes }}">
-                                        {{ $role->slug }}
-                                    </span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1 leading-relaxed">{{ $role->description }}</p>
-                                @if($isDisabled)
-                                    <span class="inline-block mt-2 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                                        Primary role for your current account (cannot be self-revoked)
-                                    </span>
-                                @endif
-                            </div>
-                        </label>
-                        @endforeach
                     </div>
                 </div>
 

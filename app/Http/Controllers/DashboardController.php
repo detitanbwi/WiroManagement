@@ -12,12 +12,15 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+
         $totalClients = Client::count();
-        $activeProjects = Project::where('status', 'in_progress')->count();
+        $projectQuery = Project::visibleTo($user);
+        $activeProjects = (clone $projectQuery)->where('status', 'in_progress')->count();
         $totalContractValue = Invoice::sum('total_amount');
         $totalPaid = Payment::sum('amount');
         
-        $recentProjects = Project::with('client')->latest()->take(5)->get();
+        $recentProjects = (clone $projectQuery)->with('client')->latest()->take(5)->get();
         $unpaidInvoices = Invoice::with(['project.client'])->where('status', '!=', 'paid')->latest()->take(5)->get();
 
         return view('dashboard', compact(

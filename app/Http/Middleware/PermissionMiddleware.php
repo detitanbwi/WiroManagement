@@ -30,7 +30,15 @@ class PermissionMiddleware
             return $next($request);
         }
 
-        if (!empty($permissions) && !$user->hasAnyPermission($permissions)) {
+        $project = $request->route('project');
+        $projectModel = null;
+        if ($project instanceof \App\Models\Project) {
+            $projectModel = $project;
+        } elseif (is_numeric($project)) {
+            $projectModel = \App\Models\Project::find($project);
+        }
+
+        if (!empty($permissions) && !$user->hasAnyPermission($permissions, $projectModel)) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'status' => 'error',

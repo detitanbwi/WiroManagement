@@ -16,11 +16,11 @@
             <p class="text-sm md:text-base text-gray-600 mt-1">Client: <span class="font-semibold text-gray-900">{{ $project->client->name }}</span> {{ $project->client->company_name ? "({$project->client->company_name})" : '' }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 md:space-x-3">
-            @canany(['projects.qc', 'qc.view'])
+            @if(auth()->user()->canAccessProjectQc($project))
             <a href="{{ route('projects.qc', $project) }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold text-[10px] md:text-xs uppercase tracking-widest shadow-sm transition">
                 QA / QC Board
             </a>
-            @endcanany
+            @endif
 
             @can('projects.edit')
             <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-[10px] md:text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
@@ -429,6 +429,198 @@
                     </div>
                     @endcan
                 </div>
+            </div>
+
+            <!-- Project Team Card (Project-Scoped Multi-Role) -->
+            <div class="bg-white rounded-lg shadow-sm border border-blue-100 overflow-hidden" x-data="{
+                openAddModal: false,
+                openEditModal: false,
+                editMember: null,
+                editActionUrl: '',
+                editRoles: [],
+                assignableRoles: {{ json_encode($assignableRoles->map(fn($r) => ['slug' => $r->slug, 'name' => $r->name, 'badge_classes' => $r->badge_classes])) }},
+                startEdit(member) {
+                    this.editMember = member;
+                    this.editActionUrl = '/projects/{{ $project->id }}/members/' + member.id;
+                    this.editRoles = member.roles.map(r => r.slug);
+                    this.openEditModal = true;
+                },
+                toggleEditRole(slug) {
+                    let idx = this.editRoles.indexOf(slug);
+                    if (idx > -1) {
+                        if (this.editRoles.length > 1) {
+                            this.editRoles.splice(idx, 1);
+                        }
+                    } else {
+                        this.editRoles.push(slug);
+                    }
+                }
+            }">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 border-b border-blue-600 text-white flex justify-between items-center">
+                    <div>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider shadow-sm">Tim Proyek</h3>
+                        <p class="text-[11px] text-blue-100 mt-0.5">{{ $project->members->count() }} Anggota Ditugaskan</p>
+                    </div>
+                    @can('projects.manage')
+                    <button @click="openAddModal = true" class="text-xs font-bold text-blue-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors cursor-pointer">
+                        + Tugaskan
+                    </button>
+                    @endcan
+                </div>
+
+                <div class="p-6 divide-y divide-gray-100 space-y-4">
+                    @forelse($project->members as $member)
+                    <div class="pt-4 first:pt-0 flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-3">
+                            <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-600 to-blue-500 text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
+                                {{ strtoupper(substr($member->user->name ?? 'U', 0, 1)) }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">{{ $member->user->name ?? 'User' }}</p>
+                                <p class="text-xs text-gray-500 font-mono">{{ $member->user->email ?? '-' }}</p>
+                                
+                                <!-- Role badges in this project -->
+                                <div class="flex flex-wrap gap-1 mt-1.5">
+                                    @forelse($member->role_badges as $badge)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border {{ $badge['classes'] }}">
+                                            {{ $badge['name'] }}
+                                        </span>
+                                    @empty
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200">
+                                            Staf
+                                        </span>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+
+                        @can('projects.manage')
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <button type="button" @click="startEdit({{ json_encode(['id' => $member->id, 'name' => $member->user->name, 'roles' => $member->roles]) }})" class="text-xs font-bold text-indigo-600 hover:text-indigo-900 transition cursor-pointer" title="Ubah Peran">
+                                Edit
+                            </button>
+                            <span class="text-gray-300">|</span>
+                            <form action="{{ route('projects.members.destroy', [$project, $member]) }}" method="POST" class="inline" onsubmit="return confirm('Hapus {{ $member->user->name }} dari tim proyek ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs font-bold text-rose-600 hover:text-rose-900 transition cursor-pointer" title="Hapus dari Tim">
+                                    Hapus
+                                </button>
+                            </form>
+                        </div>
+                        @endcan
+                    </div>
+                    @empty
+                    <div class="py-6 text-center text-gray-400">
+                        <svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <p class="text-xs">Belum ada anggota tim yang ditugaskan.</p>
+                        @can('projects.manage')
+                        <button type="button" @click="openAddModal = true" class="mt-2 text-xs font-bold text-primary hover:underline cursor-pointer">+ Tugaskan Anggota Sekarang</button>
+                        @endcan
+                    </div>
+                    @endforelse
+                </div>
+
+                <!-- Modal: Add Team Member -->
+                @can('projects.manage')
+                <template x-if="openAddModal">
+                    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="openAddModal = false"></div>
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+                            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+                                <form action="{{ route('projects.members.store', $project) }}" method="POST">
+                                    @csrf
+                                    <div class="bg-white px-6 pt-6 pb-4 sm:p-6 sm:pb-4 space-y-4">
+                                        <h3 class="text-lg font-black text-gray-900 uppercase tracking-wider">Tugaskan Anggota Tim</h3>
+                                        <p class="text-xs text-gray-500">Pilih staf dan peran untuk proyek ini (multi-role didukung).</p>
+
+                                        <div>
+                                             <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Pilih Pengguna</label>
+                                            <select name="user_id" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
+                                                <option value="">-- Pilih Staf --</option>
+                                                @foreach($availableUsers as $u)
+                                                    @if(!$project->hasMember($u))
+                                                        <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Pilih Peran Proyek</label>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
+                                                @foreach($assignableRoles as $role)
+                                                <label class="flex items-center p-3 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer transition">
+                                                    <input type="checkbox" name="roles[]" value="{{ $role->slug }}" {{ $role->slug === 'staff' ? 'checked' : '' }} class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                                                    <span class="ml-2.5 text-xs font-bold text-gray-800">{{ $role->name }}</span>
+                                                    <span class="ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border {{ $role->badge_classes }}">{{ $role->slug }}</span>
+                                                </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-2">
+                                        <button type="submit" class="px-5 py-2.5 bg-primary hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition cursor-pointer">
+                                            Simpan Penugasan
+                                        </button>
+                                        <button type="button" @click="openAddModal = false" class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+                                            Batal
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Modal: Edit Team Member Roles -->
+                <template x-if="openEditModal">
+                    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="openEditModal = false"></div>
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+                            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+                                <form :action="editActionUrl" method="POST">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="bg-white px-6 pt-6 pb-4 sm:p-6 sm:pb-4 space-y-4">
+                                        <h3 class="text-lg font-black text-gray-900 uppercase tracking-wider">Ubah Peran Anggota</h3>
+                                        <p class="text-xs text-gray-500">Sesuaikan peran untuk <strong class="text-gray-800" x-text="editMember ? editMember.name : ''"></strong> pada proyek ini.</p>
+
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Peran Proyek</label>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
+                                                <template x-for="role in assignableRoles" :key="role.slug">
+                                                    <label class="flex items-center p-3 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer transition"
+                                                           :class="editRoles.includes(role.slug) ? 'border-primary bg-blue-50/40 ring-1 ring-primary' : ''">
+                                                        <input type="checkbox" name="roles[]" :value="role.slug"
+                                                               :checked="editRoles.includes(role.slug)"
+                                                               @change="toggleEditRole(role.slug)"
+                                                               class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                                                        <span class="ml-2.5 text-xs font-bold text-gray-800" x-text="role.name"></span>
+                                                        <span class="ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border border-gray-200" x-text="role.slug"></span>
+                                                    </label>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-2">
+                                        <button type="submit" class="px-5 py-2.5 bg-primary hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition cursor-pointer">
+                                            Perbarui Peran
+                                        </button>
+                                        <button type="button" @click="openEditModal = false" class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+                                            Batal
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                @endcan
             </div>
 
             <!-- Timeline/Notes -->

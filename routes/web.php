@@ -67,6 +67,17 @@ Route::middleware(['auth', 'internal'])->group(function () {
         ->name('projects.status.update')
         ->middleware('permission:projects.status');
     
+    // Project Members & Project-scoped Roles
+    Route::post('projects/{project}/members', [\App\Http\Controllers\ProjectMemberController::class, 'store'])
+        ->name('projects.members.store')
+        ->middleware('permission:projects.manage');
+    Route::put('projects/{project}/members/{member}', [\App\Http\Controllers\ProjectMemberController::class, 'update'])
+        ->name('projects.members.update')
+        ->middleware('permission:projects.manage');
+    Route::delete('projects/{project}/members/{member}', [\App\Http\Controllers\ProjectMemberController::class, 'destroy'])
+        ->name('projects.members.destroy')
+        ->middleware('permission:projects.manage');
+    
     // QA/QC Routes (Protected by QC view permissions, with granular write permissions per action)
     Route::middleware('permission:qc.view,projects.qc')->group(function () {
         Route::get('projects/{project}/qc', [ProjectController::class, 'qc'])->name('projects.qc');

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@@section('title', 'User Management & Roles (RBAC)')
+@section('title', 'User Management & Roles (RBAC)')
 
 @section('content')
 <div class="max-w-6xl mx-auto">
@@ -61,11 +61,17 @@
                                         {{ $badge['name'] }}
                                     </span>
                                 @empty
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200">
-                                        {{ $user->role ?? 'No Role' }}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200">
+                                        Employee
                                     </span>
                                 @endforelse
                             </div>
+                            @if($user->projects->isNotEmpty())
+                                <div class="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-indigo-600">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                                    <span>{{ $user->projects->count() }} Proyek Ditugaskan</span>
+                                </div>
+                            @endif
                         </td>
                         <td class="px-6 py-4 text-center">
                             @can('users.edit')
