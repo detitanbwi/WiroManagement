@@ -13,6 +13,16 @@
         );
 @endphp
 <div class="h-full flex flex-col bg-gray-50" x-data="qcDashboard()">
+    <!-- Global Toast Notifications -->
+    <div x-show="successMessage" x-transition.opacity.duration.300ms class="fixed top-5 right-5 z-50 flex items-center gap-2 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg border border-emerald-500 font-medium text-sm" style="display: none;">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span x-text="successMessage"></span>
+    </div>
+    <div x-show="errorMessage" x-transition.opacity.duration.300ms class="fixed top-5 right-5 z-50 flex items-center gap-2 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg border border-red-500 font-medium text-sm" style="display: none;">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <span x-text="errorMessage"></span>
+    </div>
+
     <!-- Header -->
     <div class="px-6 py-4 border-b border-gray-200 bg-white flex justify-between items-center shrink-0">
         <div>
@@ -28,6 +38,26 @@
                 </svg>
                 <span>Export Excel</span>
             </a>
+
+            <!-- Send Summary Email Button -->
+            <button type="button"
+                    @click="sendSummaryEmail()"
+                    :disabled="isSendingEmail"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-blue-600 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium shadow-sm transition-colors"
+                    title="Kirim ringkasan metrik QA/QC ke seluruh anggota proyek melalui email">
+                <template x-if="!isSendingEmail">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </template>
+                <template x-if="isSendingEmail">
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </template>
+                <span x-text="isSendingEmail ? 'Mengirim...' : 'Kirim Ringkasan Email'"></span>
+            </button>
             @if(auth()->user()->can('projects.manage'))
             <a href="{{ route('projects.show', $project->id) }}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors">
                 Back to Project
@@ -2231,6 +2261,38 @@ function qcDashboard() {
         // Error & Notification State
         errorMessage: '',
         successMessage: '',
+        isSendingEmail: false,
+
+        async sendSummaryEmail() {
+            if (!confirm('Apakah Anda yakin ingin mengirimkan ringkasan metrik QA/QC proyek ini ke seluruh anggota dan kolaborator melalui email?')) {
+                return;
+            }
+
+            this.isSendingEmail = true;
+            try {
+                const response = await fetch(`/api/projects/${this.projectId}/qc/send-summary-email`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    this.showSuccess(data.message || 'Ringkasan QA/QC berhasil dijadwalkan untuk dikirim.');
+                } else {
+                    this.showError(data.message || 'Gagal mengirimkan ringkasan email.');
+                }
+            } catch (error) {
+                console.error('Error sending summary email:', error);
+                this.showError('Terjadi kendala jaringan saat menghubungi server.');
+            } finally {
+                this.isSendingEmail = false;
+            }
+        },
 
         showError(msg) {
             this.errorMessage = msg;

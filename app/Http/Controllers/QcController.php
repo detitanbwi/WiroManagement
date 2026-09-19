@@ -9,6 +9,8 @@ use App\Models\TestCase;
 use App\Models\TaskBug;
 use App\Models\TaskComment;
 use App\Services\QcExportService;
+use App\Services\ProjectQcSummaryService;
+use App\Jobs\SendProjectQcSummaryJob;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -985,5 +987,49 @@ class QcController extends Controller
         $comment->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Dispatch QA/QC summary email to all project members and PM asynchronously.
+     */
+    public function sendSummaryEmail(Request $request, Project $project, ProjectQcSummaryService $summaryService)
+    {
+        $user = auth()->user();
+
+        // Strict authorization: SuperAdmin, Admin, or project member/PM with QC access
+        $isAuthorized = $user->isSuperAdmin() 
+            || $user->isAdmin()
+            || (($project->hasMember($user) || $project->pm_id === $user->id) && $user->canAccessProjectQc($project));
+
+        if (!$isAuthorized) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengirim ringkasan QA/QC pada proyek ini.'
+            ], 403);
+        }
+
+        // Verify that there are eligible recipients
+        $recipients = $summaryService->getRecipients($project);
+        if ($recipients->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ditemukan anggota proyek aktif dengan alamat email yang valid untuk menerima ringkasan.'
+            ], 422);
+        }
+
+        // Dispatch background job
+        SendProjectQcSummaryJob::dispatch($project, $user->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Ringkasan QA/QC berhasil dijadwalkan untuk dikirim ke {$recipients->count()} anggota proyek.",
+            'recipients' => $recipients->map(fn($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $summaryService->getDestinationEmail($u),
+                'personal_email' => $u->personal_email,
+                'is_personal_email' => !empty($u->personal_email),
+            ]),
+        ]);
     }
 }

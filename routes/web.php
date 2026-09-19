@@ -82,6 +82,7 @@ Route::middleware(['auth', 'internal'])->group(function () {
     Route::middleware('permission:qc.view,projects.qc')->group(function () {
         Route::get('projects/{project}/qc', [ProjectController::class, 'qc'])->name('projects.qc');
         Route::get('projects/{project}/qc/export-excel', [QcController::class, 'exportExcel'])->name('projects.qc.export-excel');
+        Route::post('api/projects/{project}/qc/send-summary-email', [QcController::class, 'sendSummaryEmail'])->name('api.qc.project.send-summary-email');
         Route::get('api/projects/{project}/qc/tasks', [QcController::class, 'getTasks'])->name('api.qc.tasks');
         Route::get('api/projects/{project}/qc/test-cases', [QcController::class, 'getProjectTestCases'])->name('api.qc.project.test-cases');
         Route::post('api/projects/{project}/qc/test-cases', [QcController::class, 'storeProjectTestCase'])

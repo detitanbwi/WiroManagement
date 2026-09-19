@@ -60,6 +60,15 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Get the preferred destination email address for sending notifications/summaries.
+     * Prioritizes personal_email over corporate login email.
+     */
+    public function getDestinationEmailAttribute(): ?string
+    {
+        return !empty($this->personal_email) ? trim($this->personal_email) : trim($this->email ?? '');
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
