@@ -881,9 +881,17 @@ class QcController extends Controller
 
     public function destroyTestCase(TestCase $testCase)
     {
-        // Recursive deletion handled by database constraints or model boot method if needed.
-        // Assuming cascade on delete is set, or we can just delete it directly.
-        $testCase->delete();
+        if ($testCase->project && $this->isStaffOnlyUser($testCase->project)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Role Staff tidak memiliki izin untuk menghapus test case.',
+            ], 403);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($testCase) {
+            $testCase->delete();
+        });
+
         return response()->json(['success' => true]);
     }
 

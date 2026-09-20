@@ -3099,13 +3099,18 @@ function qcDashboard() {
                     method: 'DELETE',
                     headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
-                if (response.ok) {
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && (data.success || data.status !== 'error')) {
                     this.closeTaskModal();
                     await this.fetchTasks();
                     await this.fetchProjectBugs();
+                    this.showSuccess('Task successfully deleted.');
+                } else {
+                    this.showError(data.message || 'Failed to delete task.');
                 }
             } catch (error) {
                 console.error("Error deleting task:", error);
+                this.showError('An error occurred while deleting the task.');
             }
         },
 
@@ -3117,12 +3122,24 @@ function qcDashboard() {
                     method: 'DELETE',
                     headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
-                if (response.ok) {
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && (data.success || data.status !== 'error')) {
+                    if (this.activeTest && this.activeTest.id === testCaseId) {
+                        this.closeRunTestModal();
+                    }
+                    if (this.editingTestCase && this.editingTestCase.id === testCaseId) {
+                        this.closeEditTestCaseModal();
+                    }
                     await this.fetchProjectTestCases();
                     await this.fetchProjectBugs();
+                    await this.fetchTasks();
+                    this.showSuccess('Test case and its child items successfully deleted.');
+                } else {
+                    this.showError(data.message || 'Failed to delete test case.');
                 }
             } catch (error) {
                 console.error("Error deleting test case:", error);
+                this.showError('An error occurred while deleting the test case.');
             }
         },
 
@@ -3134,14 +3151,21 @@ function qcDashboard() {
                     method: 'DELETE',
                     headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
-                if (response.ok) {
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && (data.success || data.status !== 'error')) {
                     if (this.viewingBug && this.viewingBug.id === bugId) {
                         this.closeViewBugModal();
                     }
                     await this.fetchProjectBugs();
+                    await this.fetchProjectTestCases();
+                    await this.fetchTasks();
+                    this.showSuccess('Bug successfully deleted.');
+                } else {
+                    this.showError(data.message || 'Failed to delete bug.');
                 }
             } catch (error) {
                 console.error("Error deleting bug:", error);
+                this.showError('An error occurred while deleting the bug.');
             }
         },
 
