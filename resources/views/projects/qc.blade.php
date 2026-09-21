@@ -577,6 +577,16 @@
                                             </svg>
                                             <span>Detail</span>
                                         </button>
+                                        <button x-show="permissions.canManageBugs" 
+                                                type="button" 
+                                                @click="openEditBugModal(bug)" 
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-amber-50 text-gray-700 hover:text-amber-700 border border-gray-300 hover:border-amber-300 rounded-md text-xs font-medium transition-colors shadow-xs" 
+                                                title="Edit Bug Report">
+                                            <svg class="w-3.5 h-3.5 text-gray-500 hover:text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            <span>Edit</span>
+                                        </button>
                                         <template x-if="!bug.project_task && bug.status !== 'resolved' && permissions.canManageBugs">
                                             <button @click="convertBugToTask(bug.id)" :disabled="convertingBugId === bug.id" :class="{'opacity-75 cursor-wait': convertingBugId === bug.id}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors">
                                                 <svg x-show="convertingBugId === bug.id" class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -1621,17 +1631,83 @@
 
                                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                     <div class="flex justify-between items-center mb-3">
-                                        <label class="block text-sm font-medium text-gray-700">Test Steps</label>
-                                        <button type="button" @click="newTestCase.steps.push('')" class="text-xs text-primary hover:text-blue-800 font-bold px-2 py-1 bg-white border border-gray-300 rounded shadow-sm">+ Add Step</button>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Test Steps</label>
+                                            <p class="text-[11px] text-gray-500">Tarik ikon <span class="font-mono text-gray-600">⋮⋮</span> untuk mengatur ulang urutan langkah</p>
+                                        </div>
+                                        <button type="button" @click="addStep()" class="text-xs text-primary hover:text-blue-800 font-bold px-2.5 py-1 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-50 transition-colors">+ Add Step</button>
                                     </div>
-                                    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
-                                        <template x-for="(step, index) in newTestCase.steps" :key="index">
-                                            <div class="flex items-start gap-2 group">
-                                                <span class="text-xs font-bold text-gray-400 mt-2 w-4 shrink-0 text-right" x-text="(index + 1) + '.'"></span>
-                                                <input type="text" x-model="newTestCase.steps[index]" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-1.5 border outline-none" placeholder="Describe step...">
-                                                <button type="button" @click="newTestCase.steps.splice(index, 1)" class="text-red-400 hover:text-red-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" x-show="newTestCase.steps.length > 1" title="Remove Step">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                        <template x-for="(step, index) in newTestCase.steps" :key="step.id">
+                                            <div class="relative flex items-center gap-2 p-1.5 rounded-lg border bg-white transition-all group"
+                                                 :class="{
+                                                     'opacity-40 border-dashed border-blue-400 bg-blue-50/50': draggedStepIndex === index,
+                                                     'border-blue-500 ring-2 ring-blue-100 shadow-sm': dragOverStepIndex === index && draggedStepIndex !== index,
+                                                     'border-gray-200 hover:border-gray-300': draggedStepIndex !== index && dragOverStepIndex !== index
+                                                 }"
+                                                 :draggable="canDragStep"
+                                                 @dragstart="startStepDrag(index, $event)"
+                                                 @dragover.prevent="handleStepDragOver(index, $event)"
+                                                 @dragleave="handleStepDragLeave(index, $event)"
+                                                 @drop="dropStep(index)"
+                                                 @dragend="endStepDrag()">
+                                                
+                                                <!-- Drop line indicator (Top) -->
+                                                <div x-show="dragOverStepIndex === index && dragOverStepPosition === 'before' && draggedStepIndex !== index" 
+                                                     class="absolute -top-1 left-0 right-0 h-1 bg-blue-500 rounded-full z-20 pointer-events-none"></div>
+
+                                                <!-- Drag Handle -->
+                                                <div @mouseenter="canDragStep = true" 
+                                                     @mouseleave="canDragStep = false"
+                                                     class="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors select-none shrink-0" 
+                                                     title="Tarik untuk memindahkan urutan">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01"></path>
+                                                    </svg>
+                                                </div>
+
+                                                <!-- Number Badge -->
+                                                <span class="text-xs font-bold text-gray-500 w-5 shrink-0 text-center font-mono" x-text="(index + 1) + '.'"></span>
+
+                                                <!-- Step Input -->
+                                                <input type="text" 
+                                                       x-model="step.text" 
+                                                       draggable="false"
+                                                       class="w-full border-gray-200 rounded-md focus:ring-primary focus:border-primary text-sm px-2.5 py-1.5 border outline-none bg-transparent hover:bg-gray-50/50 focus:bg-white transition-colors" 
+                                                       placeholder="Deskripsikan langkah pengujian...">
+
+                                                <!-- Up / Down Nudge Buttons -->
+                                                <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                    <button type="button" 
+                                                            @click="moveStepUp(index)" 
+                                                            :disabled="index === 0" 
+                                                            :class="index === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'"
+                                                            class="p-1 rounded transition-colors" 
+                                                            title="Pindah ke Atas">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"></path></svg>
+                                                    </button>
+                                                    <button type="button" 
+                                                            @click="moveStepDown(index)" 
+                                                            :disabled="index === newTestCase.steps.length - 1" 
+                                                            :class="index === newTestCase.steps.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'"
+                                                            class="p-1 rounded transition-colors" 
+                                                            title="Pindah ke Bawah">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                                    </button>
+                                                </div>
+
+                                                <!-- Remove Step Button -->
+                                                <button type="button" 
+                                                        @click="removeStep(index)" 
+                                                        class="text-gray-300 hover:text-red-600 p-1 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0" 
+                                                        x-show="newTestCase.steps.length > 1" 
+                                                        title="Hapus Langkah">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                 </button>
+
+                                                <!-- Drop line indicator (Bottom) -->
+                                                <div x-show="dragOverStepIndex === index && dragOverStepPosition === 'after' && draggedStepIndex !== index" 
+                                                     class="absolute -bottom-1 left-0 right-0 h-1 bg-blue-500 rounded-full z-20 pointer-events-none"></div>
                                             </div>
                                         </template>
                                     </div>
@@ -1934,12 +2010,24 @@
                     </div>
 
                     <!-- Steps to Reproduce (if any) -->
-                    <div x-show="viewingBug?.steps_to_reproduce">
+                    <div x-show="viewingBug?.steps_to_reproduce && (Array.isArray(viewingBug.steps_to_reproduce) ? viewingBug.steps_to_reproduce.length > 0 : (viewingBug.steps_to_reproduce + '').trim() !== '')">
                         <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                             Langkah untuk Mereproduksi (Steps to Reproduce)
                         </h4>
-                        <div class="bg-amber-50/50 p-4 rounded-lg border border-amber-200/80 text-sm text-amber-950 whitespace-pre-wrap leading-relaxed" x-text="viewingBug?.steps_to_reproduce"></div>
+                        <template x-if="Array.isArray(viewingBug?.steps_to_reproduce)">
+                            <div class="space-y-2">
+                                <template x-for="(step, sIdx) in viewingBug.steps_to_reproduce" :key="sIdx">
+                                    <div class="flex items-start gap-3 bg-amber-50/50 p-2.5 rounded-lg border border-amber-200/80">
+                                        <div class="flex items-center justify-center w-5 h-5 rounded-full bg-amber-200 text-amber-800 font-bold text-xs shrink-0 font-mono" x-text="sIdx + 1"></div>
+                                        <div class="text-xs text-amber-950 font-medium leading-relaxed mt-0.5" x-text="typeof step === 'object' && step !== null ? (step.text || '') : step"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="!Array.isArray(viewingBug?.steps_to_reproduce)">
+                            <div class="bg-amber-50/50 p-4 rounded-lg border border-amber-200/80 text-sm text-amber-950 whitespace-pre-wrap leading-relaxed" x-text="viewingBug?.steps_to_reproduce"></div>
+                        </template>
                     </div>
 
                     <!-- Expected Result vs Actual Result -->
@@ -2080,10 +2168,277 @@
                             </button>
                         </template>
                     </div>
-                    <button @click="closeViewBugModal()" type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
-                        Tutup
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <template x-if="permissions.canManageBugs && viewingBug">
+                            <button type="button" 
+                                    @click="closeViewBugModal(); openEditBugModal(viewingBug);" 
+                                    class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-md text-sm font-semibold transition-colors inline-flex items-center gap-1.5 shadow-xs">
+                                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                <span>Edit Bug</span>
+                            </button>
+                        </template>
+                        <button @click="closeViewBugModal()" type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                            Tutup
+                        </button>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Bug Modal -->
+    <div x-show="isEditBugModalOpen" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         aria-labelledby="edit-bug-modal-title" 
+         role="dialog" 
+         aria-modal="true" 
+         x-cloak>
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="isEditBugModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+                 @click="closeEditBugModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <!-- Modal Content -->
+            <div x-show="isEditBugModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                
+                <form @submit.prevent="submitEditBug()">
+                    <!-- Modal Header -->
+                    <div class="bg-gradient-to-r from-red-50 to-amber-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center text-red-600 shadow-xs shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200" x-text="editingBug?.code"></span>
+                                    <template x-if="editingBug?.test_case">
+                                        <span class="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200" x-text="'TC: ' + editingBug.test_case.code"></span>
+                                    </template>
+                                </div>
+                                <h3 class="text-base font-bold text-gray-900 mt-0.5" id="edit-bug-modal-title">Edit Bug Report</h3>
+                            </div>
+                        </div>
+                        <button @click="closeEditBugModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none p-1">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="px-6 py-5 space-y-4 max-h-[72vh] overflow-y-auto">
+                        <!-- Alert notice about table isolation -->
+                        <div class="bg-blue-50/60 p-3 rounded-lg border border-blue-200 flex items-start gap-2.5 text-xs text-blue-900">
+                            <svg class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>Perubahan pada bug report ini hanya disimpan di tabel defect/bug (<span class="font-mono font-semibold">task_bugs</span>) dan tidak akan mengubah langkah ataupun data pada test case asal.</span>
+                        </div>
+
+                        <!-- Bug Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Bug <span class="text-red-500">*</span></label>
+                            <input type="text" 
+                                   x-model="editingBug.description" 
+                                   required 
+                                   placeholder="Contoh: Error 500 saat klik tombol submit form checkout" 
+                                   class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                        </div>
+
+                        <!-- Actual Result -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Actual Result (Hasil yang Terjadi)</label>
+                            <textarea rows="2" 
+                                      x-model="editingBug.actual_result" 
+                                      class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" 
+                                      placeholder="Apa yang sebenarnya terjadi di sistem?"></textarea>
+                        </div>
+
+                        <!-- Steps to Reproduce (Interactive dynamic steps like Test Case) -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Langkah Reproduksi (Steps to Reproduce)</label>
+                                    <p class="text-[11px] text-gray-500">Tarik ikon <span class="font-mono text-gray-600">⋮⋮</span> atau gunakan tombol panah untuk mengatur ulang urutan langkah</p>
+                                </div>
+                                <button type="button" 
+                                        @click="addBugStep()" 
+                                        class="text-xs text-primary hover:text-blue-800 font-bold px-2.5 py-1 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-50 transition-colors">
+                                    + Add Step
+                                </button>
+                            </div>
+
+                            <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                <template x-for="(step, index) in editingBug?.steps_to_reproduce" :key="step.id">
+                                    <div class="relative flex items-center gap-2 p-1.5 rounded-lg border bg-white transition-all group"
+                                         :class="{
+                                             'opacity-40 border-dashed border-red-400 bg-red-50/50': draggedBugStepIndex === index,
+                                             'border-red-500 ring-2 ring-red-100 shadow-sm': dragOverBugStepIndex === index && draggedBugStepIndex !== index,
+                                             'border-gray-200 hover:border-gray-300': draggedBugStepIndex !== index && dragOverBugStepIndex !== index
+                                         }"
+                                         :draggable="canDragBugStep"
+                                         @dragstart="startBugStepDrag(index, $event)"
+                                         @dragover.prevent="handleBugStepDragOver(index, $event)"
+                                         @dragleave="handleBugStepDragLeave(index, $event)"
+                                         @drop="dropBugStep(index)"
+                                         @dragend="endBugStepDrag()">
+                                        
+                                        <!-- Drop line indicator (Top) -->
+                                        <div x-show="dragOverBugStepIndex === index && dragOverBugStepPosition === 'before' && draggedBugStepIndex !== index" 
+                                             class="absolute -top-1 left-0 right-0 h-1 bg-red-500 rounded-full z-20 pointer-events-none"></div>
+
+                                        <!-- Drag Handle -->
+                                        <div @mouseenter="canDragBugStep = true" 
+                                             @mouseleave="canDragBugStep = false"
+                                             class="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors select-none shrink-0" 
+                                             title="Tarik untuk memindahkan urutan">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01"></path>
+                                            </svg>
+                                        </div>
+
+                                        <!-- Number Badge -->
+                                        <span class="text-xs font-bold text-gray-500 w-5 shrink-0 text-center font-mono" x-text="(index + 1) + '.'"></span>
+
+                                        <!-- Step Input -->
+                                        <input type="text" 
+                                               x-model="step.text" 
+                                               draggable="false"
+                                               class="w-full border-gray-200 rounded-md focus:ring-primary focus:border-primary text-sm px-2.5 py-1.5 border outline-none bg-transparent hover:bg-gray-50/50 focus:bg-white transition-colors" 
+                                               placeholder="Deskripsikan langkah reproduksi...">
+
+                                        <!-- Up / Down Nudge Buttons -->
+                                        <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                            <button type="button" 
+                                                    @click="moveBugStepUp(index)" 
+                                                    :disabled="index === 0" 
+                                                    :class="index === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'"
+                                                    class="p-1 rounded transition-colors" 
+                                                    title="Pindah ke Atas">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"></path></svg>
+                                            </button>
+                                            <button type="button" 
+                                                    @click="moveBugStepDown(index)" 
+                                                    :disabled="index === editingBug.steps_to_reproduce.length - 1" 
+                                                    :class="index === editingBug.steps_to_reproduce.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'"
+                                                    class="p-1 rounded transition-colors" 
+                                                    title="Pindah ke Bawah">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                            </button>
+                                        </div>
+
+                                        <!-- Remove Step Button -->
+                                        <button type="button" 
+                                                @click="removeBugStep(index)" 
+                                                class="text-gray-300 hover:text-red-600 p-1 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0" 
+                                                x-show="editingBug.steps_to_reproduce.length > 1" 
+                                                title="Hapus Langkah">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+
+                                        <!-- Drop line indicator (Bottom) -->
+                                        <div x-show="dragOverBugStepIndex === index && dragOverBugStepPosition === 'after' && draggedBugStepIndex !== index" 
+                                             class="absolute -bottom-1 left-0 right-0 h-1 bg-red-500 rounded-full z-20 pointer-events-none"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Severity, Environment, Versi, Status -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                                <select x-model="editingBug.severity" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status Bug</label>
+                                <select x-model="editingBug.status" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                    <option value="open">Open</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Environment</label>
+                                <input type="text" 
+                                       x-model="editingBug.environment" 
+                                       placeholder="Contoh: Chrome / Windows 11" 
+                                       class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Versi Aplikasi</label>
+                                <input type="text" 
+                                       x-model="editingBug.app_version" 
+                                       placeholder="Contoh: v1.0.0" 
+                                       class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono">
+                            </div>
+                        </div>
+
+                        <!-- Attachment / Lampiran -->
+                        <div class="p-3.5 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Lampiran Bukti Masalah (Screenshot / File)</label>
+                            
+                            <template x-if="editingBug?.attachment_path && !editingBug.remove_attachment">
+                                <div class="mb-3 p-2.5 bg-white border border-gray-200 rounded-md flex items-center justify-between">
+                                    <div class="flex items-center gap-2 overflow-hidden">
+                                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                        <a :href="'/storage/' + editingBug.attachment_path" target="_blank" class="text-xs text-blue-600 hover:underline font-mono truncate" x-text="getFilename(editingBug.attachment_path)"></a>
+                                    </div>
+                                    <label class="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-800 cursor-pointer font-medium shrink-0 ml-2">
+                                        <input type="checkbox" x-model="editingBug.remove_attachment" class="rounded border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5">
+                                        <span>Hapus file ini</span>
+                                    </label>
+                                </div>
+                            </template>
+
+                            <template x-if="editingBug?.remove_attachment">
+                                <div class="mb-2 text-xs text-red-600 italic">Lampiran saat ini akan dihapus saat disimpan.</div>
+                            </template>
+
+                            <input type="file" 
+                                   id="edit_bug_attachment" 
+                                   class="block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
+                            <p class="text-[11px] text-gray-500 mt-1">Format: JPG, PNG, GIF, PDF, DOCX, XLSX (Maks. 10MB). Unggah file baru untuk mengganti lampiran.</p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="bg-gray-50 px-6 py-3.5 border-t border-gray-200 flex justify-end gap-2">
+                        <button type="button" 
+                                @click="closeEditBugModal()" 
+                                class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" 
+                                :disabled="isSubmittingBug" 
+                                :class="{'opacity-75 cursor-wait': isSubmittingBug}" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium shadow-sm transition-colors inline-flex items-center gap-2">
+                            <svg x-show="isSubmittingBug" class="animate-spin -ml-0.5 mr-1.5 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span x-text="isSubmittingBug ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -2241,7 +2596,7 @@ function qcDashboard() {
             title: '',
             preconditions: '',
             expected: '',
-            steps: [''],
+            steps: [{ id: 'step_init_1', text: '' }],
             payload: '',
             complexity: 'Low',
             priority: 'Medium',
@@ -2250,6 +2605,12 @@ function qcDashboard() {
             app_version: ''
         },
 
+        // Test Step Drag & Drop State
+        draggedStepIndex: null,
+        dragOverStepIndex: null,
+        dragOverStepPosition: null,
+        canDragStep: false,
+
         // View Test Case State
         isViewTestCaseModalOpen: false,
         viewingTestCase: null,
@@ -2257,6 +2618,15 @@ function qcDashboard() {
         // View Bug State
         isViewBugModalOpen: false,
         viewingBug: null,
+
+        // Edit Bug State
+        isEditBugModalOpen: false,
+        isSubmittingBug: false,
+        editingBug: null,
+        draggedBugStepIndex: null,
+        dragOverBugStepIndex: null,
+        dragOverBugStepPosition: null,
+        canDragBugStep: false,
         
         // Error & Notification State
         errorMessage: '',
@@ -2867,16 +3237,229 @@ function qcDashboard() {
             }, 300);
         },
 
+        openEditBugModal(bugOrId) {
+            if (!this.permissions.canManageBugs || !bugOrId) return;
+            const bugId = typeof bugOrId === 'object' ? bugOrId.id : bugOrId;
+            const bug = this.projectBugs.find(b => b.id === bugId) || (typeof bugOrId === 'object' ? bugOrId : null);
+            if (!bug) return;
+
+            let initialSteps = [{ id: 'bug_step_' + Date.now(), text: '' }];
+            if (bug.steps_to_reproduce) {
+                if (Array.isArray(bug.steps_to_reproduce) && bug.steps_to_reproduce.length > 0) {
+                    initialSteps = bug.steps_to_reproduce.map((s, idx) => ({
+                        id: 'bug_step_' + Date.now() + '_' + idx,
+                        text: typeof s === 'object' && s !== null ? (s.text || '') : String(s)
+                    }));
+                } else if (typeof bug.steps_to_reproduce === 'string' && bug.steps_to_reproduce.trim() !== '') {
+                    const lines = bug.steps_to_reproduce.split(/\r\n|\r|\n/).map(l => l.trim()).filter(l => l !== '');
+                    if (lines.length > 0) {
+                        initialSteps = lines.map((l, idx) => ({
+                            id: 'bug_step_' + Date.now() + '_' + idx,
+                            text: l.replace(/^(\d+[\.\)]\s*|[-*•]\s*)/, '')
+                        }));
+                    }
+                }
+            }
+
+            this.editingBug = {
+                id: bug.id,
+                code: bug.code,
+                description: bug.description || '',
+                actual_result: bug.actual_result || '',
+                severity: bug.severity || 'Medium',
+                environment: bug.environment || '',
+                app_version: bug.app_version || '',
+                status: bug.status || 'open',
+                steps_to_reproduce: initialSteps,
+                attachment_path: bug.attachment_path || null,
+                remove_attachment: false,
+                test_case: bug.test_case || null,
+                project_task: bug.project_task || null,
+            };
+
+            this.endBugStepDrag();
+            this.isEditBugModalOpen = true;
+        },
+
+        closeEditBugModal() {
+            this.isEditBugModalOpen = false;
+            this.endBugStepDrag();
+            setTimeout(() => {
+                this.editingBug = null;
+            }, 300);
+        },
+
+        addBugStep() {
+            if (!this.editingBug) return;
+            this.editingBug.steps_to_reproduce.push({
+                id: 'bug_step_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                text: ''
+            });
+        },
+
+        removeBugStep(index) {
+            if (!this.editingBug) return;
+            if (this.editingBug.steps_to_reproduce.length > 1) {
+                this.editingBug.steps_to_reproduce.splice(index, 1);
+            }
+        },
+
+        startBugStepDrag(index, event) {
+            this.draggedBugStepIndex = index;
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', index.toString());
+            }
+        },
+
+        handleBugStepDragOver(index, event) {
+            if (this.draggedBugStepIndex === null || this.draggedBugStepIndex === index) {
+                this.dragOverBugStepIndex = null;
+                this.dragOverBugStepPosition = null;
+                return;
+            }
+            this.dragOverBugStepIndex = index;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            this.dragOverBugStepPosition = event.clientY < midY ? 'before' : 'after';
+        },
+
+        handleBugStepDragLeave(index, event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                if (this.dragOverBugStepIndex === index) {
+                    this.dragOverBugStepIndex = null;
+                    this.dragOverBugStepPosition = null;
+                }
+            }
+        },
+
+        dropBugStep(targetIndex) {
+            if (this.draggedBugStepIndex === null || !this.editingBug) return;
+            const fromIndex = this.draggedBugStepIndex;
+            const position = this.dragOverBugStepPosition || 'after';
+
+            if (fromIndex !== targetIndex) {
+                const steps = [...this.editingBug.steps_to_reproduce];
+                const [movedItem] = steps.splice(fromIndex, 1);
+                let insertIndex = targetIndex;
+                if (fromIndex < targetIndex) {
+                    insertIndex = insertIndex - 1;
+                }
+                if (position === 'after') {
+                    insertIndex = insertIndex + 1;
+                }
+                insertIndex = Math.max(0, Math.min(insertIndex, steps.length));
+                steps.splice(insertIndex, 0, movedItem);
+                this.editingBug.steps_to_reproduce = steps;
+            }
+
+            this.endBugStepDrag();
+        },
+
+        endBugStepDrag() {
+            this.draggedBugStepIndex = null;
+            this.dragOverBugStepIndex = null;
+            this.dragOverBugStepPosition = null;
+            this.canDragBugStep = false;
+        },
+
+        moveBugStepUp(index) {
+            if (!this.editingBug) return;
+            if (index > 0) {
+                const steps = [...this.editingBug.steps_to_reproduce];
+                const temp = steps[index];
+                steps[index] = steps[index - 1];
+                steps[index - 1] = temp;
+                this.editingBug.steps_to_reproduce = steps;
+            }
+        },
+
+        moveBugStepDown(index) {
+            if (!this.editingBug) return;
+            if (index < this.editingBug.steps_to_reproduce.length - 1) {
+                const steps = [...this.editingBug.steps_to_reproduce];
+                const temp = steps[index];
+                steps[index] = steps[index + 1];
+                steps[index + 1] = temp;
+                this.editingBug.steps_to_reproduce = steps;
+            }
+        },
+
+        async submitEditBug() {
+            if (!this.permissions.canManageBugs || this.isSubmittingBug || !this.editingBug) return;
+            this.isSubmittingBug = true;
+
+            try {
+                const cleanedSteps = this.editingBug.steps_to_reproduce
+                    .map(s => typeof s === 'object' && s !== null ? s.text : s)
+                    .filter(s => typeof s === 'string' && s.trim() !== '');
+
+                const formData = new FormData();
+                formData.append('description', this.editingBug.description);
+                formData.append('actual_result', this.editingBug.actual_result || '');
+                formData.append('severity', this.editingBug.severity || 'Medium');
+                formData.append('environment', this.editingBug.environment || '');
+                formData.append('app_version', this.editingBug.app_version || '');
+                formData.append('status', this.editingBug.status || 'open');
+                formData.append('remove_attachment', this.editingBug.remove_attachment ? '1' : '0');
+
+                cleanedSteps.forEach((step, idx) => {
+                    formData.append(`steps_to_reproduce[${idx}]`, step);
+                });
+
+                const fileInput = document.getElementById('edit_bug_attachment');
+                if (fileInput && fileInput.files[0]) {
+                    formData.append('attachment', fileInput.files[0]);
+                }
+
+                const response = await fetch(`/api/qc/bugs/${this.editingBug.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    const updatedBug = data.bug;
+                    const bugIndex = this.projectBugs.findIndex(b => b.id === updatedBug.id);
+                    if (bugIndex !== -1) {
+                        this.projectBugs[bugIndex] = { ...this.projectBugs[bugIndex], ...updatedBug };
+                    }
+
+                    if (this.viewingBug && this.viewingBug.id === updatedBug.id) {
+                        this.viewingBug = { ...this.viewingBug, ...updatedBug };
+                    }
+
+                    this.fetchTasks();
+                    this.fetchTestCases();
+
+                    this.closeEditBugModal();
+                    this.showSuccess('Bug report berhasil diperbarui.');
+                } else {
+                    this.showError(data.message || 'Gagal memperbarui bug report.');
+                }
+            } catch (error) {
+                console.error('Error updating bug:', error);
+                this.showError('Terjadi kesalahan saat menyimpan perubahan bug.');
+            } finally {
+                this.isSubmittingBug = false;
+            }
+        },
+
         openNewTestCaseModal(parentTC = null) {
             if (!this.permissions.canManageTestCases) return;
             this.parentTestCase = parentTC;
             this.editingTestCaseId = null;
             this.isDuplicatingTestCase = false;
+            this.endStepDrag();
             this.newTestCase = {
                 title: '',
                 preconditions: '',
                 expected: '',
-                steps: [''],
+                steps: [{ id: 'step_' + Date.now(), text: '' }],
                 payload: '',
                 complexity: 'Low',
                 priority: 'Medium',
@@ -2892,11 +3475,21 @@ function qcDashboard() {
             this.editingTestCaseId = tc.id;
             this.parentTestCase = null;
             this.isDuplicatingTestCase = false;
+            this.endStepDrag();
+
+            let initialSteps = [{ id: 'step_' + Date.now(), text: '' }];
+            if (tc.steps && Array.isArray(tc.steps) && tc.steps.length > 0) {
+                initialSteps = tc.steps.map((s, idx) => ({
+                    id: 'step_' + Date.now() + '_' + idx,
+                    text: (typeof s === 'object' && s !== null ? (s.text || '') : (s || '')).toString()
+                }));
+            }
+
             this.newTestCase = {
                 title: tc.title || '',
                 preconditions: tc.preconditions || '',
                 expected: tc.expected || '',
-                steps: (tc.steps && tc.steps.length > 0) ? [...tc.steps] : [''],
+                steps: initialSteps,
                 payload: tc.payload || '',
                 complexity: tc.complexity || 'Low',
                 priority: tc.priority || 'Medium',
@@ -2911,6 +3504,7 @@ function qcDashboard() {
             if (!this.permissions.canManageTestCases) return;
             this.editingTestCaseId = null;
             this.isDuplicatingTestCase = true;
+            this.endStepDrag();
             
             // Resolve parent: first check tc.parent_id, then fallback to tree hierarchy search
             let parent = null;
@@ -2925,11 +3519,19 @@ function qcDashboard() {
             }
             this.parentTestCase = parent;
 
+            let initialSteps = [{ id: 'step_' + Date.now(), text: '' }];
+            if (tc.steps && Array.isArray(tc.steps) && tc.steps.length > 0) {
+                initialSteps = tc.steps.map((s, idx) => ({
+                    id: 'step_' + Date.now() + '_' + idx,
+                    text: (typeof s === 'object' && s !== null ? (s.text || '') : (s || '')).toString()
+                }));
+            }
+
             this.newTestCase = {
                 title: tc.title ? tc.title + ' (Copy)' : '',
                 preconditions: tc.preconditions || '',
                 expected: tc.expected || '',
-                steps: (tc.steps && tc.steps.length > 0) ? [...tc.steps] : [''],
+                steps: initialSteps,
                 payload: tc.payload || '',
                 complexity: tc.complexity || 'Low',
                 priority: tc.priority || 'Medium',
@@ -2942,21 +3544,118 @@ function qcDashboard() {
 
         closeNewTestCaseModal() {
             this.isNewTestCaseModalOpen = false;
+            this.endStepDrag();
             setTimeout(() => {
                 this.editingTestCaseId = null;
                 this.isDuplicatingTestCase = false;
             }, 300);
         },
 
+        addStep() {
+            this.newTestCase.steps.push({
+                id: 'step_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                text: ''
+            });
+        },
+
+        removeStep(index) {
+            if (this.newTestCase.steps.length > 1) {
+                this.newTestCase.steps.splice(index, 1);
+            }
+        },
+
+        startStepDrag(index, event) {
+            this.draggedStepIndex = index;
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', index.toString());
+            }
+        },
+
+        handleStepDragOver(index, event) {
+            if (this.draggedStepIndex === null || this.draggedStepIndex === index) {
+                this.dragOverStepIndex = null;
+                this.dragOverStepPosition = null;
+                return;
+            }
+            this.dragOverStepIndex = index;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            this.dragOverStepPosition = event.clientY < midY ? 'before' : 'after';
+        },
+
+        handleStepDragLeave(index, event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                if (this.dragOverStepIndex === index) {
+                    this.dragOverStepIndex = null;
+                    this.dragOverStepPosition = null;
+                }
+            }
+        },
+
+        dropStep(targetIndex) {
+            if (this.draggedStepIndex === null) return;
+            const fromIndex = this.draggedStepIndex;
+            const position = this.dragOverStepPosition || 'after';
+
+            if (fromIndex !== targetIndex) {
+                const steps = [...this.newTestCase.steps];
+                const [movedItem] = steps.splice(fromIndex, 1);
+                let insertIndex = targetIndex;
+                if (fromIndex < targetIndex) {
+                    insertIndex = insertIndex - 1;
+                }
+                if (position === 'after') {
+                    insertIndex = insertIndex + 1;
+                }
+                insertIndex = Math.max(0, Math.min(insertIndex, steps.length));
+                steps.splice(insertIndex, 0, movedItem);
+                this.newTestCase.steps = steps;
+            }
+
+            this.endStepDrag();
+        },
+
+        endStepDrag() {
+            this.draggedStepIndex = null;
+            this.dragOverStepIndex = null;
+            this.dragOverStepPosition = null;
+            this.canDragStep = false;
+        },
+
+        moveStepUp(index) {
+            if (index > 0) {
+                const steps = [...this.newTestCase.steps];
+                const temp = steps[index];
+                steps[index] = steps[index - 1];
+                steps[index - 1] = temp;
+                this.newTestCase.steps = steps;
+            }
+        },
+
+        moveStepDown(index) {
+            if (index < this.newTestCase.steps.length - 1) {
+                const steps = [...this.newTestCase.steps];
+                const temp = steps[index];
+                steps[index] = steps[index + 1];
+                steps[index + 1] = temp;
+                this.newTestCase.steps = steps;
+            }
+        },
+
         async submitNewTestCase() {
             if (!this.permissions.canManageTestCases || this.isSubmittingTestCase) return;
             this.isSubmittingTestCase = true;
+
+            const cleanedSteps = this.newTestCase.steps
+                .map(s => typeof s === 'object' && s !== null ? s.text : s)
+                .filter(s => typeof s === 'string' && s.trim() !== '');
 
             const payload = {
                 title: this.newTestCase.title,
                 preconditions: this.newTestCase.preconditions,
                 expected: this.newTestCase.expected,
-                steps: this.newTestCase.steps.filter(s => s.trim() !== ''),
+                steps: cleanedSteps,
                 payload: this.newTestCase.payload,
                 complexity: this.newTestCase.complexity,
                 priority: this.newTestCase.priority,

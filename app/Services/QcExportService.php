@@ -388,7 +388,18 @@ class QcExportService
             $sheet->setCellValue("E{$row}", ucfirst(str_replace('_', ' ', $bug->status ?: 'open')));
             $sheet->setCellValue("F{$row}", $bug->description ?: '-');
             $sheet->setCellValue("G{$row}", $bug->actual_result ?: '-');
-            $sheet->setCellValue("H{$row}", $bug->steps_to_reproduce ?: '-');
+            $bugStepsText = '-';
+            if (is_array($bug->steps_to_reproduce) && count($bug->steps_to_reproduce) > 0) {
+                $formattedSteps = [];
+                foreach ($bug->steps_to_reproduce as $idx => $step) {
+                    $formattedSteps[] = ($idx + 1) . '. ' . (is_array($step) ? ($step['text'] ?? '') : $step);
+                }
+                $bugStepsText = implode("\n", $formattedSteps);
+            } elseif (is_string($bug->steps_to_reproduce) && !empty($bug->steps_to_reproduce)) {
+                $bugStepsText = $bug->steps_to_reproduce;
+            }
+
+            $sheet->setCellValue("H{$row}", $bugStepsText ?: '-');
             $sheet->setCellValue("I{$row}", $bug->environment ?: '-');
             $sheet->setCellValue("J{$row}", $tcText);
             $sheet->setCellValue("K{$row}", $taskText);

@@ -396,7 +396,7 @@ class QcController extends Controller
             $request->validate([
                 'status' => 'required|in:passed,failed',
                 'bug_description' => 'required|string',
-                'steps_to_reproduce' => 'nullable|string',
+                'steps_to_reproduce' => 'nullable',
                 'severity' => 'nullable|string|in:Low,Medium,High,Critical',
                 'actual_result' => 'nullable|string',
                 'environment' => 'nullable|string',
@@ -918,6 +918,93 @@ class QcController extends Controller
         }
         $bug->delete();
         return response()->json(['success' => true]);
+    }
+
+    public function updateBug(Request $request, TaskBug $bug)
+    {
+        $request->validate([
+            'description' => 'required|string',
+            'severity' => 'nullable|string|in:Low,Medium,High,Critical',
+            'actual_result' => 'nullable|string',
+            'environment' => 'nullable|string',
+            'app_version' => 'nullable|string|max:100',
+            'status' => 'nullable|string|in:open,in_progress,resolved,closed',
+            'steps_to_reproduce' => 'nullable',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240',
+            'remove_attachment' => 'nullable|in:true,false,1,0',
+        ]);
+
+        $data = [
+            'description' => $request->description,
+            'severity' => $request->severity ?? $bug->severity,
+            'actual_result' => $request->actual_result,
+            'environment' => $request->environment,
+            'app_version' => $request->app_version,
+        ];
+
+        if ($request->filled('status')) {
+            $data['status'] = $request->status;
+        }
+
+        // Steps to reproduce: only updates task_bugs.steps_to_reproduce in the task_bugs table.
+        // The test_cases table and testCase->steps remain completely untouched!
+        if ($request->has('steps_to_reproduce')) {
+            $data['steps_to_reproduce'] = $request->steps_to_reproduce;
+        }
+
+        // Handle attachment removal
+        if (filter_var($request->remove_attachment, FILTER_VALIDATE_BOOLEAN)) {
+            if ($bug->attachment_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($bug->attachment_path);
+                $data['attachment_path'] = null;
+            }
+        }
+
+        // Handle new attachment upload
+        if ($request->hasFile('attachment')) {
+            if ($bug->attachment_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($bug->attachment_path);
+            }
+            $data['attachment_path'] = $request->file('attachment')->store('attachments/bugs', 'public');
+        }
+
+        $bug->update($data);
+
+        $bug->load(['testCase', 'projectTask']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bug report berhasil diperbarui.',
+            'bug' => [
+                'id' => $bug->id,
+                'code' => $bug->code,
+                'description' => $bug->description,
+                'steps_to_reproduce' => $bug->steps_to_reproduce,
+                'severity' => $bug->severity,
+                'status' => $bug->status,
+                'actual_result' => $bug->actual_result,
+                'environment' => $bug->environment,
+                'app_version' => $bug->app_version,
+                'attachment_path' => $bug->attachment_path,
+                'created_at' => $bug->created_at ? $bug->created_at->format('d M Y, H:i') : null,
+                'created_at_human' => $bug->created_at ? $bug->created_at->diffForHumans() : null,
+                'updated_at' => $bug->updated_at ? $bug->updated_at->format('d M Y, H:i') : null,
+                'test_case' => $bug->testCase ? [
+                    'id' => $bug->testCase->id,
+                    'code' => $bug->testCase->code,
+                    'title' => $bug->testCase->title,
+                    'status' => $bug->testCase->status,
+                    'expected' => $bug->testCase->expected,
+                    'app_version' => $bug->testCase->app_version,
+                ] : null,
+                'project_task' => $bug->projectTask ? [
+                    'id' => $bug->projectTask->id,
+                    'code' => $bug->projectTask->code,
+                    'title' => $bug->projectTask->title,
+                    'column_id' => $bug->projectTask->column_id,
+                ] : null,
+            ]
+        ]);
     }
 
     public function getTaskComments(ProjectTask $task)

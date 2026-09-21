@@ -128,6 +128,9 @@ Route::middleware(['auth', 'internal'])->group(function () {
         Route::delete('api/qc/bugs/{bug}', [QcController::class, 'destroyBug'])
             ->name('api.qc.bugs.destroy')
             ->middleware('permission:qc.manage_bugs');
+        Route::match(['post', 'put', 'patch'], 'api/qc/bugs/{bug}', [QcController::class, 'updateBug'])
+            ->name('api.qc.bugs.update')
+            ->middleware('permission:qc.manage_bugs');
         Route::get('api/qc/tasks/{task}/comments', [QcController::class, 'getTaskComments'])->name('api.qc.tasks.comments');
         Route::post('api/qc/tasks/{task}/comments', [QcController::class, 'storeTaskComment'])
             ->name('api.qc.tasks.comments.store')
