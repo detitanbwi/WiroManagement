@@ -86,29 +86,24 @@ class SendProjectQcSummaryJob
                 $targetEmail = $service->getDestinationEmail($recipient);
 
                 if (empty($targetEmail)) {
-                    Log::warning("[QA/QC Summary] User #{$recipient->id} ({$recipient->name}) has no valid personal or account email address. Skipping.");
+                    Log::info("[QA/QC Summary] User #{$recipient->id} ({$recipient->name}) tidak memiliki personal email. Melewati pengiriman email.");
                     continue;
                 }
-
-                $emailType = (!empty($recipient->personal_email) && $targetEmail === $recipient->personal_email) 
-                    ? 'personal email' 
-                    : 'login email (fallback)';
 
                 try {
                     Mail::to($targetEmail)->send($mailable);
                     $sentCount++;
 
-                    Log::info("[QA/QC Summary] Successfully sent report to {$recipient->name} <{$targetEmail}> ({$emailType}) for project #{$projectId}.");
+                    Log::info("[QA/QC Summary] Successfully sent report to {$recipient->name} <{$targetEmail}> (personal email) for project #{$projectId}.");
                 } catch (Throwable $e) {
                     $failedCount++;
                     $errors[] = [
                         'user_id' => $recipient->id,
                         'email' => $targetEmail,
-                        'email_type' => $emailType,
                         'error' => $e->getMessage(),
                     ];
 
-                    Log::error("[QA/QC Summary] Failed sending email to {$targetEmail} ({$emailType}) for project #{$projectId}: {$e->getMessage()}", [
+                    Log::error("[QA/QC Summary] Failed sending email to {$targetEmail} (personal email) for project #{$projectId}: {$e->getMessage()}", [
                         'exception' => $e,
                         'project_id' => $projectId,
                         'recipient_id' => $recipient->id,
@@ -118,9 +113,10 @@ class SendProjectQcSummaryJob
 
             Log::info("[QA/QC Summary] Completed dispatch for project #{$projectId}. Success: {$sentCount}, Failed: {$failedCount}.");
 
-            // If all recipients failed and there were recipients, throw exception
+            // If all recipients failed and there were recipients, throw exception with specific error
             if ($sentCount === 0 && $recipients->isNotEmpty()) {
-                throw new \RuntimeException("[QA/QC Summary] All {$failedCount} recipient deliveries failed for project #{$projectId}.");
+                $detail = $errors[0]['error'] ?? 'Pengiriman email gagal';
+                throw new \RuntimeException("Pengiriman email gagal ke seluruh penerima: {$detail}");
             }
 
             return [

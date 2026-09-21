@@ -64,7 +64,12 @@ class SendProjectQcSummaryCommand extends Command
                 $result = SendProjectQcSummaryJob::dispatchSync($project);
                 $sent = $result['sent'] ?? 0;
                 $failed = $result['failed'] ?? 0;
-                $this->info("  [SENT] Completed dispatch for #{$project->id}: {$sent} sent" . ($failed > 0 ? ", {$failed} failed." : "."));
+                $total = $result['total'] ?? 0;
+                if ($total === 0) {
+                    $this->warn("  [SKIPPED] No project members with personal email found for #{$project->id}.");
+                } else {
+                    $this->info("  [SENT] Completed dispatch for #{$project->id}: {$sent} sent" . ($failed > 0 ? ", {$failed} failed." : "."));
+                }
             } catch (\Throwable $e) {
                 $this->error("  [FAILED] Failed sending summary for #{$project->id}: {$e->getMessage()}");
             }

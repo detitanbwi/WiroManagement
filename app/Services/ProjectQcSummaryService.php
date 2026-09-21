@@ -122,7 +122,7 @@ class ProjectQcSummaryService
 
     /**
      * Resolve the target destination email for a user.
-     * Prioritizes personal_email, falling back to corporate login email.
+     * Strictly uses personal_email. Returns null if empty, blank, or invalid format.
      *
      * @param User $user
      * @return string|null
@@ -134,47 +134,38 @@ class ProjectQcSummaryService
             return $personalEmail;
         }
 
-        $loginEmail = trim($user->email ?? '');
-        if (!empty($loginEmail) && filter_var($loginEmail, FILTER_VALIDATE_EMAIL)) {
-            return $loginEmail;
-        }
-
         return null;
     }
 
     /**
      * Retrieve all eligible email recipients for this project.
-     * Scope: All active members assigned to the project + Project Manager.
+     * Scope: Active members assigned to the project + Project Manager,
+     * strictly filtered to those who have a valid personal_email.
      *
      * @param Project $project
      * @return Collection<int, User>
      */
     public function getRecipients(Project $project): Collection
     {
-        // 1. Get active users associated via project_user table
+        // 1. Get active users associated via project_user table who have a valid personal_email
         $recipients = $project->users()
             ->where('is_active', true)
-            ->where(function ($q) {
-                $q->where(function ($sub) {
-                    $sub->whereNotNull('personal_email')->where('personal_email', '!=', '');
-                })->orWhere(function ($sub) {
-                    $sub->whereNotNull('email')->where('email', '!=', '');
-                });
-            })
-            ->get();
+            ->whereNotNull('personal_email')
+            ->where('personal_email', '!=', '')
+            ->get()
+            ->filter(fn (User $u) => !empty($this->getDestinationEmail($u)));
 
-        // 2. Include project manager (pm_id) if assigned and active
+        // 2. Include project manager (pm_id) if assigned, active, and has valid personal_email
         if ($project->pm_id) {
             $pm = $project->pm;
-            if ($pm && $pm->is_active) {
-                $hasValidEmail = !empty($this->getDestinationEmail($pm));
-                if ($hasValidEmail && !$recipients->contains('id', $pm->id)) {
+            if ($pm && $pm->is_active && !empty($this->getDestinationEmail($pm))) {
+                if (!$recipients->contains('id', $pm->id)) {
                     $recipients->push($pm);
                 }
             }
         }
 
-        // 3. Fallback: If no project_user records exist yet, ensure PM or project assignees receive it
+        // 3. Fallback: If no project_user records exist yet, check task assignees who have valid personal_email
         if ($recipients->isEmpty()) {
             $taskAssigneeIds = ProjectTask::where('project_id', $project->id)
                 ->whereNotNull('assignee_id')
@@ -184,14 +175,11 @@ class ProjectQcSummaryService
             if ($taskAssigneeIds->isNotEmpty()) {
                 $assignees = User::whereIn('id', $taskAssigneeIds)
                     ->where('is_active', true)
-                    ->where(function ($q) {
-                        $q->where(function ($sub) {
-                            $sub->whereNotNull('personal_email')->where('personal_email', '!=', '');
-                        })->orWhere(function ($sub) {
-                            $sub->whereNotNull('email')->where('email', '!=', '');
-                        });
-                    })
-                    ->get();
+                    ->whereNotNull('personal_email')
+                    ->where('personal_email', '!=', '')
+                    ->get()
+                    ->filter(fn (User $u) => !empty($this->getDestinationEmail($u)));
+
                 $recipients = $recipients->merge($assignees);
             }
         }

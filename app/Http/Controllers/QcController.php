@@ -1103,12 +1103,12 @@ class QcController extends Controller
             ], 403);
         }
 
-        // Verify that there are eligible recipients
+        // Verify that there are eligible recipients with personal email
         $recipients = $summaryService->getRecipients($project);
         if ($recipients->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ditemukan anggota proyek aktif dengan alamat email yang valid untuk menerima ringkasan.'
+                'message' => 'Tidak ditemukan anggota proyek aktif yang memiliki alamat personal email untuk menerima ringkasan.'
             ], 422);
         }
 
