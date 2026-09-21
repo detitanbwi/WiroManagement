@@ -15,14 +15,14 @@ class SendProjectQcSummaryCommand extends Command
      */
     protected $signature = 'qc:send-summary 
                             {project? : ID or Project Code to send summary for (optional)}
-                            {--sync : Execute immediately without queueing}';
+                            {--sync : Execute immediately (sync mode is default)}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Dispatch QA/QC Summary Emails to project members and stakeholders';
+    protected $description = 'Send QA/QC Summary Emails synchronously to project members and stakeholders';
 
     /**
      * Execute the console command.
@@ -32,7 +32,6 @@ class SendProjectQcSummaryCommand extends Command
     public function handle(): int
     {
         $projectArg = $this->argument('project');
-        $runSync = $this->option('sync');
 
         if ($projectArg) {
             $project = Project::where('id', $projectArg)
@@ -56,22 +55,23 @@ class SendProjectQcSummaryCommand extends Command
             }
         }
 
-        $this->info("Dispatching QA/QC Summary for {$projects->count()} project(s)...");
+        $this->info("Sending QA/QC Summary synchronously for {$projects->count()} project(s)...");
 
         foreach ($projects as $project) {
-            $this->line("- Scheduling project #{$project->id}: {$project->title}");
+            $this->line("- Sending summary for project #{$project->id}: {$project->title}");
 
-            if ($runSync) {
-                dispatch_sync(new SendProjectQcSummaryJob($project));
-                $this->info("  [SYNC SENT] Completed dispatch for #{$project->id}.");
-            } else {
-                SendProjectQcSummaryJob::dispatch($project);
-                $this->info("  [QUEUED] Job pushed to queue for #{$project->id}.");
+            try {
+                $result = SendProjectQcSummaryJob::dispatchSync($project);
+                $sent = $result['sent'] ?? 0;
+                $failed = $result['failed'] ?? 0;
+                $this->info("  [SENT] Completed dispatch for #{$project->id}: {$sent} sent" . ($failed > 0 ? ", {$failed} failed." : "."));
+            } catch (\Throwable $e) {
+                $this->error("  [FAILED] Failed sending summary for #{$project->id}: {$e->getMessage()}");
             }
         }
 
         $this->newLine();
-        $this->info("All QA/QC summary emails have been queued/dispatched successfully.");
+        $this->info("All QA/QC summary emails have been dispatched successfully.");
 
         return self::SUCCESS;
     }

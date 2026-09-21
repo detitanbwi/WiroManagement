@@ -1085,7 +1085,7 @@ class QcController extends Controller
     }
 
     /**
-     * Dispatch QA/QC summary email to all project members and PM asynchronously.
+     * Send QA/QC summary email to all project members and PM synchronously.
      */
     public function sendSummaryEmail(Request $request, Project $project, ProjectQcSummaryService $summaryService)
     {
@@ -1112,19 +1112,42 @@ class QcController extends Controller
             ], 422);
         }
 
-        // Dispatch background job
-        SendProjectQcSummaryJob::dispatch($project, $user->id);
+        // Execute synchronously
+        try {
+            $result = SendProjectQcSummaryJob::dispatchSync($project, $user->id);
 
-        return response()->json([
-            'success' => true,
-            'message' => "Ringkasan QA/QC berhasil dijadwalkan untuk dikirim ke {$recipients->count()} anggota proyek.",
-            'recipients' => $recipients->map(fn($u) => [
-                'id' => $u->id,
-                'name' => $u->name,
-                'email' => $summaryService->getDestinationEmail($u),
-                'personal_email' => $u->personal_email,
-                'is_personal_email' => !empty($u->personal_email),
-            ]),
-        ]);
+            $sentCount = $result['sent'] ?? $recipients->count();
+            $failedCount = $result['failed'] ?? 0;
+
+            $message = "Ringkasan QA/QC berhasil dikirim ke {$sentCount} anggota proyek.";
+            if ($failedCount > 0) {
+                $message .= " ({$failedCount} email gagal terkirim).";
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'sent_count' => $sentCount,
+                'failed_count' => $failedCount,
+                'recipients' => $recipients->map(fn($u) => [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $summaryService->getDestinationEmail($u),
+                    'personal_email' => $u->personal_email,
+                    'is_personal_email' => !empty($u->personal_email),
+                ]),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("[QA/QC Summary] Gagal mengirim ringkasan email untuk project #{$project->id}: {$e->getMessage()}", [
+                'exception' => $e,
+                'project_id' => $project->id,
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim ringkasan QA/QC: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

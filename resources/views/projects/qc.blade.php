@@ -2652,7 +2652,7 @@ function qcDashboard() {
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    this.showSuccess(data.message || 'Ringkasan QA/QC berhasil dijadwalkan untuk dikirim.');
+                    this.showSuccess(data.message || 'Ringkasan QA/QC berhasil dikirim.');
                 } else {
                     this.showError(data.message || 'Gagal mengirimkan ringkasan email.');
                 }

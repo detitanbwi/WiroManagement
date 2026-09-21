@@ -6,32 +6,15 @@ use App\Mail\ProjectQcSummaryMail;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\ProjectQcSummaryService;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
-class SendProjectQcSummaryJob implements ShouldQueue
+class SendProjectQcSummaryJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
-    public int $tries = 3;
-
-    /**
-     * The number of seconds to wait before retrying the job.
-     *
-     * @var array<int>
-     */
-    public array $backoff = [10, 30, 60];
+    use Dispatchable, SerializesModels;
 
     /**
      * The project instance.
@@ -60,18 +43,18 @@ class SendProjectQcSummaryJob implements ShouldQueue
     }
 
     /**
-     * Execute the job.
+     * Execute the job synchronously.
      *
      * @param ProjectQcSummaryService $service
-     * @return void
+     * @return array
      */
-    public function handle(ProjectQcSummaryService $service): void
+    public function handle(ProjectQcSummaryService $service): array
     {
         $projectId = $this->project->id;
         $projectTitle = $this->project->title;
         $triggerInfo = $this->triggeredByUserId ? "user ID #{$this->triggeredByUserId}" : "system/scheduler";
 
-        Log::info("[QA/QC Summary] Starting email dispatch for project #{$projectId} ('{$projectTitle}') triggered by {$triggerInfo}.");
+        Log::info("[QA/QC Summary] Starting synchronous email dispatch for project #{$projectId} ('{$projectTitle}') triggered by {$triggerInfo}.");
 
         try {
             // 1. Gather Metrics
@@ -82,7 +65,12 @@ class SendProjectQcSummaryJob implements ShouldQueue
 
             if ($recipients->isEmpty()) {
                 Log::warning("[QA/QC Summary] No eligible active recipients found with valid email addresses for project #{$projectId}. Dispatch aborted.");
-                return;
+                return [
+                    'sent' => 0,
+                    'failed' => 0,
+                    'errors' => [],
+                    'total' => 0,
+                ];
             }
 
             Log::info("[QA/QC Summary] Sending QA/QC report for project #{$projectId} to {$recipients->count()} recipient(s).");
@@ -91,7 +79,7 @@ class SendProjectQcSummaryJob implements ShouldQueue
             $failedCount = 0;
             $errors = [];
 
-            // 3. Dispatch emails (instantiate format once)
+            // 3. Dispatch emails synchronously
             $mailable = new ProjectQcSummaryMail($this->project, $metrics);
 
             foreach ($recipients as $recipient) {
@@ -130,10 +118,17 @@ class SendProjectQcSummaryJob implements ShouldQueue
 
             Log::info("[QA/QC Summary] Completed dispatch for project #{$projectId}. Success: {$sentCount}, Failed: {$failedCount}.");
 
-            // If all recipients failed and there were recipients, throw exception to allow retry
+            // If all recipients failed and there were recipients, throw exception
             if ($sentCount === 0 && $recipients->isNotEmpty()) {
                 throw new \RuntimeException("[QA/QC Summary] All {$failedCount} recipient deliveries failed for project #{$projectId}.");
             }
+
+            return [
+                'sent' => $sentCount,
+                'failed' => $failedCount,
+                'errors' => $errors,
+                'total' => $recipients->count(),
+            ];
 
         } catch (Throwable $e) {
             Log::error("[QA/QC Summary] Unexpected failure during summary dispatch for project #{$projectId}: {$e->getMessage()}", [
@@ -143,20 +138,5 @@ class SendProjectQcSummaryJob implements ShouldQueue
 
             throw $e;
         }
-    }
-
-    /**
-     * Handle a job failure.
-     *
-     * @param Throwable $exception
-     * @return void
-     */
-    public function failed(Throwable $exception): void
-    {
-        Log::critical("[QA/QC Summary] Job SendProjectQcSummaryJob failed definitively after {$this->tries} attempts for project #{$this->project->id}: {$exception->getMessage()}", [
-            'project_id' => $this->project->id,
-            'triggered_by' => $this->triggeredByUserId,
-            'exception' => $exception,
-        ]);
     }
 }
