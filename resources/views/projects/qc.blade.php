@@ -76,7 +76,7 @@
     </div>
 
     <!-- Kanban Board Box -->
-    <div class="px-6 pt-6 pb-4 flex flex-col" :class="{'flex-1 min-h-[400px]': isKanbanExpanded}">
+    <div class="px-6 pt-6 pb-4 flex flex-col" :class="{'flex-1 min-h-[700px]': isKanbanExpanded}">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" :class="{'flex-1': isKanbanExpanded}">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center cursor-pointer select-none shrink-0" @click="isKanbanExpanded = !isKanbanExpanded">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -115,7 +115,7 @@
                         </div>
                     </div>
                     
-                    <div class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[140px]">
+                    <div class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[220px]">
                         <!-- Drop indicator placeholder when dragging over column -->
                         <div x-show="dragOverColumn === column.id && draggedTask?.column_id !== column.id"
                              x-transition:enter="transition ease-out duration-150"
