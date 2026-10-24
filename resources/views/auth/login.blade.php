@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,13 +20,13 @@
                 <img src="{{ asset('logo.png') }}" alt="Wirodayan Logo" class="w-full h-auto object-contain">
             </div>
             <h1 class="text-3xl font-extrabold text-white tracking-tight">WiroManagement</h1>
-            <p class="text-blue-200 mt-2 text-sm opacity-80">Portal Administrasi Client & Proyek</p>
+            <p class="text-blue-200 mt-2 text-sm opacity-80">Client & Project Administration Portal</p>
         </div>
 
         <div class="glass border border-white/30 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-700">
             <div class="p-8 sm:p-12">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Selamat Datang</h2>
-                <p class="text-gray-500 text-sm mb-8">Silakan masukkan akun Anda untuk melanjutkan.</p>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+                <p class="text-gray-500 text-sm mb-8">Please enter your credentials to continue.</p>
 
                 @if(session('error'))
                 <div class="mb-6 p-4 bg-red-100 border border-red-200 text-red-600 rounded-2xl flex items-center shadow-sm">
@@ -53,14 +53,14 @@
                             </div>
                             <input type="email" name="email" id="email" required value="{{ old('email') }}"
                                 class="block w-full pl-12 pr-4 py-4 bg-white/50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700 placeholder-gray-400 shadow-sm"
-                                placeholder="nama@email.com" autocomplete="username">
+                                placeholder="name@email.com" autocomplete="username">
                         </div>
                         @error('email') <p class="mt-2 text-xs text-red-600 font-medium italic">* {{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <label for="password" class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Secret Key / Password</label>
+                            <label for="password" class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Password</label>
                         </div>
                         <div class="relative group">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
@@ -74,12 +74,12 @@
 
                     <div class="flex items-center">
                         <input type="checkbox" name="remember" id="remember" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                        <label for="remember" class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-tight cursor-pointer select-none">Ingat saya di perangkat ini</label>
+                        <label for="remember" class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-tight cursor-pointer select-none">Remember me on this device</label>
                     </div>
 
                     <button type="submit" 
                         class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold uppercase tracking-widest text-sm shadow-xl shadow-blue-200 transform hover:-translate-y-1 active:translate-y-0 active:shadow-inner transition-all duration-300 flex items-center justify-center space-x-2">
-                        <span>Masuk ke Dashboard</span>
+                        <span>Sign In to Dashboard</span>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </button>
                 </form>

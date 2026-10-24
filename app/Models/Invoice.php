@@ -59,4 +59,41 @@ class Invoice extends Model
     {
         return $this->total_amount - $this->paid_amount;
     }
+
+    /**
+     * Generate a unique sequential invoice number for the project.
+     * Format: INV/WIRODEV/{YEAR}/{PROJECT_REF}/{SEQUENCE}
+     */
+    public static function generateNextNumber(Project $project): string
+    {
+        $projectYear = $project->created_at ? $project->created_at->format('Y') : date('Y');
+        $projectRef = $project->getProjectRef();
+        $prefix = "INV/WIRODEV/{$projectYear}/{$projectRef}/";
+
+        // Query existing invoices belonging to this project
+        $existing = $project->invoices()
+            ->pluck('invoice_number')
+            ->toArray();
+
+        $maxSeq = 0;
+        foreach ($existing as $num) {
+            if (preg_match('/\/(\d+)$/', $num, $matches)) {
+                $seq = (int) $matches[1];
+                if ($seq > $maxSeq) {
+                    $maxSeq = $seq;
+                }
+            }
+        }
+
+        $nextSeq = $maxSeq + 1;
+        $candidate = $prefix . str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
+
+        // Ensure candidate is globally unique in the table
+        while (self::where('invoice_number', $candidate)->exists()) {
+            $nextSeq++;
+            $candidate = $prefix . str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
+        }
+
+        return $candidate;
+    }
 }

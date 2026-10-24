@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -24,6 +25,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'personal_email',
         'password',
         'role',
         'client_id',
@@ -58,6 +60,15 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Get the preferred destination email address for sending notifications/summaries.
+     * Prioritizes personal_email over corporate login email.
+     */
+    public function getDestinationEmailAttribute(): ?string
+    {
+        return !empty($this->personal_email) ? trim($this->personal_email) : trim($this->email ?? '');
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
@@ -90,13 +101,78 @@ class User extends Authenticatable
         return array_unique($slugs);
     }
 
+    public function projectMemberships(): HasMany
+    {
+        return $this->hasMany(ProjectMember::class);
+    }
+
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_user')->withTimestamps();
+    }
+
     /**
-     * Check if user has a specific role or any of the given roles.
+     * Get the project member record for a specific project.
+     */
+    public function getProjectMembership(Project|int $project): ?ProjectMember
+    {
+        $projectId = $project instanceof Project ? $project->id : $project;
+
+        if ($this->relationLoaded('projectMemberships')) {
+            return $this->projectMemberships->firstWhere('project_id', $projectId);
+        }
+
+        return $this->projectMemberships()->where('project_id', $projectId)->first();
+    }
+
+    /**
+     * Get array of role slugs assigned to this user in a specific project.
+     *
+     * @return array<string>
+     */
+    public function getProjectRoleSlugs(Project|int $project): array
+    {
+        $membership = $this->getProjectMembership($project);
+        return $membership ? $membership->getRoleSlugs() : [];
+    }
+
+    /**
+     * Check if user has a specific role or any of the given roles in a specific project.
+     *
+     * @param Project|int $project
+     * @param string|array $roles
+     */
+    public function hasProjectRole(Project|int $project, string|array $roles): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        $membership = $this->getProjectMembership($project);
+        return $membership ? $membership->hasRole($roles) : false;
+    }
+
+    /**
+     * Check if user has at least one of the given roles in a specific project.
+     */
+    public function hasAnyProjectRole(Project|int $project, array $roles): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        $membership = $this->getProjectMembership($project);
+        return $membership ? $membership->hasAnyRole($roles) : false;
+    }
+
+    /**
+     * Check if user has a specific role or any of the given roles (globally).
      *
      * @param string|UserRole|array $roles
      */
     public function hasRole(string|UserRole|array $roles): bool
     {
+
         if (is_array($roles)) {
             return $this->hasAnyRole($roles);
         }
@@ -179,10 +255,14 @@ class User extends Authenticatable
      */
     public function syncLegacyRoleColumn(?array $slugs = null): void
     {
-        $slugs = $slugs ?? $this->getRoleSlugs();
+        if ($slugs === null) {
+            $slugs = $this->relationLoaded('roles')
+                ? $this->roles->pluck('slug')->toArray()
+                : $this->roles()->pluck('slug')->toArray();
+        }
 
         $priority = ['superadmin', 'admin', 'pm', 'finance', 'qc', 'staff', 'client'];
-        $highestRole = 'staff';
+        $highestRole = null;
 
         foreach ($priority as $p) {
             if (in_array($p, $slugs, true)) {
@@ -257,38 +337,59 @@ class User extends Authenticatable
     }
 
     /**
-     * Get all permission names granted to this user.
+     * Get all permission names granted to this user (optionally scoped to a project).
      *
      * @return array<string>
      */
-    public function getPermissionNames(): array
+    public function getPermissionNames(?Project $project = null): array
     {
         if ($this->isSuperAdmin()) {
             return Permission::pluck('name')->toArray();
         }
 
-        if ($this->cachedPermissionNames === null) {
-            $roleIds = $this->roles()->pluck('roles.id')->toArray();
+        $projectId = $project ? ($project instanceof Project ? $project->id : $project) : null;
+        $cacheKey = $projectId ? 'proj_' . $projectId : 'global';
 
-            // Fallback for legacy users.role column if role_user pivot is empty
-            if (empty($roleIds) && !empty($this->role)) {
-                $roleIds = Role::where('slug', $this->role)->pluck('id')->toArray();
-            }
+        if (isset($this->cachedPermissionNames[$cacheKey])) {
+            return $this->cachedPermissionNames[$cacheKey];
+        }
 
-            if (empty($roleIds)) {
-                $this->cachedPermissionNames = [];
-            } else {
-                $this->cachedPermissionNames = \Illuminate\Support\Facades\DB::table('permission_role')
-                    ->join('permissions', 'permissions.id', '=', 'permission_role.permission_id')
-                    ->whereIn('permission_role.role_id', $roleIds)
-                    ->pluck('permissions.name')
-                    ->unique()
-                    ->values()
-                    ->toArray();
+        $roleIds = $this->roles()->pluck('roles.id')->toArray();
+
+        // Fallback for legacy users.role column if role_user pivot is empty
+        if (empty($roleIds) && !empty($this->role)) {
+            $roleIds = Role::where('slug', $this->role)->pluck('id')->toArray();
+        }
+
+        // Include roles assigned specifically in the project scope
+        if ($projectId !== null) {
+            $membership = $this->getProjectMembership($projectId);
+            if ($membership) {
+                $projectRoleIds = $membership->roles()->pluck('roles.id')->toArray();
+                $roleIds = array_unique(array_merge($roleIds, $projectRoleIds));
             }
         }
 
-        return $this->cachedPermissionNames;
+        $permissions = [];
+        if (!empty($roleIds)) {
+            $permissions = \Illuminate\Support\Facades\DB::table('permission_role')
+                ->join('permissions', 'permissions.id', '=', 'permission_role.permission_id')
+                ->whereIn('permission_role.role_id', $roleIds)
+                ->pluck('permissions.name')
+                ->unique()
+                ->values()
+                ->toArray();
+        }
+
+        // If user is internal, ensure they can view the projects directory
+        if ($this->isInternal()) {
+            $permissions[] = 'projects.view';
+        }
+
+        $result = array_values(array_unique($permissions));
+        $this->cachedPermissionNames[$cacheKey] = $result;
+
+        return $result;
     }
 
     /**
@@ -307,30 +408,56 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has a specific permission.
+     * Check if user has a specific permission (optionally evaluated within a project scope).
      */
-    public function hasPermission(string $permissionName): bool
+    public function hasPermission(string $permissionName, ?Project $project = null): bool
     {
         if ($this->isSuperAdmin()) {
             return true;
         }
 
-        return in_array($permissionName, $this->getPermissionNames(), true);
+        if (in_array($permissionName, $this->getPermissionNames($project), true)) {
+            return true;
+        }
+
+        // Safe fallback for qc.comments: anyone who can access QC board or internal user can comment
+        if ($permissionName === 'qc.comments') {
+            return in_array('qc.view', $this->getPermissionNames($project), true)
+                || in_array('projects.qc', $this->getPermissionNames($project), true)
+                || ($project !== null && $this->hasAnyProjectRole($project, ['pm', 'qc', 'staff']))
+                || $this->isInternal();
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user has permission to access the QC module of a project.
+     */
+    public function canAccessProjectQc(Project $project): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($this->hasPermission('projects.qc', $project) || $this->hasPermission('qc.view', $project)) {
+            return true;
+        }
+
+        return $this->hasAnyProjectRole($project, ['pm', 'qc', 'staff']);
     }
 
     /**
      * Check if user has at least one of the specified permissions.
      */
-    public function hasAnyPermission(array $permissionNames): bool
+    public function hasAnyPermission(array $permissionNames, ?Project $project = null): bool
     {
         if ($this->isSuperAdmin()) {
             return true;
         }
 
-        $allPermissionNames = $this->getPermissionNames();
-
         foreach ($permissionNames as $perm) {
-            if (in_array($perm, $allPermissionNames, true)) {
+            if ($this->hasPermission($perm, $project)) {
                 return true;
             }
         }
@@ -340,10 +467,15 @@ class User extends Authenticatable
 
     /**
      * Determine if user has any internal operational role.
+     * All non-client portal accounts are internal users.
      */
     public function isInternal(): bool
     {
-        return $this->hasAnyRole(['superadmin', 'admin', 'pm', 'finance', 'qc', 'staff']);
+        if ($this->hasRole('client') || $this->client_id !== null) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -367,6 +499,14 @@ class User extends Authenticatable
                 'slug' => $role->slug,
                 'name' => $enum ? $enum->label() : $role->name,
                 'classes' => $enum ? $enum->badgeClasses() : $role->badge_classes,
+            ];
+        }
+
+        if (empty($badges) && $this->isInternal()) {
+            $badges[] = [
+                'slug' => 'employee',
+                'name' => 'Employee',
+                'classes' => 'bg-slate-100 text-slate-700 border-slate-200',
             ];
         }
 

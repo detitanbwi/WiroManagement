@@ -114,7 +114,7 @@ class QuotationController extends Controller
             
             // Create Invoice
             $invoice = $project->invoices()->create([
-                'invoice_number' => 'INV/' . date('Ymd') . '/' . str_pad($project->invoices()->count() + 1, 2, '0', STR_PAD_LEFT),
+                'invoice_number' => \App\Models\Invoice::generateNextNumber($project),
                 'type' => 'final',
                 'subtotal' => $quotation->total_amount,
                 'tax' => 0,

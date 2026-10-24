@@ -13,10 +13,12 @@ class ProjectExpense extends Model
         'project_id',
         'description',
         'amount',
+        'is_paid',
         'date'
     ];
 
     protected $casts = [
+        'is_paid' => 'boolean',
         'date' => 'date'
     ];
 

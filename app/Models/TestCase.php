@@ -12,6 +12,21 @@ class TestCase extends Model
         'steps' => 'array',
     ];
 
+    protected static function booted()
+    {
+        static::deleting(function ($testCase) {
+            foreach ($testCase->children as $child) {
+                $child->delete();
+            }
+            foreach ($testCase->bugs as $bug) {
+                if ($bug->attachment_path) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($bug->attachment_path);
+                }
+                $bug->delete();
+            }
+        });
+    }
+
     public function projectTask()
     {
         return $this->belongsTo(ProjectTask::class);

@@ -85,10 +85,22 @@ Route::middleware(['auth', 'internal'])->group(function () {
         ->name('projects.status.update')
         ->middleware('permission:projects.status');
     
+    // Project Members & Project-scoped Roles
+    Route::post('projects/{project}/members', [\App\Http\Controllers\ProjectMemberController::class, 'store'])
+        ->name('projects.members.store')
+        ->middleware('permission:projects.manage');
+    Route::put('projects/{project}/members/{member}', [\App\Http\Controllers\ProjectMemberController::class, 'update'])
+        ->name('projects.members.update')
+        ->middleware('permission:projects.manage');
+    Route::delete('projects/{project}/members/{member}', [\App\Http\Controllers\ProjectMemberController::class, 'destroy'])
+        ->name('projects.members.destroy')
+        ->middleware('permission:projects.manage');
+    
     // QA/QC Routes (Protected by QC view permissions, with granular write permissions per action)
     Route::middleware('permission:qc.view,projects.qc')->group(function () {
         Route::get('projects/{project}/qc', [ProjectController::class, 'qc'])->name('projects.qc');
         Route::get('projects/{project}/qc/export-excel', [QcController::class, 'exportExcel'])->name('projects.qc.export-excel');
+        Route::post('api/projects/{project}/qc/send-summary-email', [QcController::class, 'sendSummaryEmail'])->name('api.qc.project.send-summary-email');
         Route::get('api/projects/{project}/qc/tasks', [QcController::class, 'getTasks'])->name('api.qc.tasks');
         Route::get('api/projects/{project}/qc/test-cases', [QcController::class, 'getProjectTestCases'])->name('api.qc.project.test-cases');
         Route::post('api/projects/{project}/qc/test-cases', [QcController::class, 'storeProjectTestCase'])
@@ -100,8 +112,14 @@ Route::middleware(['auth', 'internal'])->group(function () {
         Route::post('api/projects/{project}/qc/tasks', [QcController::class, 'storeTask'])
             ->name('api.qc.tasks.store')
             ->middleware('permission:qc.manage_tasks');
-        Route::post('api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])
+        Route::match(['post', 'put', 'patch'], 'api/qc/tasks/{task}', [QcController::class, 'updateTask'])
+            ->name('api.qc.tasks.update')
+            ->middleware('permission:qc.manage_tasks');
+        Route::match(['post', 'patch'], 'api/qc/tasks/{task}/move', [QcController::class, 'updateTaskColumn'])
             ->name('api.qc.tasks.move')
+            ->middleware('permission:qc.manage_tasks');
+        Route::match(['post', 'patch'], 'api/qc/tasks/{task}/column', [QcController::class, 'updateTaskColumn'])
+            ->name('api.qc.tasks.column')
             ->middleware('permission:qc.manage_tasks');
         Route::post('api/qc/tasks/{task}/pass-test-cases', [QcController::class, 'passTaskTestCases'])
             ->name('api.qc.tasks.pass-test-cases')
@@ -128,13 +146,16 @@ Route::middleware(['auth', 'internal'])->group(function () {
         Route::delete('api/qc/bugs/{bug}', [QcController::class, 'destroyBug'])
             ->name('api.qc.bugs.destroy')
             ->middleware('permission:qc.manage_bugs');
+        Route::match(['post', 'put', 'patch'], 'api/qc/bugs/{bug}', [QcController::class, 'updateBug'])
+            ->name('api.qc.bugs.update')
+            ->middleware('permission:qc.manage_bugs');
         Route::get('api/qc/tasks/{task}/comments', [QcController::class, 'getTaskComments'])->name('api.qc.tasks.comments');
         Route::post('api/qc/tasks/{task}/comments', [QcController::class, 'storeTaskComment'])
             ->name('api.qc.tasks.comments.store')
-            ->middleware('permission:qc.comments');
+            ->middleware('permission:qc.comments,qc.view,projects.qc');
         Route::delete('api/qc/comments/{comment}', [QcController::class, 'destroyTaskComment'])
             ->name('api.qc.comments.destroy')
-            ->middleware('permission:qc.comments');
+            ->middleware('permission:qc.comments,qc.view,projects.qc');
     });
 
     // Invoices, Quotations, and Documents (Permission-protected)

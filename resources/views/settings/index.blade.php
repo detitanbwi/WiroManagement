@@ -9,8 +9,8 @@
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Pengaturan Sistem & Rate Card</h1>
-            <p class="text-sm text-gray-500">Kelola harga satuan dasar modul AI Pricing, parameter multiplier, dan template dokumen legal.</p>
+            <h1 class="text-2xl font-bold text-gray-900">System & Rate Card Settings</h1>
+            <p class="text-sm text-gray-500">Manage base unit prices for AI Pricing modules, multiplier parameters, and legal document templates.</p>
         </div>
 
         <a href="{{ route('ai-pricing.index') }}" 
@@ -18,7 +18,7 @@
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
-            Kembali ke AI Pricing
+            Back to AI Pricing
         </a>
     </div>
 
@@ -41,7 +41,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
             </svg>
-            <span>Rate Card & Harga Satuan AI</span>
+            <span>Rate Card & Base Unit Prices</span>
         </button>
 
         <button type="button"
@@ -51,7 +51,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <span>Template Dokumen Legal</span>
+            <span>Legal Document Templates</span>
         </button>
     </div>
 
@@ -69,8 +69,8 @@
                     </svg>
                 </div>
                 <div class="flex-1 text-xs leading-relaxed text-gray-700">
-                    <h3 class="font-bold text-gray-900 text-sm mb-0.5">Master Rate Card & Harga Satuan Resmi</h3>
-                    <p>Harga satuan dasar di bawah ini digunakan oleh AI Pricing Engine untuk menghitung estimasi penawaran secara deterministik. Input nominal otomatis dilengkapi <strong>pemisah ribuan (thousand separator)</strong> untuk kenyamanan pengetikan.</p>
+                    <h3 class="font-bold text-gray-900 text-sm mb-0.5">Master Rate Card & Official Base Pricing</h3>
+                    <p>The base unit prices below are used by the AI Pricing Engine to deterministically calculate quotation estimates. Numeric inputs automatically include <strong>thousand separators</strong> for convenience.</p>
                 </div>
             </div>
 
@@ -92,7 +92,7 @@
                                 <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
                                 <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide">{{ $category }}</h3>
                             </div>
-                            <span class="text-xs font-semibold text-gray-500">{{ count($catModules) }} Modul</span>
+                            <span class="text-xs font-semibold text-gray-500">{{ count($catModules) }} Modules</span>
                         </div>
 
                         <div class="divide-y divide-gray-100">
@@ -101,13 +101,13 @@
                                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
                                         <!-- Module Info (Cols 5) -->
                                         <div class="lg:col-span-5 space-y-1">
-                                            <div class="flex items-center space-x-2">
+                                             <div class="flex items-center space-x-2">
                                                 <span class="font-mono text-xs font-black bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded border border-indigo-200">
                                                     {{ $mod['code'] }}
                                                 </span>
                                                 <h4 class="text-sm font-bold text-gray-900">{{ $mod['name'] }}</h4>
                                                 @if(!empty($mod['is_free']))
-                                                    <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">Gratis</span>
+                                                    <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">Free</span>
                                                 @endif
                                             </div>
                                             <p class="text-xs text-gray-600 leading-relaxed">{{ $mod['spec'] }}</p>
@@ -121,7 +121,7 @@
                                             <!-- Harga Min -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                                    Harga Min
+                                                    Min Price
                                                 </label>
                                                 <div class="relative">
                                                     <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 pointer-events-none">Rp</span>
@@ -136,8 +136,8 @@
                                             <!-- Harga Rekomendasi (Satuan Dasar Utama) -->
                                             <div>
                                                 <label class="block text-[10px] font-extrabold text-indigo-700 uppercase tracking-wider mb-1 flex items-center">
-                                                    <span>Harga Standar</span>
-                                                    <span class="ml-1 px-1 py-0.2 rounded text-[9px] bg-indigo-100 text-indigo-800">Utama</span>
+                                                    <span>Standard Price</span>
+                                                    <span class="ml-1 px-1 py-0.2 rounded text-[9px] bg-indigo-100 text-indigo-800">Primary</span>
                                                 </label>
                                                 <div class="relative">
                                                     <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-indigo-600 pointer-events-none">Rp</span>
@@ -152,7 +152,7 @@
                                             <!-- Harga Max -->
                                             <div>
                                                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                                    Harga Max
+                                                    Max Price
                                                 </label>
                                                 <div class="relative">
                                                     <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 pointer-events-none">Rp</span>
@@ -182,7 +182,7 @@
                         </div>
                         <div>
                             <h4 class="text-sm font-bold text-gray-900">Platform Multipliers</h4>
-                            <p class="text-[11px] text-gray-500">Pengali berdasarkan arsitektur aplikasi</p>
+                            <p class="text-[11px] text-gray-500">Multipliers based on application architecture</p>
                         </div>
                     </div>
 
@@ -215,8 +215,8 @@
                             🏗️
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-gray-900">Status Proyek (Novelty)</h4>
-                            <p class="text-[11px] text-gray-500">Markup adaptasi & refactoring kode existing</p>
+                            <h4 class="text-sm font-bold text-gray-900">Project Novelty Multipliers</h4>
+                            <p class="text-[11px] text-gray-500">Adaptation & refactoring markup for existing codebases</p>
                         </div>
                     </div>
 
@@ -249,14 +249,14 @@
                             💳
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-gray-900">DP & Termin Pembayaran</h4>
-                            <p class="text-[11px] text-gray-500">Ketentuan DP berdasar nilai proyek</p>
+                            <h4 class="text-sm font-bold text-gray-900">Down Payment & Terms</h4>
+                            <p class="text-[11px] text-gray-500">Down payment rules based on project valuation</p>
                         </div>
                     </div>
 
                     <div class="space-y-3 text-xs">
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Ambang Batas Nilai Proyek</label>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Project Valuation Threshold</label>
                             <div class="relative">
                                 <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 pointer-events-none">Rp</span>
                                 <input type="text" 
@@ -269,7 +269,7 @@
 
                         <div class="grid grid-cols-2 gap-3 pt-1">
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">&lt; Batas</label>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">&lt; Threshold</label>
                                 <div class="flex items-center space-x-1">
                                     <input type="number" 
                                            name="dp_rules[below_threshold_dp_pct]" 
@@ -281,7 +281,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">&ge; Batas</label>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">&ge; Threshold</label>
                                 <div class="flex items-center space-x-1">
                                     <input type="number" 
                                            name="dp_rules[above_threshold_dp_pct]" 
@@ -305,8 +305,8 @@
                             🏢
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-gray-900">Batas Floor Price per Segmen</h4>
-                            <p class="text-[11px] text-gray-500">Nilai penawaran minimal proyek sistem utuh</p>
+                            <h4 class="text-sm font-bold text-gray-900">Floor Price per Segment</h4>
+                            <p class="text-[11px] text-gray-500">Minimum quotation floor for full-system projects</p>
                         </div>
                     </div>
 
@@ -337,8 +337,8 @@
                             SOP
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-white">Standar Operasional & SLA</h4>
-                            <p class="text-[11px] text-white/60">Ketentuan baku penawaran & kontrak WiroDev</p>
+                            <h4 class="text-sm font-bold text-white">Standard Operations & SLA</h4>
+                            <p class="text-[11px] text-white/60">Baseline terms for WiroDev quotations and contracts</p>
                         </div>
                     </div>
 
@@ -348,16 +348,16 @@
                             <span class="font-bold text-white">Rp 250.000 / man-day</span>
                         </div>
                         <div class="flex justify-between border-b border-white/5 pb-2">
-                            <span>Masa Garansi Bug Standar:</span>
-                            <span class="font-bold text-emerald-300">30 Hari Kalender Pasca UAT</span>
+                            <span>Standard Bug Warranty:</span>
+                            <span class="font-bold text-emerald-300">30 Calendar Days Post-UAT</span>
                         </div>
                         <div class="flex justify-between border-b border-white/5 pb-2">
-                            <span>Retainer Baseline (Opsional):</span>
-                            <span class="font-bold text-amber-300">Rp 500.000 / bulan (5 jam SLA 4-8 jam)</span>
+                            <span>Baseline Retainer (Optional):</span>
+                            <span class="font-bold text-amber-300">Rp 500.000 / month (5 hours SLA 4-8 hrs)</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Domain & Hosting (Dewaweb):</span>
-                            <span class="font-bold text-indigo-200">At-Cost / Tagihan Terpisah</span>
+                            <span class="font-bold text-indigo-200">At-Cost / Separate Invoicing</span>
                         </div>
                     </div>
                 </div>
@@ -366,7 +366,7 @@
             <!-- Sticky Save Bar -->
             <div class="sticky bottom-4 bg-white/95 backdrop-blur border border-gray-200 rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 z-10">
                 <div class="text-xs text-gray-500 text-center sm:text-left">
-                    Perubahan Rate Card akan langsung berlaku pada sesi kalkulasi estimasi baru maupun yang sedang dibuka.
+                    Changes to the Rate Card will take effect immediately for both new and open estimation sessions.
                 </div>
 
                 <button type="submit" 
@@ -374,7 +374,7 @@
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    Simpan Perubahan Rate Card
+                    Save Rate Card Changes
                 </button>
             </div>
         </form>
@@ -391,24 +391,24 @@
                 <div class="space-y-6">
                     <div>
                         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-2">Terms & Conditions (Invoice)</h3>
-                        <label for="terms_conditions" class="block text-xs font-medium text-gray-600 mb-2">Garis besar syarat pembayaran dan ketentuan teknis invoice.</label>
+                        <label for="terms_conditions" class="block text-xs font-medium text-gray-600 mb-2">Overview of invoice payment terms and technical conditions.</label>
                         <div class="bg-white">
                             <textarea name="settings[terms_conditions]" id="editor-invoice-terms" style="height: 150px;">{!! $settings['terms_conditions'] ?? "" !!}</textarea>
                         </div>
                     </div>
 
                     <div>
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-2">Quotation Notes (Penawaran)</h3>
-                        <label for="quotation_notes" class="block text-xs font-medium text-gray-600 mb-2">Catatan standar yang muncul di bagian bawah penawaran harga.</label>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-2">Quotation Notes</h3>
+                        <label for="quotation_notes" class="block text-xs font-medium text-gray-600 mb-2">Standard notes appearing at the bottom of quotations.</label>
                         <div class="bg-white">
                             <textarea name="settings[quotation_notes]" id="editor-quotation-notes" style="height: 150px;">{!! $settings['quotation_notes'] ?? "" !!}</textarea>
                         </div>
-                        <p class="mt-2 text-[10px] text-gray-400">Contoh: Masa berlaku penawaran, kebijakan DP, dan lingkup maintenance.</p>
+                        <p class="mt-2 text-[10px] text-gray-400">Example: Quotation validity, down payment policy, and maintenance scope.</p>
                     </div>
 
                     <div>
-                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-2">Syarat & Ketentuan (Quotation)</h3>
-                        <label for="quotation_terms" class="block text-xs font-medium text-gray-600 mb-2">Halaman khusus Syarat & Ketentuan yang akan muncul di halaman baru pada PDF Quotation.</label>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-2">Terms & Conditions (Quotation)</h3>
+                        <label for="quotation_terms" class="block text-xs font-medium text-gray-600 mb-2">Dedicated Terms & Conditions page that appears on a new page in Quotation PDFs.</label>
                         <div class="bg-white">
                             <textarea name="settings[quotation_terms]" id="editor-quotation-terms" style="height: 250px;">{!! $settings['quotation_terms'] ?? "" !!}</textarea>
                         </div>
@@ -417,7 +417,7 @@
 
                 <div class="pt-6 border-t border-gray-100 flex justify-end">
                     <button type="submit" id="submit-btn" class="inline-flex items-center px-6 py-2.5 bg-primary border border-transparent rounded-xl font-bold text-xs text-white uppercase tracking-wider hover:bg-blue-800 transition shadow-md">
-                        Simpan Konfigurasi Dokumen
+                        Save Document Settings
                     </button>
                 </div>
             </form>

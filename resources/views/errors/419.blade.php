@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3;url={{ route('login') }}">
-    <title>Sesi Berakhir | WiroManagement</title>
+    <title>Session Expired | WiroManagement</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -22,18 +22,18 @@
                 </svg>
             </div>
 
-            <h1 class="text-2xl font-bold text-gray-800 mb-2">Sesi Telah Berakhir (419)</h1>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Session Expired (419)</h1>
             <p class="text-gray-600 text-sm mb-6 leading-relaxed">
-                Token keamanan sesi Anda telah kedaluwarsa. Sistem telah mereset sesi lama demi keamanan akun Anda.
+                Your session security token has expired. The system has reset the old session for your account security.
             </p>
 
             <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl mb-6 text-xs text-blue-700 font-medium">
-                Mengalihkan otomatis ke halaman login dalam <span id="countdown" class="font-bold">3</span> detik...
+                Redirecting automatically to login page in <span id="countdown" class="font-bold">3</span> seconds...
             </div>
 
             <a href="{{ route('login') }}" 
                 class="inline-flex items-center justify-center w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all duration-200">
-                <span>Kembali ke Halaman Login</span>
+                <span>Back to Login Page</span>
                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                 </svg>
@@ -41,7 +41,7 @@
         </div>
 
         <p class="mt-8 text-blue-200/60 text-xs font-semibold">
-            &copy; {{ date('Y') }} WiroManagement &bull; Keamanan Sesi Terjamin
+            &copy; {{ date('Y') }} WiroManagement &bull; Session Security Protected
         </p>
     </div>
 

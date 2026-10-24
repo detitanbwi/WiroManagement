@@ -21,14 +21,14 @@
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Bank Accounts</h1>
-            <p class="text-sm text-gray-500">Kelola rekening dan dompet untuk pencatatan pengeluaran.</p>
+            <p class="text-sm text-gray-500">Manage bank accounts and wallets for expense tracking.</p>
         </div>
         @can('finance.bank_accounts')
         <button @click="openCreate()" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all font-medium shadow-sm">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
-            Tambah Akun
+            + New Account
         </button>
         @endcan
     </div>
@@ -41,7 +41,7 @@
                 <button @click="openEdit({{ json_encode($account) }})" class="p-1 text-blue-600 hover:bg-blue-50 rounded">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                 </button>
-                <form action="{{ route('finance.bank-accounts.destroy', $account->id) }}" method="POST" onsubmit="return confirm('Hapus akun ini?')">
+                <form action="{{ route('finance.bank-accounts.destroy', $account->id) }}" method="POST" onsubmit="return confirm('Delete this account?')">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="p-1 text-red-600 hover:bg-red-50 rounded">
@@ -96,7 +96,7 @@
 
                     <div class="px-6 py-6 bg-white">
                         <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-xl font-bold text-gray-900" x-text="isEdit ? 'Edit Akun Bank' : 'Tambah Akun Bank'"></h3>
+                            <h3 class="text-xl font-bold text-gray-900" x-text="isEdit ? 'Edit Bank Account' : 'Add Bank Account'"></h3>
                             <button type="button" @click="showModal = false" class="text-gray-400 hover:text-gray-500">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
@@ -104,12 +104,12 @@
 
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Nama Akun / Bank</label>
-                                <input type="text" name="name" x-model="currentAccount.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Contoh: BCA Personal, Cash Company">
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Account / Bank Name</label>
+                                <input type="text" name="name" x-model="currentAccount.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="e.g. BCA Personal, Cash Company">
                             </div>
 
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Tipe</label>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Type</label>
                                 <select name="type" x-model="currentAccount.type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
                                     <option value="personal">Personal</option>
                                     <option value="company">Company</option>
@@ -117,7 +117,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Saldo Awal</label>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Opening Balance</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-bold">Rp</span>
                                     <input type="number" name="balance" x-model="currentAccount.balance" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="0">
@@ -127,8 +127,8 @@
                     </div>
 
                     <div class="px-6 py-4 bg-gray-50 flex flex-row-reverse space-x-2 space-x-reverse">
-                        <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-opacity-90 shadow-sm" x-text="isEdit ? 'Simpan Perubahan' : 'Tambah Akun'"></button>
-                        <button type="button" @click="showModal = false" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50">Batal</button>
+                        <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-opacity-90 shadow-sm" x-text="isEdit ? 'Save Changes' : 'Add Account'"></button>
+                        <button type="button" @click="showModal = false" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50">Cancel</button>
                     </div>
                 </form>
             </div>

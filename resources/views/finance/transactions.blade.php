@@ -6,8 +6,8 @@
 <div class="space-y-6">
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Transaksi</h1>
-            <p class="text-sm text-gray-500">Riwayat pengeluaran yang masuk dari sistem Flutter.</p>
+            <h1 class="text-2xl font-bold text-gray-900">Transactions</h1>
+            <p class="text-sm text-gray-500">Expense transactions synced from the mobile app.</p>
         </div>
     </div>
 
@@ -16,12 +16,12 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Tipe</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Rekening</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Nominal</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Keterangan</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Account</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Description</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -51,7 +51,7 @@
                     @empty
                     <tr>
                         <td colspan="6" class="px-6 py-10 text-center text-gray-400 italic">
-                            Belum ada transaksi yang tersinkron.
+                            No synchronized transactions found.
                         </td>
                     </tr>
                     @endforelse

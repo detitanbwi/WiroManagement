@@ -106,7 +106,7 @@ class PermissionSeeder extends Seeder
             'staff' => [
                 'projects.view',
                 'projects.qc', 'projects.gantt',
-                'qc.view', 'qc.comments',
+                'qc.view', 'qc.manage_tasks', 'qc.comments',
                 'ai_pricing.use',
                 'company_tasks.view',
             ],

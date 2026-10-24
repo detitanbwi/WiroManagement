@@ -3,7 +3,26 @@
 @section('title', 'QA/QC Dashboard - ' . $project->title)
 
 @section('content')
+@php
+    $currentUser = auth()->user();
+    $isProjectStaffOnly = !$currentUser->isSuperAdmin() 
+        && !$currentUser->hasAnyRole(['superadmin', 'admin']) 
+        && (
+            ($currentUser->hasProjectRole($project, 'staff') && !$currentUser->hasAnyProjectRole($project, ['pm', 'qc']))
+            || ($currentUser->hasRole('staff') && !$currentUser->hasAnyRole(['pm', 'qc', 'admin', 'superadmin']))
+        );
+@endphp
 <div class="h-full flex flex-col bg-gray-50" x-data="qcDashboard()">
+    <!-- Global Toast Notifications -->
+    <div x-show="successMessage" x-transition.opacity.duration.300ms class="fixed top-5 right-5 z-50 flex items-center gap-2 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg border border-emerald-500 font-medium text-sm" style="display: none;">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span x-text="successMessage"></span>
+    </div>
+    <div x-show="errorMessage" x-transition.opacity.duration.300ms class="fixed top-5 right-5 z-50 flex items-center gap-2 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg border border-red-500 font-medium text-sm" style="display: none;">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <span x-text="errorMessage"></span>
+    </div>
+
     <!-- Header -->
     <div class="px-6 py-4 border-b border-gray-200 bg-white flex justify-between items-center shrink-0">
         <div>
@@ -19,13 +38,33 @@
                 </svg>
                 <span>Export Excel</span>
             </a>
+
+            <!-- Send Summary Email Button -->
+            <button type="button"
+                    @click="sendSummaryEmail()"
+                    :disabled="isSendingEmail"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-blue-600 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium shadow-sm transition-colors"
+                    title="Kirim ringkasan metrik QA/QC ke seluruh anggota proyek melalui email">
+                <template x-if="!isSendingEmail">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </template>
+                <template x-if="isSendingEmail">
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </template>
+                <span x-text="isSendingEmail ? 'Mengirim...' : 'Kirim Ringkasan Email'"></span>
+            </button>
             @if(auth()->user()->can('projects.manage'))
             <a href="{{ route('projects.show', $project->id) }}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors">
                 Back to Project
             </a>
             @else
             <a href="{{ route('projects.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors">
-                Daftar Proyek
+                Back to Projects
             </a>
             @endif
             @can('qc.manage_tasks')
@@ -37,7 +76,7 @@
     </div>
 
     <!-- Kanban Board Box -->
-    <div class="px-6 pt-6 pb-4 flex flex-col" :class="{'flex-1 min-h-[400px]': isKanbanExpanded}">
+    <div class="px-6 pt-6 pb-4 flex flex-col" :class="{'flex-1 min-h-[700px]': isKanbanExpanded}">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" :class="{'flex-1': isKanbanExpanded}">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center cursor-pointer select-none shrink-0" @click="isKanbanExpanded = !isKanbanExpanded">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -52,27 +91,80 @@
                 <div class="flex h-full space-x-6 min-w-max pb-4">
                     <!-- Columns mapped via Alpine -->
             <template x-for="column in columns" :key="column.id">
-                <div class="w-80 flex flex-col max-h-full bg-gray-100/50 rounded-xl border border-gray-200 shrink-0">
+                <div class="w-80 flex flex-col max-h-full bg-gray-100/50 rounded-xl border border-gray-200 shrink-0 transition-all duration-150"
+                     :class="{
+                         'ring-2 ring-blue-500 bg-blue-50/50 border-blue-400 shadow-md': dragOverColumn === column.id && draggedTask?.column_id !== column.id,
+                         'opacity-90': dragOverColumn === column.id && draggedTask?.column_id === column.id
+                     }"
+                     @dragover.prevent="handleTaskDragOver(column.id, $event)"
+                     @dragleave="handleTaskDragLeave(column.id, $event)"
+                     @drop.prevent="dropTaskOnColumn(column.id)">
                     <div class="px-4 py-3 border-b border-gray-200/80 bg-gray-100 rounded-t-xl shrink-0 flex justify-between items-center">
                         <h3 class="font-semibold text-gray-700 text-sm tracking-wide" x-text="column.title"></h3>
-                        <span class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full font-medium" x-text="getTasksByColumn(column.id).length"></span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full font-medium" x-text="getTasksByColumn(column.id).length"></span>
+                            <button 
+                                x-show="permissions.canManageTasks && (!permissions.isStaffOnly || (column.id !== 'qc_in_progress' && column.id !== 'done'))"
+                                @click.stop="openNewTaskModal(column.id)"
+                                type="button"
+                                :title="'Add task to ' + column.title"
+                                class="p-1 hover:bg-gray-200 text-gray-500 hover:text-gray-800 rounded transition-colors"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            </button>
+                        </div>
                     </div>
                     
-                    <div class="p-3 flex-1 overflow-y-auto space-y-3">
+                    <div class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[220px]">
+                        <!-- Drop indicator placeholder when dragging over column -->
+                        <div x-show="dragOverColumn === column.id && draggedTask?.column_id !== column.id"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             class="border-2 border-dashed border-blue-400 bg-blue-50/70 rounded-lg p-3 text-center text-xs font-semibold text-blue-600">
+                            Drop to move to <span x-text="column.title"></span>
+                        </div>
+
                         <template x-for="task in getTasksByColumn(column.id)" :key="task.id">
                             <!-- Task Card -->
                             <div 
+                                :draggable="permissions.canManageTasks && (!permissions.isStaffOnly || (task.column_id !== 'qc_in_progress' && task.column_id !== 'done'))"
+                                @dragstart="startTaskDrag(task, $event)"
+                                @dragend="endTaskDrag()"
                                 @click="openTaskModal(task)"
-                                class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:border-gray-300 hover:shadow transition-all group cursor-pointer"
+                                class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:border-gray-300 hover:shadow transition-all group select-none"
+                                :class="{
+                                    'cursor-grab active:cursor-grabbing': permissions.canManageTasks && (!permissions.isStaffOnly || (task.column_id !== 'qc_in_progress' && task.column_id !== 'done')),
+                                    'cursor-pointer': !permissions.canManageTasks || (permissions.isStaffOnly && (task.column_id === 'qc_in_progress' || task.column_id === 'done')),
+                                    'opacity-40 scale-95 border-dashed border-blue-300': draggedTask?.id === task.id
+                                }"
                             >
                                 <div class="flex justify-between items-start mb-1.5">
-                                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider font-mono" x-text="task.code"></span>
-                                    <template x-if="task.hasActiveBug">
-                                        <span class="inline-flex items-center gap-1 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded border border-red-200">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                            BLOCKED
-                                        </span>
-                                    </template>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg x-show="permissions.canManageTasks" class="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 cursor-grab shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Drag to move task">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                                        </svg>
+                                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider font-mono" x-text="task.code"></span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button 
+                                            x-show="permissions.canManageTasks && (!permissions.isStaffOnly || (task.column_id !== 'qc_in_progress' && task.column_id !== 'done'))"
+                                            @click.stop="openEditTaskModal(task)"
+                                            type="button"
+                                            class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 p-0.5 hover:bg-blue-50 rounded transition-all"
+                                            title="Edit Task"
+                                        >
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
+                                        <template x-if="task.hasActiveBug">
+                                            <span class="inline-flex items-center gap-1 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded border border-red-200">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                                BLOCKED
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
                                 <h4 class="text-sm font-semibold text-gray-900 mb-2 leading-snug line-clamp-2" x-text="task.title"></h4>
                                 <template x-if="task.source_test_case">
@@ -89,13 +181,15 @@
                                         <span class="text-xs text-gray-500 font-medium truncate max-w-[110px]" x-text="task.assignee"></span>
                                     </div>
 
-                                    <!-- Comment Counter Badge -->
-                                    <template x-if="task.comments_count > 0">
-                                        <div class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" title="Komentar / Percakapan">
-                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                            <span x-text="task.comments_count"></span>
-                                        </div>
-                                    </template>
+                                    <!-- Comment Counter & Discussion Button -->
+                                    <button type="button" 
+                                            @click.stop="openTaskModal(task, 'comments')"
+                                            class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-all cursor-pointer"
+                                            :class="task.comments_count > 0 ? 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100' : 'text-gray-400 bg-gray-50 border-gray-200 hover:bg-gray-100 hover:text-gray-600'"
+                                            title="Diskusi & Komentar">
+                                        <svg class="w-3.5 h-3.5" :class="task.comments_count > 0 ? 'text-blue-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                        <span x-text="task.comments_count || 0"></span>
+                                    </button>
                                 </div>
                             </div>
                         </template>
@@ -167,6 +261,9 @@
                             <span x-show="!tc.children || tc.children.length === 0" class="w-4 h-4 inline-block"></span>
                             
                             <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100" x-text="tc.code"></span>
+                            <template x-if="tc.app_version">
+                                <span class="text-xs font-mono font-medium text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200" :title="'Versi: ' + tc.app_version" x-text="tc.app_version"></span>
+                            </template>
                             <span class="text-sm font-medium text-gray-800" x-text="tc.title"></span>
                         </div>
                         <div class="flex items-center gap-3">
@@ -249,19 +346,19 @@
                         <button @click="bugFilterTab = 'active'" 
                                 :class="{'border-amber-500 text-amber-800 font-bold': bugFilterTab === 'active', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'active'}"
                                 class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
-                            Bug Aktif (Open)
+                            Active Bugs (Open)
                             <span class="bg-amber-100 text-amber-800 py-0.5 px-2 rounded-full text-xs font-bold" x-text="projectBugs.filter(b => b.status !== 'resolved').length"></span>
                         </button>
                         <button @click="bugFilterTab = 'solved'" 
                                 :class="{'border-green-600 text-green-700 font-bold': bugFilterTab === 'solved', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'solved'}"
                                 class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
-                            Bug Solved / Resolved
+                            Resolved Bugs
                             <span class="bg-green-100 text-green-800 py-0.5 px-2 rounded-full text-xs font-bold" x-text="projectBugs.filter(b => b.status === 'resolved').length"></span>
                         </button>
                         <button @click="bugFilterTab = 'all'" 
                                 :class="{'border-red-600 text-red-700 font-bold': bugFilterTab === 'all', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': bugFilterTab !== 'all'}"
                                 class="whitespace-nowrap pb-3 pt-2 px-1 border-b-2 text-sm transition-colors flex items-center gap-2">
-                            Semua Bug
+                            All Bugs
                             <span class="bg-gray-100 text-gray-700 py-0.5 px-2 rounded-full text-xs font-semibold" x-text="projectBugs.length"></span>
                         </button>
                     </nav>
@@ -270,16 +367,16 @@
                 <!-- Selection Action Toolbar -->
                 <div x-show="selectedBugIds.length > 0 && permissions.canManageBugs" x-cloak class="px-6 py-2.5 bg-blue-50 border-b border-blue-200 flex items-center justify-between flex-wrap gap-3">
                     <div class="flex items-center gap-3">
-                        <span class="inline-flex items-center justify-center bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full" x-text="selectedBugIds.length + ' Bug Terpilih'"></span>
-                        <span class="text-xs text-blue-900 font-medium">Pilih beberapa bug untuk digabungkan menjadi satu Kanban Task baru.</span>
+                        <span class="inline-flex items-center justify-center bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full" x-text="selectedBugIds.length + ' Selected Bugs'"></span>
+                        <span class="text-xs text-blue-900 font-medium">Select multiple bugs to merge into a single new Kanban Task.</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" @click="openBulkConvertModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold shadow-xs transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                            <span>Buat 1 Task Kanban (<span x-text="selectedBugIds.length"></span> Bug)</span>
+                            <span>Create 1 Kanban Task (<span x-text="selectedBugIds.length"></span> Bugs)</span>
                         </button>
                         <button type="button" @click="selectedBugIds = []" class="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md text-xs font-medium transition-colors">
-                            Batal
+                            Cancel
                         </button>
                     </div>
                 </div>
@@ -294,10 +391,11 @@
                                            @change="toggleSelectAllBugs($event)" 
                                            :checked="isAllBugsSelected" 
                                            x-effect="$el.indeterminate = isSomeBugsSelected"
-                                           title="Pilih Semua Bug"
+                                           title="Select All Bugs"
                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer">
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bug Details</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">Versi</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28">Severity</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-28">Status</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Test Case</th>
@@ -307,19 +405,24 @@
                             <!-- Per-Column Filters Row -->
                             <tr class="bg-gray-100/90 border-t border-gray-200 text-xs">
                                 <th scope="col" x-show="permissions.canManageBugs" class="px-2 py-2 text-center">
-                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="text-gray-400 hover:text-red-600 transition-colors p-1" title="Reset Semua Filter">
+                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="text-gray-400 hover:text-red-600 transition-colors p-1" title="Reset All Filters">
                                         <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </th>
                                 <th scope="col" class="px-6 py-2">
                                     <div class="relative">
-                                        <input type="text" x-model="bugFilters.details" placeholder="Filter kode / deskripsi..." class="w-full text-xs pl-7 pr-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
+                                        <input type="text" x-model="bugFilters.details" placeholder="Filter code / description..." class="w-full text-xs pl-7 pr-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
                                         <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-2 py-2">
+                                    <div class="relative">
+                                        <input type="text" x-model="bugFilters.version" placeholder="Filter versi..." class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400 font-normal">
                                     </div>
                                 </th>
                                 <th scope="col" class="px-3 py-2">
                                     <select x-model="bugFilters.severity" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
-                                        <option value="">Semua</option>
+                                        <option value="">All</option>
                                         <option value="Critical">Critical</option>
                                         <option value="High">High</option>
                                         <option value="Medium">Medium</option>
@@ -328,7 +431,7 @@
                                 </th>
                                 <th scope="col" class="px-3 py-2">
                                     <select x-model="bugFilters.status" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
-                                        <option value="">Semua</option>
+                                        <option value="">All</option>
                                         <option value="open">Open</option>
                                         <option value="in_progress">In Progress</option>
                                         <option value="resolved">Resolved</option>
@@ -342,13 +445,13 @@
                                 </th>
                                 <th scope="col" class="px-6 py-2">
                                     <select x-model="bugFilters.task" class="w-full text-xs px-2 py-1 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-primary focus:border-primary font-normal text-gray-700">
-                                        <option value="">Semua Task</option>
+                                        <option value="">All Tasks</option>
                                         <option value="assigned">Assigned</option>
                                         <option value="unassigned">Unassigned</option>
                                     </select>
                                 </th>
                                 <th scope="col" class="px-6 py-2 text-right">
-                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="inline-flex items-center gap-1 text-[11px] text-red-600 hover:text-red-800 font-semibold px-2 py-1 rounded bg-red-50 hover:bg-red-100 border border-red-200 transition-colors" title="Reset Semua Filter Kolom">
+                                    <button type="button" x-show="hasActiveBugFilters" @click="resetBugFilters()" class="inline-flex items-center gap-1 text-[11px] text-red-600 hover:text-red-800 font-semibold px-2 py-1 rounded bg-red-50 hover:bg-red-100 border border-red-200 transition-colors" title="Reset All Column Filters">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                         <span>Reset</span>
                                     </button>
@@ -387,20 +490,24 @@
                                             </div>
                                             <span class="text-sm font-medium text-gray-900 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors" 
                                                   @click="openViewBugModal(bug)" 
-                                                  title="Klik untuk membaca deskripsi lengkap" 
+                                                  title="Click to view details" 
                                                   x-text="bug.description"></span>
                                             <div class="flex items-center gap-3 text-xs text-gray-500 mt-1.5 flex-wrap">
-                                                <span x-text="'Dilaporkan: ' + (bug.created_at_human || bug.created_at)"></span>
+                                                <span x-text="'Reported: ' + (bug.created_at_human || bug.created_at)"></span>
                                                 <template x-if="bug.status === 'resolved' && bug.updated_at">
-                                                    <span class="text-green-700 font-medium" x-text="'Diselesaikan: ' + bug.updated_at"></span>
+                                                    <span class="text-green-700 font-medium" x-text="'Resolved: ' + bug.updated_at"></span>
                                                 </template>
-                                                <button type="button" 
-                                                        @click="openViewBugModal(bug)" 
-                                                        class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline inline-flex items-center gap-0.5">
-                                                    Lihat Detail Deskripsi &rarr;
-                                                </button>
                                             </div>
                                         </div>
+                                    </td>
+                                    <!-- Separate Versi Column -->
+                                    <td class="px-3 py-4 whitespace-nowrap">
+                                        <template x-if="bug.app_version">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-purple-50 text-purple-700 border border-purple-200" x-text="bug.app_version"></span>
+                                        </template>
+                                        <template x-if="!bug.app_version">
+                                            <span class="text-xs text-gray-400 italic">-</span>
+                                        </template>
                                     </td>
                                     <!-- Separate Severity Column -->
                                     <td class="px-4 py-4 whitespace-nowrap">
@@ -470,6 +577,16 @@
                                             </svg>
                                             <span>Detail</span>
                                         </button>
+                                        <button x-show="permissions.canManageBugs" 
+                                                type="button" 
+                                                @click="openEditBugModal(bug)" 
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-amber-50 text-gray-700 hover:text-amber-700 border border-gray-300 hover:border-amber-300 rounded-md text-xs font-medium transition-colors shadow-xs" 
+                                                title="Edit Bug Report">
+                                            <svg class="w-3.5 h-3.5 text-gray-500 hover:text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            <span>Edit</span>
+                                        </button>
                                         <template x-if="!bug.project_task && bug.status !== 'resolved' && permissions.canManageBugs">
                                             <button @click="convertBugToTask(bug.id)" :disabled="convertingBugId === bug.id" :class="{'opacity-75 cursor-wait': convertingBugId === bug.id}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors">
                                                 <svg x-show="convertingBugId === bug.id" class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -491,17 +608,17 @@
                         <template x-if="hasActiveBugFilters">
                             <div class="flex flex-col items-center justify-center gap-2 py-4">
                                 <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                                <span class="font-medium text-gray-600">Tidak ada bug yang cocok dengan kriteria filter yang dipilih.</span>
+                                <span class="font-medium text-gray-600">No bugs match the selected filter criteria.</span>
                                 <button type="button" @click="resetBugFilters()" class="text-xs text-primary hover:underline font-bold mt-1">
-                                    Reset Semua Filter Kolom
+                                    Reset All Column Filters
                                 </button>
                             </div>
                         </template>
                         <template x-if="!hasActiveBugFilters && bugFilterTab === 'solved'">
-                            <span>Belum ada bug yang berstatus Solved / Resolved.</span>
+                            <span>No resolved bugs yet.</span>
                         </template>
                         <template x-if="!hasActiveBugFilters && bugFilterTab === 'active'">
-                            <span class="text-green-600 font-semibold">Tidak ada bug aktif saat ini! Semua bug telah terselesaikan.</span>
+                            <span class="text-green-600 font-semibold">No active bugs right now! All bugs have been resolved.</span>
                         </template>
                         <template x-if="!hasActiveBugFilters && bugFilterTab === 'all'">
                             <span>No bugs reported yet. Great job!</span>
@@ -596,22 +713,22 @@
                                             <svg x-show="movingToColumn === 'in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'in_progress' ? 'Moving...' : '&larr; Back to In Progress'"></span>
                                         </button>
-                                        <button @click="updateTaskColumn(activeTask.id, 'qc_in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 transition-colors">
+                                        <button x-show="!permissions.isStaffOnly" @click="updateTaskColumn(activeTask.id, 'qc_in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-semibold rounded shadow-sm text-white bg-purple-600 hover:bg-purple-700 transition-colors">
                                             <svg x-show="movingToColumn === 'qc_in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'qc_in_progress' ? 'Moving...' : 'Start QC Process &rarr;'"></span>
                                         </button>
                                     </div>
                                 </template>
                                 
-                                <template x-if="activeTask?.column_id === 'qc_in_progress'">
+                                <template x-if="activeTask?.column_id === 'qc_in_progress' && !permissions.isStaffOnly">
                                     <div class="flex gap-2">
                                         <button @click="updateTaskColumn(activeTask.id, 'ready_for_qc')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                             <svg x-show="movingToColumn === 'ready_for_qc'" class="animate-spin mr-1.5 h-3 w-3 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <span x-text="movingToColumn === 'ready_for_qc' ? 'Moving...' : '&larr; Back to Ready for QC'"></span>
                                         </button>
-                                        <button @click="updateTaskColumn(activeTask.id, 'in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded shadow-sm text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
-                                            <svg x-show="movingToColumn === 'in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                            <span x-text="movingToColumn === 'in_progress' ? 'Moving...' : '&#x21BA; Return to Developer'"></span>
+                                        <button @click="updateTaskColumn(activeTask.id, 'todo')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded shadow-sm text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
+                                            <svg x-show="movingToColumn === 'todo'" class="animate-spin mr-1.5 h-3 w-3 text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <span x-text="movingToColumn === 'todo' ? 'Moving...' : '&#x21BA; Return to Developer'"></span>
                                         </button>
                                         <button x-show="permissions.canExecuteTests" @click="updateTaskColumn(activeTask.id, 'done')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3.5 py-1.5 border border-transparent text-xs font-bold rounded shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors">
                                             <svg x-show="movingToColumn === 'done'" class="animate-spin mr-1.5 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -620,7 +737,7 @@
                                     </div>
                                 </template>
                                 
-                                <template x-if="activeTask?.column_id === 'done'">
+                                <template x-if="activeTask?.column_id === 'done' && !permissions.isStaffOnly">
                                     <button @click="updateTaskColumn(activeTask.id, 'qc_in_progress')" :disabled="isMovingTask" :class="{'opacity-75 cursor-wait': isMovingTask}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-semibold rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                         <svg x-show="movingToColumn === 'qc_in_progress'" class="animate-spin mr-1.5 h-3 w-3 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                         <span x-text="movingToColumn === 'qc_in_progress' ? 'Moving...' : '&larr; Reopen (Back to QC)'"></span>
@@ -629,7 +746,18 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button x-show="permissions.canManageTasks" @click="deleteTask(activeTask.id)" type="button" class="bg-red-50 p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors focus:outline-none" title="Delete Task">
+                            <button 
+                                x-show="permissions.canManageTasks && (!permissions.isStaffOnly || (activeTask?.column_id !== 'qc_in_progress' && activeTask?.column_id !== 'done'))"
+                                @click="openEditTaskModal(activeTask)"
+                                type="button" 
+                                class="bg-blue-50 p-1.5 rounded-md text-blue-600 hover:text-blue-800 hover:bg-blue-100 transition-colors focus:outline-none" 
+                                title="Edit Task"
+                            >
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button x-show="permissions.canManageTasks && !permissions.isStaffOnly" @click="deleteTask(activeTask.id)" type="button" class="bg-red-50 p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors focus:outline-none" title="Delete Task">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                             <button @click="closeTaskModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
@@ -733,14 +861,14 @@
                             <template x-if="activeTask?.testCases && activeTask.testCases.length > 0">
                                 <div class="space-y-3">
                                     <div class="flex items-center justify-between pb-2 border-b border-gray-100">
-                                        <span class="text-xs text-gray-500 font-medium" x-text="activeTask.testCases.length + ' Test Cases terkait task ini'"></span>
+                                        <span class="text-xs text-gray-500 font-medium" x-text="activeTask.testCases.length + ' Test Cases linked to this task'"></span>
                                         <button x-show="permissions.canExecuteTests" type="button" 
                                                 @click="passAllTaskTestCases(activeTask.id)" 
                                                 :disabled="isPassingAllTests"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-md text-xs font-semibold shadow-xs transition-colors disabled:opacity-50">
                                             <svg x-show="isPassingAllTests" class="animate-spin h-3 w-3 text-green-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             <svg x-show="!isPassingAllTests" class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                            <span>Pass Semua Test Case</span>
+                                            <span>Pass All Test Cases</span>
                                         </button>
                                     </div>
                                     <template x-for="tc in activeTask.testCases" :key="tc.id">
@@ -748,6 +876,9 @@
                                             <div>
                                                 <div class="flex items-center gap-2 mb-1 flex-wrap">
                                                     <span class="text-xs font-bold text-primary bg-blue-50 px-2 py-0.5 rounded border border-blue-100" x-text="tc.code"></span>
+                                                    <template x-if="tc.app_version">
+                                                        <span class="text-[10px] font-mono font-medium text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200" x-text="tc.app_version"></span>
+                                                    </template>
                                                     <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded" 
                                                           :class="{
                                                             'bg-green-100 text-green-700 border border-green-200': tc.status === 'passed',
@@ -822,7 +953,7 @@
 
                                             <div class="mt-3 pt-2 border-t border-gray-100 flex justify-end">
                                                 <button type="button" @click="openViewBugModal(bug)" class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline inline-flex items-center gap-1">
-                                                    <span>Lihat Detail Deskripsi Bug &rarr;</span>
+                                                    <span>View Bug Details &rarr;</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -837,7 +968,7 @@
                             <div class="mb-4 p-3 bg-blue-50/80 border border-blue-200 rounded-lg flex items-center justify-between text-xs text-blue-900">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                    <span>Diskusi langsung antar <strong>Programmer</strong> dan <strong>QC</strong> terkait pengerjaan dan verifikasi task ini.</span>
+                                    <span>Direct discussion between <strong>Programmer</strong> and <strong>QC</strong> regarding task execution and verification.</span>
                                 </div>
                                 <button type="button" @click="fetchTaskComments(activeTask.id)" class="text-blue-700 hover:text-blue-900 font-semibold underline flex items-center gap-1 shrink-0">
                                     <svg class="w-3.5 h-3.5" :class="{'animate-spin': isLoadingComments}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -852,8 +983,8 @@
                                         <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 mx-auto flex items-center justify-center mb-3">
                                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                                         </div>
-                                        <h4 class="text-sm font-semibold text-gray-800">Belum ada percakapan</h4>
-                                        <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto">Mulai diskusi atau koordinasi antara Programmer dan tim QC dengan menulis komentar pertama di bawah.</p>
+                                        <h4 class="text-sm font-semibold text-gray-800">No conversations yet</h4>
+                                        <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto">Start a discussion or coordination between the Programmer and QC team by writing the first comment below.</p>
                                     </div>
                                 </template>
 
@@ -896,7 +1027,7 @@
                                                             @click="deleteTaskComment(c.id)" 
                                                             :disabled="deletingCommentId === c.id"
                                                             class="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors" 
-                                                            title="Hapus Komentar">
+                                                            title="Delete Comment">
                                                         <svg x-show="deletingCommentId !== c.id" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                         <svg x-show="deletingCommentId === c.id" class="w-3.5 h-3.5 animate-spin text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                                     </button>
@@ -912,10 +1043,10 @@
                                                     <template x-if="isImageAttachment(c.attachment_path)">
                                                         <div class="mt-1">
                                                             <a :href="'/storage/' + c.attachment_path" target="_blank" class="inline-block group relative rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-all shadow-xs">
-                                                                <img :src="'/storage/' + c.attachment_path" class="max-h-48 max-w-xs object-cover rounded-lg group-hover:scale-102 transition-transform duration-200" alt="Lampiran">
+                                                                <img :src="'/storage/' + c.attachment_path" class="max-h-48 max-w-xs object-cover rounded-lg group-hover:scale-102 transition-transform duration-200" alt="Attachment">
                                                                 <span class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold gap-1 transition-opacity">
                                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                                                    Buka Gambar
+                                                                    View Image
                                                                 </span>
                                                             </a>
                                                         </div>
@@ -924,7 +1055,7 @@
                                                         <a :href="'/storage/' + c.attachment_path" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700 border border-gray-200 hover:border-blue-200 rounded-lg text-xs font-medium transition-colors shadow-xs">
                                                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
                                                             <span x-text="getFilename(c.attachment_path)"></span>
-                                                            <span class="text-[10px] text-gray-400 font-normal">&darr; Unduh</span>
+                                                            <span class="text-[10px] text-gray-400 font-normal">&darr; Download</span>
                                                         </a>
                                                     </template>
                                                 </div>
@@ -943,7 +1074,7 @@
                                         <span class="font-medium truncate" x-text="newCommentFile?.name"></span>
                                         <span class="text-gray-500 text-[10px]" x-text="formatFileSize(newCommentFile?.size)"></span>
                                     </div>
-                                    <button type="button" @click="removeCommentFile()" class="text-gray-400 hover:text-red-600 p-0.5 rounded transition-colors ml-2 shrink-0" title="Batal lampiran">
+                                    <button type="button" @click="removeCommentFile()" class="text-gray-400 hover:text-red-600 p-0.5 rounded transition-colors ml-2 shrink-0" title="Remove attachment">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </div>
@@ -952,7 +1083,7 @@
                                     <textarea x-model="newCommentText"
                                               @keydown.ctrl.enter="submitTaskComment()"
                                               @keydown.meta.enter="submitTaskComment()"
-                                              placeholder="Tulis pesan atau komentar untuk programmer / tim QC... (Ctrl + Enter untuk kirim)"
+                                              placeholder="Write a message or comment for developer / QC team... (Ctrl + Enter to send)"
                                               rows="3"
                                               class="w-full border border-gray-300 rounded-xl shadow-inner focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm px-3.5 py-2.5 outline-none resize-none pr-28 pb-10 transition-colors"></textarea>
                                     
@@ -1097,7 +1228,7 @@
                                 <p class="text-xs text-gray-500 mt-1">Pre-filled with test steps. Edit if necessary.</p>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
                                     <select x-model="bugSeverity" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
@@ -1110,6 +1241,10 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Environment</label>
                                     <input type="text" x-model="bugEnvironment" placeholder="E.g. Chrome, Windows, Staging" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Versi Aplikasi</label>
+                                    <input type="text" x-model="bugAppVersion" placeholder="E.g. v1.0.0" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono">
                                 </div>
                             </div>
                             
@@ -1187,7 +1322,7 @@
                  class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200">
                 
                 <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title" x-text="editingTaskId ? 'Edit Task' : 'Create New Task'">
                         Create New Task
                     </h3>
                     <button @click="closeNewTaskModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
@@ -1225,15 +1360,26 @@
                                     <option value="todo">To Do</option>
                                     <option value="in_progress">In Progress</option>
                                     <option value="ready_for_qc">Ready for QC</option>
+                                    @if(!$isProjectStaffOnly)
                                     <option value="qc_in_progress">QC in Progress</option>
                                     <option value="done">Done</option>
+                                    @endif
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Attachment (Optional)</label>
+                                <template x-if="editingTaskId && existingAttachment">
+                                    <div class="mb-2 flex items-center justify-between text-xs text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded border border-blue-200">
+                                        <div class="flex items-center gap-1.5 truncate">
+                                            <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                            <span class="text-gray-600">Lampiran saat ini:</span>
+                                            <a :href="'/storage/' + existingAttachment" target="_blank" class="font-semibold underline hover:text-blue-900 truncate" x-text="existingAttachment.split('/').pop()"></a>
+                                        </div>
+                                    </div>
+                                </template>
                                 <input type="file" id="task_attachment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md shadow-sm outline-none cursor-pointer">
-                                <p class="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOCX up to 10MB</p>
+                                <p class="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOCX up to 10MB <span x-show="editingTaskId && existingAttachment" class="text-gray-400">(Kosongkan jika tidak ingin mengganti)</span></p>
                             </div>
                         </div>
 
@@ -1241,9 +1387,9 @@
                             <button type="button" @click="closeNewTaskModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                                 Cancel
                             </button>
-                            <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmitting" :class="{'opacity-50 cursor-not-allowed': isSubmitting}">
-                                <span x-show="!isSubmitting">Save Task</span>
-                                <span x-show="isSubmitting">Saving...</span>
+                            <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmittingTask" :class="{'opacity-50 cursor-not-allowed': isSubmittingTask}">
+                                <span x-show="!isSubmittingTask" x-text="editingTaskId ? 'Update Task' : 'Save Task'">Save Task</span>
+                                <span x-show="isSubmittingTask" x-text="editingTaskId ? 'Updating...' : 'Saving...'">Saving...</span>
                             </button>
                         </div>
                     </form>
@@ -1281,9 +1427,9 @@
                 <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <div>
                         <h3 class="text-lg leading-6 font-bold text-gray-900">
-                            Buat 1 Task Kanban dari <span x-text="selectedBugIds.length"></span> Bug
+                            Create 1 Kanban Task from <span x-text="selectedBugIds.length"></span> Bugs
                         </h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Semua bug terpilih akan digabungkan ke dalam 1 kartu task baru di Kanban Board.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">All selected bugs will be merged into 1 new task card on the Kanban Board.</p>
                     </div>
                     <button @click="isBulkTaskModalOpen = false" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
                         <span class="sr-only">Close</span>
@@ -1296,7 +1442,7 @@
                         <div class="space-y-4">
                             <!-- Selected Bugs List Preview -->
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Daftar Bug Terpilih (<span x-text="selectedBugIds.length"></span>)</label>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Selected Bugs List (<span x-text="selectedBugIds.length"></span>)</label>
                                 <div class="max-h-36 overflow-y-auto space-y-1.5 p-2 bg-gray-50 rounded-lg border border-gray-200 text-xs">
                                     <template x-for="b in getSelectedBugs()" :key="b.id">
                                         <div class="flex items-center justify-between p-2 bg-white rounded border border-gray-200 shadow-2xs">
@@ -1307,7 +1453,7 @@
                                                 </template>
                                                 <span class="text-gray-800 truncate" x-text="b.description"></span>
                                             </div>
-                                            <button type="button" @click="toggleBugSelection(b.id)" class="text-gray-400 hover:text-red-500 p-1 shrink-0 ml-2" title="Hapus dari pilihan">
+                                            <button type="button" @click="toggleBugSelection(b.id)" class="text-gray-400 hover:text-red-500 p-1 shrink-0 ml-2" title="Remove from selection">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                             </button>
                                         </div>
@@ -1316,8 +1462,8 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Task Kanban <span class="text-red-500">*</span></label>
-                                <input type="text" x-model="bulkTask.title" required placeholder="Contoh: Perbaikan kumpulan bug ..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kanban Task Title <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="bulkTask.title" required placeholder="e.g. Bug fixes collection ..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1331,7 +1477,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kolom Awal</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Initial Column</label>
                                     <select x-model="bulkTask.column_id" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
                                         <option value="todo">To Do</option>
                                         <option value="in_progress">In Progress</option>
@@ -1341,14 +1487,14 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Tambahan</label>
-                                <textarea rows="3" x-model="bulkTask.description" placeholder="Catatan perbaikan / deskripsi gabungan..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono text-xs"></textarea>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Additional Description</label>
+                                <textarea rows="3" x-model="bulkTask.description" placeholder="Fix notes / merged description..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono text-xs"></textarea>
                             </div>
                         </div>
                         
                         <div class="mt-6 flex justify-end space-x-3">
                             <button type="button" @click="isBulkTaskModalOpen = false" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                                Batal
+                                Cancel
                             </button>
                             <button type="submit" :disabled="isSubmittingBulkConvert || selectedBugIds.length === 0" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                                 <svg x-show="isSubmittingBulkConvert" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -1392,8 +1538,9 @@
                 
                 <div class="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        <span x-show="editingTestCaseId">Edit Test Case</span>
-                        <span x-show="!editingTestCaseId" x-text="parentTestCase ? 'Add Sub Test Case' : 'Add Root Test Case'"></span>
+                        <span x-show="isDuplicatingTestCase">Duplicate Test Case</span>
+                        <span x-show="!isDuplicatingTestCase && editingTestCaseId">Edit Test Case</span>
+                        <span x-show="!isDuplicatingTestCase && !editingTestCaseId" x-text="parentTestCase ? 'Add Sub Test Case' : 'Add Root Test Case'"></span>
                     </h3>
                     <button @click="closeNewTestCaseModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
                         <span class="sr-only">Close</span>
@@ -1405,7 +1552,7 @@
                     <template x-if="parentTestCase">
                         <div class="mb-4 p-3 bg-blue-50 border border-blue-100 rounded text-sm">
                             <span class="text-gray-500 font-medium">Parent:</span> 
-                            <span class="font-bold text-blue-800" x-text="parentTestCase.code + ' - ' + parentTestCase.title"></span>
+                            <span class="font-bold text-blue-800" x-text="parentTestCase.code ? (parentTestCase.code + ' - ' + parentTestCase.title) : ('TC #' + parentTestCase.id)"></span>
                         </div>
                     </template>
                     <form @submit.prevent="submitNewTestCase">
@@ -1477,19 +1624,90 @@
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Versi Aplikasi</label>
+                                    <input type="text" x-model="newTestCase.app_version" placeholder="e.g. v1.0.0, v2.1.0-beta" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono">
+                                </div>
+
                                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                     <div class="flex justify-between items-center mb-3">
-                                        <label class="block text-sm font-medium text-gray-700">Test Steps</label>
-                                        <button type="button" @click="newTestCase.steps.push('')" class="text-xs text-primary hover:text-blue-800 font-bold px-2 py-1 bg-white border border-gray-300 rounded shadow-sm">+ Add Step</button>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Test Steps</label>
+                                            <p class="text-[11px] text-gray-500">Tarik ikon <span class="font-mono text-gray-600">⋮⋮</span> untuk mengatur ulang urutan langkah</p>
+                                        </div>
+                                        <button type="button" @click="addStep()" class="text-xs text-primary hover:text-blue-800 font-bold px-2.5 py-1 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-50 transition-colors">+ Add Step</button>
                                     </div>
-                                    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
-                                        <template x-for="(step, index) in newTestCase.steps" :key="index">
-                                            <div class="flex items-start gap-2 group">
-                                                <span class="text-xs font-bold text-gray-400 mt-2 w-4 shrink-0 text-right" x-text="(index + 1) + '.'"></span>
-                                                <input type="text" x-model="newTestCase.steps[index]" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-1.5 border outline-none" placeholder="Describe step...">
-                                                <button type="button" @click="newTestCase.steps.splice(index, 1)" class="text-red-400 hover:text-red-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" x-show="newTestCase.steps.length > 1" title="Remove Step">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                        <template x-for="(step, index) in newTestCase.steps" :key="step.id">
+                                            <div class="relative flex items-center gap-2 p-1.5 rounded-lg border bg-white transition-all group"
+                                                 :class="{
+                                                     'opacity-40 border-dashed border-blue-400 bg-blue-50/50': draggedStepIndex === index,
+                                                     'border-blue-500 ring-2 ring-blue-100 shadow-sm': dragOverStepIndex === index && draggedStepIndex !== index,
+                                                     'border-gray-200 hover:border-gray-300': draggedStepIndex !== index && dragOverStepIndex !== index
+                                                 }"
+                                                 :draggable="canDragStep"
+                                                 @dragstart="startStepDrag(index, $event)"
+                                                 @dragover.prevent="handleStepDragOver(index, $event)"
+                                                 @dragleave="handleStepDragLeave(index, $event)"
+                                                 @drop="dropStep(index)"
+                                                 @dragend="endStepDrag()">
+                                                
+                                                <!-- Drop line indicator (Top) -->
+                                                <div x-show="dragOverStepIndex === index && dragOverStepPosition === 'before' && draggedStepIndex !== index" 
+                                                     class="absolute -top-1 left-0 right-0 h-1 bg-blue-500 rounded-full z-20 pointer-events-none"></div>
+
+                                                <!-- Drag Handle -->
+                                                <div @mouseenter="canDragStep = true" 
+                                                     @mouseleave="canDragStep = false"
+                                                     class="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors select-none shrink-0" 
+                                                     title="Tarik untuk memindahkan urutan">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01"></path>
+                                                    </svg>
+                                                </div>
+
+                                                <!-- Number Badge -->
+                                                <span class="text-xs font-bold text-gray-500 w-5 shrink-0 text-center font-mono" x-text="(index + 1) + '.'"></span>
+
+                                                <!-- Step Input -->
+                                                <input type="text" 
+                                                       x-model="step.text" 
+                                                       draggable="false"
+                                                       class="w-full border-gray-200 rounded-md focus:ring-primary focus:border-primary text-sm px-2.5 py-1.5 border outline-none bg-transparent hover:bg-gray-50/50 focus:bg-white transition-colors" 
+                                                       placeholder="Deskripsikan langkah pengujian...">
+
+                                                <!-- Up / Down Nudge Buttons -->
+                                                <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                    <button type="button" 
+                                                            @click="moveStepUp(index)" 
+                                                            :disabled="index === 0" 
+                                                            :class="index === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'"
+                                                            class="p-1 rounded transition-colors" 
+                                                            title="Pindah ke Atas">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"></path></svg>
+                                                    </button>
+                                                    <button type="button" 
+                                                            @click="moveStepDown(index)" 
+                                                            :disabled="index === newTestCase.steps.length - 1" 
+                                                            :class="index === newTestCase.steps.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'"
+                                                            class="p-1 rounded transition-colors" 
+                                                            title="Pindah ke Bawah">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                                    </button>
+                                                </div>
+
+                                                <!-- Remove Step Button -->
+                                                <button type="button" 
+                                                        @click="removeStep(index)" 
+                                                        class="text-gray-300 hover:text-red-600 p-1 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0" 
+                                                        x-show="newTestCase.steps.length > 1" 
+                                                        title="Hapus Langkah">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                 </button>
+
+                                                <!-- Drop line indicator (Bottom) -->
+                                                <div x-show="dragOverStepIndex === index && dragOverStepPosition === 'after' && draggedStepIndex !== index" 
+                                                     class="absolute -bottom-1 left-0 right-0 h-1 bg-blue-500 rounded-full z-20 pointer-events-none"></div>
                                             </div>
                                         </template>
                                     </div>
@@ -1502,7 +1720,7 @@
                                 Cancel
                             </button>
                             <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-800" :disabled="isSubmittingTestCase" :class="{'opacity-50 cursor-not-allowed': isSubmittingTestCase}">
-                                <span x-show="!isSubmittingTestCase" x-text="editingTestCaseId ? 'Update Test Case' : 'Save Test Case'"></span>
+                                <span x-show="!isSubmittingTestCase" x-text="editingTestCaseId ? 'Update Test Case' : (isDuplicatingTestCase ? 'Duplicate Test Case' : 'Save Test Case')"></span>
                                 <span x-show="isSubmittingTestCase">Saving...</span>
                             </button>
                         </div>
@@ -1646,6 +1864,9 @@
                     </div>
 
                     <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-purple-50 text-purple-700 border-purple-200 border" x-show="viewingTestCase?.app_version">
+                            <span class="mr-1 opacity-75">Versi:</span> <span class="font-mono" x-text="viewingTestCase?.app_version"></span>
+                        </span>
                         <span class="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-gray-100 text-gray-700" x-show="viewingTestCase?.test_type">
                             <span class="mr-1 font-normal text-gray-500">Type:</span> <span x-text="viewingTestCase?.test_type"></span>
                         </span>
@@ -1757,6 +1978,10 @@
                                   }"
                                   x-text="viewingBug?.status"></span>
 
+                            <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-purple-200 bg-purple-50 text-purple-700 font-mono" 
+                                  x-show="viewingBug?.app_version"
+                                  x-text="'Versi: ' + viewingBug.app_version"></span>
+
                             <span class="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border" 
                                   :class="{
                                       'bg-red-50 text-red-700 border-red-200': viewingBug?.severity === 'Critical' || viewingBug?.severity === 'High',
@@ -1785,12 +2010,24 @@
                     </div>
 
                     <!-- Steps to Reproduce (if any) -->
-                    <div x-show="viewingBug?.steps_to_reproduce">
+                    <div x-show="viewingBug?.steps_to_reproduce && (Array.isArray(viewingBug.steps_to_reproduce) ? viewingBug.steps_to_reproduce.length > 0 : (viewingBug.steps_to_reproduce + '').trim() !== '')">
                         <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                             Langkah untuk Mereproduksi (Steps to Reproduce)
                         </h4>
-                        <div class="bg-amber-50/50 p-4 rounded-lg border border-amber-200/80 text-sm text-amber-950 whitespace-pre-wrap leading-relaxed" x-text="viewingBug?.steps_to_reproduce"></div>
+                        <template x-if="Array.isArray(viewingBug?.steps_to_reproduce)">
+                            <div class="space-y-2">
+                                <template x-for="(step, sIdx) in viewingBug.steps_to_reproduce" :key="sIdx">
+                                    <div class="flex items-start gap-3 bg-amber-50/50 p-2.5 rounded-lg border border-amber-200/80">
+                                        <div class="flex items-center justify-center w-5 h-5 rounded-full bg-amber-200 text-amber-800 font-bold text-xs shrink-0 font-mono" x-text="sIdx + 1"></div>
+                                        <div class="text-xs text-amber-950 font-medium leading-relaxed mt-0.5" x-text="typeof step === 'object' && step !== null ? (step.text || '') : step"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="!Array.isArray(viewingBug?.steps_to_reproduce)">
+                            <div class="bg-amber-50/50 p-4 rounded-lg border border-amber-200/80 text-sm text-amber-950 whitespace-pre-wrap leading-relaxed" x-text="viewingBug?.steps_to_reproduce"></div>
+                        </template>
                     </div>
 
                     <!-- Expected Result vs Actual Result -->
@@ -1812,13 +2049,22 @@
                         </div>
                     </div>
 
-                    <!-- Environment (if any) -->
-                    <div x-show="viewingBug?.environment">
-                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            Environment / Lingkungan Uji
-                        </h4>
-                        <div class="text-xs text-gray-700 bg-gray-100/80 px-3 py-2 rounded border border-gray-200 font-mono" x-text="viewingBug?.environment"></div>
+                    <!-- Environment & Versi Aplikasi -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" x-show="viewingBug?.environment || viewingBug?.app_version">
+                        <div x-show="viewingBug?.environment">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                Environment / Lingkungan Uji
+                            </h4>
+                            <div class="text-xs text-gray-700 bg-gray-100/80 px-3 py-2 rounded border border-gray-200 font-mono" x-text="viewingBug?.environment"></div>
+                        </div>
+                        <div x-show="viewingBug?.app_version">
+                            <h4 class="text-xs font-bold text-purple-700 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                                Versi Aplikasi
+                            </h4>
+                            <div class="text-xs text-purple-800 bg-purple-50 px-3 py-2 rounded border border-purple-200 font-mono font-semibold" x-text="viewingBug?.app_version"></div>
+                        </div>
                     </div>
 
                     <!-- Relations: Test Case & Kanban Task -->
@@ -1922,10 +2168,277 @@
                             </button>
                         </template>
                     </div>
-                    <button @click="closeViewBugModal()" type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
-                        Tutup
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <template x-if="permissions.canManageBugs && viewingBug">
+                            <button type="button" 
+                                    @click="closeViewBugModal(); openEditBugModal(viewingBug);" 
+                                    class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-md text-sm font-semibold transition-colors inline-flex items-center gap-1.5 shadow-xs">
+                                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                <span>Edit Bug</span>
+                            </button>
+                        </template>
+                        <button @click="closeViewBugModal()" type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                            Tutup
+                        </button>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Bug Modal -->
+    <div x-show="isEditBugModalOpen" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         aria-labelledby="edit-bug-modal-title" 
+         role="dialog" 
+         aria-modal="true" 
+         x-cloak>
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="isEditBugModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+                 @click="closeEditBugModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <!-- Modal Content -->
+            <div x-show="isEditBugModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                
+                <form @submit.prevent="submitEditBug()">
+                    <!-- Modal Header -->
+                    <div class="bg-gradient-to-r from-red-50 to-amber-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center text-red-600 shadow-xs shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200" x-text="editingBug?.code"></span>
+                                    <template x-if="editingBug?.test_case">
+                                        <span class="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200" x-text="'TC: ' + editingBug.test_case.code"></span>
+                                    </template>
+                                </div>
+                                <h3 class="text-base font-bold text-gray-900 mt-0.5" id="edit-bug-modal-title">Edit Bug Report</h3>
+                            </div>
+                        </div>
+                        <button @click="closeEditBugModal()" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none p-1">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="px-6 py-5 space-y-4 max-h-[72vh] overflow-y-auto">
+                        <!-- Alert notice about table isolation -->
+                        <div class="bg-blue-50/60 p-3 rounded-lg border border-blue-200 flex items-start gap-2.5 text-xs text-blue-900">
+                            <svg class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>Perubahan pada bug report ini hanya disimpan di tabel defect/bug (<span class="font-mono font-semibold">task_bugs</span>) dan tidak akan mengubah langkah ataupun data pada test case asal.</span>
+                        </div>
+
+                        <!-- Bug Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Bug <span class="text-red-500">*</span></label>
+                            <input type="text" 
+                                   x-model="editingBug.description" 
+                                   required 
+                                   placeholder="Contoh: Error 500 saat klik tombol submit form checkout" 
+                                   class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                        </div>
+
+                        <!-- Actual Result -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Actual Result (Hasil yang Terjadi)</label>
+                            <textarea rows="2" 
+                                      x-model="editingBug.actual_result" 
+                                      class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none" 
+                                      placeholder="Apa yang sebenarnya terjadi di sistem?"></textarea>
+                        </div>
+
+                        <!-- Steps to Reproduce (Interactive dynamic steps like Test Case) -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Langkah Reproduksi (Steps to Reproduce)</label>
+                                    <p class="text-[11px] text-gray-500">Tarik ikon <span class="font-mono text-gray-600">⋮⋮</span> atau gunakan tombol panah untuk mengatur ulang urutan langkah</p>
+                                </div>
+                                <button type="button" 
+                                        @click="addBugStep()" 
+                                        class="text-xs text-primary hover:text-blue-800 font-bold px-2.5 py-1 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-50 transition-colors">
+                                    + Add Step
+                                </button>
+                            </div>
+
+                            <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                <template x-for="(step, index) in editingBug?.steps_to_reproduce" :key="step.id">
+                                    <div class="relative flex items-center gap-2 p-1.5 rounded-lg border bg-white transition-all group"
+                                         :class="{
+                                             'opacity-40 border-dashed border-red-400 bg-red-50/50': draggedBugStepIndex === index,
+                                             'border-red-500 ring-2 ring-red-100 shadow-sm': dragOverBugStepIndex === index && draggedBugStepIndex !== index,
+                                             'border-gray-200 hover:border-gray-300': draggedBugStepIndex !== index && dragOverBugStepIndex !== index
+                                         }"
+                                         :draggable="canDragBugStep"
+                                         @dragstart="startBugStepDrag(index, $event)"
+                                         @dragover.prevent="handleBugStepDragOver(index, $event)"
+                                         @dragleave="handleBugStepDragLeave(index, $event)"
+                                         @drop="dropBugStep(index)"
+                                         @dragend="endBugStepDrag()">
+                                        
+                                        <!-- Drop line indicator (Top) -->
+                                        <div x-show="dragOverBugStepIndex === index && dragOverBugStepPosition === 'before' && draggedBugStepIndex !== index" 
+                                             class="absolute -top-1 left-0 right-0 h-1 bg-red-500 rounded-full z-20 pointer-events-none"></div>
+
+                                        <!-- Drag Handle -->
+                                        <div @mouseenter="canDragBugStep = true" 
+                                             @mouseleave="canDragBugStep = false"
+                                             class="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors select-none shrink-0" 
+                                             title="Tarik untuk memindahkan urutan">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01"></path>
+                                            </svg>
+                                        </div>
+
+                                        <!-- Number Badge -->
+                                        <span class="text-xs font-bold text-gray-500 w-5 shrink-0 text-center font-mono" x-text="(index + 1) + '.'"></span>
+
+                                        <!-- Step Input -->
+                                        <input type="text" 
+                                               x-model="step.text" 
+                                               draggable="false"
+                                               class="w-full border-gray-200 rounded-md focus:ring-primary focus:border-primary text-sm px-2.5 py-1.5 border outline-none bg-transparent hover:bg-gray-50/50 focus:bg-white transition-colors" 
+                                               placeholder="Deskripsikan langkah reproduksi...">
+
+                                        <!-- Up / Down Nudge Buttons -->
+                                        <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                            <button type="button" 
+                                                    @click="moveBugStepUp(index)" 
+                                                    :disabled="index === 0" 
+                                                    :class="index === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'"
+                                                    class="p-1 rounded transition-colors" 
+                                                    title="Pindah ke Atas">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"></path></svg>
+                                            </button>
+                                            <button type="button" 
+                                                    @click="moveBugStepDown(index)" 
+                                                    :disabled="index === editingBug.steps_to_reproduce.length - 1" 
+                                                    :class="index === editingBug.steps_to_reproduce.length - 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'"
+                                                    class="p-1 rounded transition-colors" 
+                                                    title="Pindah ke Bawah">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                            </button>
+                                        </div>
+
+                                        <!-- Remove Step Button -->
+                                        <button type="button" 
+                                                @click="removeBugStep(index)" 
+                                                class="text-gray-300 hover:text-red-600 p-1 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0" 
+                                                x-show="editingBug.steps_to_reproduce.length > 1" 
+                                                title="Hapus Langkah">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+
+                                        <!-- Drop line indicator (Bottom) -->
+                                        <div x-show="dragOverBugStepIndex === index && dragOverBugStepPosition === 'after' && draggedBugStepIndex !== index" 
+                                             class="absolute -bottom-1 left-0 right-0 h-1 bg-red-500 rounded-full z-20 pointer-events-none"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Severity, Environment, Versi, Status -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                                <select x-model="editingBug.severity" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status Bug</label>
+                                <select x-model="editingBug.status" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                                    <option value="open">Open</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Environment</label>
+                                <input type="text" 
+                                       x-model="editingBug.environment" 
+                                       placeholder="Contoh: Chrome / Windows 11" 
+                                       class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Versi Aplikasi</label>
+                                <input type="text" 
+                                       x-model="editingBug.app_version" 
+                                       placeholder="Contoh: v1.0.0" 
+                                       class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm px-3 py-2 border outline-none font-mono">
+                            </div>
+                        </div>
+
+                        <!-- Attachment / Lampiran -->
+                        <div class="p-3.5 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Lampiran Bukti Masalah (Screenshot / File)</label>
+                            
+                            <template x-if="editingBug?.attachment_path && !editingBug.remove_attachment">
+                                <div class="mb-3 p-2.5 bg-white border border-gray-200 rounded-md flex items-center justify-between">
+                                    <div class="flex items-center gap-2 overflow-hidden">
+                                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                        <a :href="'/storage/' + editingBug.attachment_path" target="_blank" class="text-xs text-blue-600 hover:underline font-mono truncate" x-text="getFilename(editingBug.attachment_path)"></a>
+                                    </div>
+                                    <label class="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-800 cursor-pointer font-medium shrink-0 ml-2">
+                                        <input type="checkbox" x-model="editingBug.remove_attachment" class="rounded border-gray-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5">
+                                        <span>Hapus file ini</span>
+                                    </label>
+                                </div>
+                            </template>
+
+                            <template x-if="editingBug?.remove_attachment">
+                                <div class="mb-2 text-xs text-red-600 italic">Lampiran saat ini akan dihapus saat disimpan.</div>
+                            </template>
+
+                            <input type="file" 
+                                   id="edit_bug_attachment" 
+                                   class="block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
+                            <p class="text-[11px] text-gray-500 mt-1">Format: JPG, PNG, GIF, PDF, DOCX, XLSX (Maks. 10MB). Unggah file baru untuk mengganti lampiran.</p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="bg-gray-50 px-6 py-3.5 border-t border-gray-200 flex justify-end gap-2">
+                        <button type="button" 
+                                @click="closeEditBugModal()" 
+                                class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" 
+                                :disabled="isSubmittingBug" 
+                                :class="{'opacity-75 cursor-wait': isSubmittingBug}" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium shadow-sm transition-colors inline-flex items-center gap-2">
+                            <svg x-show="isSubmittingBug" class="animate-spin -ml-0.5 mr-1.5 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span x-text="isSubmittingBug ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1991,11 +2504,12 @@
 function qcDashboard() {
     return {
         permissions: {
-            canManageTasks: {{ auth()->user()->can('qc.manage_tasks') ? 'true' : 'false' }},
-            canManageTestCases: {{ auth()->user()->can('qc.manage_test_cases') ? 'true' : 'false' }},
-            canExecuteTests: {{ auth()->user()->can('qc.execute_tests') ? 'true' : 'false' }},
-            canManageBugs: {{ auth()->user()->can('qc.manage_bugs') ? 'true' : 'false' }},
-            canComment: {{ auth()->user()->can('qc.comments') ? 'true' : 'false' }},
+            canManageTasks: {{ auth()->user()->can('qc.manage_tasks', $project) ? 'true' : 'false' }},
+            canManageTestCases: {{ auth()->user()->can('qc.manage_test_cases', $project) ? 'true' : 'false' }},
+            canExecuteTests: {{ auth()->user()->can('qc.execute_tests', $project) ? 'true' : 'false' }},
+            canManageBugs: {{ auth()->user()->can('qc.manage_bugs', $project) ? 'true' : 'false' }},
+            canComment: {{ (auth()->user()->can('qc.comments', $project) || auth()->user()->can('qc.view', $project) || auth()->user()->can('projects.qc', $project) || auth()->user()->isInternal()) ? 'true' : 'false' }},
+            isStaffOnly: {{ $isProjectStaffOnly ? 'true' : 'false' }},
         },
         columns: [
             { id: 'todo', title: 'To Do' },
@@ -2014,6 +2528,7 @@ function qcDashboard() {
         bugFilterTab: 'active', // Default: 'active' (Bug Aktif), 'solved', 'all'
         bugFilters: {
             details: '',
+            version: '',
             severity: '',
             status: '',
             testCase: '',
@@ -2051,6 +2566,7 @@ function qcDashboard() {
         bugSeverity: 'Medium',
         bugActualResult: '',
         bugEnvironment: '',
+        bugAppVersion: '',
         createKanbanTask: false,
         isSubmittingTest: false,
         bugAssigneeId: '',
@@ -2058,7 +2574,9 @@ function qcDashboard() {
         projectId: '{{ $project->id }}',
 
         isNewTaskModalOpen: false,
-        isSubmitting: false,
+        editingTaskId: null,
+        existingAttachment: null,
+        isSubmittingTask: false,
         isMovingTask: false,
         movingToColumn: null,
         newTask: {
@@ -2072,18 +2590,26 @@ function qcDashboard() {
         isNewTestCaseModalOpen: false,
         isSubmittingTestCase: false,
         editingTestCaseId: null,
+        isDuplicatingTestCase: false,
         parentTestCase: null,
         newTestCase: {
             title: '',
             preconditions: '',
             expected: '',
-            steps: [''],
+            steps: [{ id: 'step_init_1', text: '' }],
             payload: '',
             complexity: 'Low',
             priority: 'Medium',
             test_type: 'Functional',
-            automation_status: 'Manual'
+            automation_status: 'Manual',
+            app_version: ''
         },
+
+        // Test Step Drag & Drop State
+        draggedStepIndex: null,
+        dragOverStepIndex: null,
+        dragOverStepPosition: null,
+        canDragStep: false,
 
         // View Test Case State
         isViewTestCaseModalOpen: false,
@@ -2092,10 +2618,51 @@ function qcDashboard() {
         // View Bug State
         isViewBugModalOpen: false,
         viewingBug: null,
+
+        // Edit Bug State
+        isEditBugModalOpen: false,
+        isSubmittingBug: false,
+        editingBug: null,
+        draggedBugStepIndex: null,
+        dragOverBugStepIndex: null,
+        dragOverBugStepPosition: null,
+        canDragBugStep: false,
         
         // Error & Notification State
         errorMessage: '',
         successMessage: '',
+        isSendingEmail: false,
+
+        async sendSummaryEmail() {
+            if (!confirm('Apakah Anda yakin ingin mengirimkan ringkasan metrik QA/QC proyek ini ke seluruh anggota dan kolaborator melalui email?')) {
+                return;
+            }
+
+            this.isSendingEmail = true;
+            try {
+                const response = await fetch(`/api/projects/${this.projectId}/qc/send-summary-email`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    this.showSuccess(data.message || 'Ringkasan QA/QC berhasil dikirim.');
+                } else {
+                    this.showError(data.message || 'Gagal mengirimkan ringkasan email.');
+                }
+            } catch (error) {
+                console.error('Error sending summary email:', error);
+                this.showError('Terjadi kendala jaringan saat menghubungi server.');
+            } finally {
+                this.isSendingEmail = false;
+            }
+        },
 
         showError(msg) {
             this.errorMessage = msg;
@@ -2177,6 +2744,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ target_id: targetId, position: targetId === null ? 'inside' : position })
@@ -2190,7 +2758,7 @@ function qcDashboard() {
                     }
                 } else {
                     const data = await response.json();
-                    this.showError(data.message || 'Gagal memindahkan test case.');
+                    this.showError(data.message || 'Failed to move test case.');
                 }
             } catch (error) {
                 console.error('Error moving test case:', error);
@@ -2200,6 +2768,68 @@ function qcDashboard() {
                 this.dragOverTarget = null;
                 this.dragOverPosition = null;
             }
+        },
+
+        // Kanban Task Drag and Drop State & Methods
+        draggedTask: null,
+        dragOverColumn: null,
+
+        startTaskDrag(task, event) {
+            if (!this.permissions.canManageTasks) return;
+            if (this.permissions.isStaffOnly && (task.column_id === 'qc_in_progress' || task.column_id === 'done')) {
+                return;
+            }
+            this.draggedTask = task;
+            event.dataTransfer.effectAllowed = 'move';
+            try {
+                event.dataTransfer.setData('text/plain', String(task.id));
+            } catch (e) {}
+        },
+
+        handleTaskDragOver(columnId, event) {
+            if (!this.permissions.canManageTasks || !this.draggedTask) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            this.dragOverColumn = columnId;
+        },
+
+        handleTaskDragLeave(columnId, event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                if (this.dragOverColumn === columnId) {
+                    this.dragOverColumn = null;
+                }
+            }
+        },
+
+        endTaskDrag() {
+            this.draggedTask = null;
+            this.dragOverColumn = null;
+        },
+
+        async dropTaskOnColumn(targetColumnId) {
+            if (!this.permissions.canManageTasks || !this.draggedTask) return;
+            const taskToMove = this.draggedTask;
+            const currentColumn = taskToMove.column_id;
+            this.endTaskDrag();
+
+            if (currentColumn === targetColumnId) {
+                return;
+            }
+
+            if (this.permissions.isStaffOnly) {
+                const allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
+                if (!allowedStaffColumns.includes(currentColumn) || !allowedStaffColumns.includes(targetColumnId)) {
+                    this.showError('Akses ditolak. Role Staff hanya dapat mengubah posisi task hingga Ready for QC.');
+                    return;
+                }
+            }
+
+            if (targetColumnId === 'done' && !this.permissions.canExecuteTests) {
+                this.showError('Akses ditolak. Anda tidak memiliki izin untuk menandai Pass QC.');
+                return;
+            }
+
+            await this.updateTaskColumn(taskToMove.id, targetColumnId);
         },
 
         init() {
@@ -2227,6 +2857,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({}) // Assignee empty for now, defaults to Todo
@@ -2240,14 +2871,14 @@ function qcDashboard() {
                         this.viewingBug = this.projectBugs.find(b => b.id === bugId) || this.viewingBug;
                     }
                     this.isKanbanExpanded = true;
-                    this.showSuccess('Task baru (' + (resData.task?.code || '') + ') berhasil dibuat di Kanban Board!');
+                    this.showSuccess('New task (' + (resData.task?.code || '') + ') successfully created in Kanban Board!');
                 } else {
                     const data = await response.json();
-                    this.showError(data.message || 'Gagal mengubah bug menjadi task.');
+                    this.showError(data.message || 'Failed to convert bug to task.');
                 }
             } catch (error) {
                 console.error("Error converting bug to task:", error);
-                this.showError('Terjadi kesalahan saat memproses permintaan.');
+                this.showError('An error occurred while processing request.');
             } finally {
                 this.convertingBugId = null;
             }
@@ -2267,6 +2898,7 @@ function qcDashboard() {
         get hasActiveBugFilters() {
             return !!(
                 (this.bugFilters.details && this.bugFilters.details.trim()) ||
+                (this.bugFilters.version && this.bugFilters.version.trim()) ||
                 this.bugFilters.severity ||
                 this.bugFilters.status ||
                 (this.bugFilters.testCase && this.bugFilters.testCase.trim()) ||
@@ -2277,6 +2909,7 @@ function qcDashboard() {
         resetBugFilters() {
             this.bugFilters = {
                 details: '',
+                version: '',
                 severity: '',
                 status: '',
                 testCase: '',
@@ -2301,6 +2934,12 @@ function qcDashboard() {
                     (b.code && b.code.toLowerCase().includes(q)) || 
                     (b.description && b.description.toLowerCase().includes(q))
                 );
+            }
+
+            // 2.5 Column: Versi
+            if (this.bugFilters.version && this.bugFilters.version.trim()) {
+                const v = this.bugFilters.version.toLowerCase().trim();
+                list = list.filter(b => b.app_version && b.app_version.toLowerCase().includes(v));
             }
 
             // 3. Column: Severity
@@ -2399,6 +3038,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({
@@ -2419,14 +3059,14 @@ function qcDashboard() {
                     this.selectedBugIds = [];
                     this.isBulkTaskModalOpen = false;
                     this.isKanbanExpanded = true;
-                    this.showSuccess(`Task baru (${data.task.code}) berhasil dibuat dari ${data.count} bug!`);
+                    this.showSuccess(`New task (${data.task.code}) successfully created from ${data.count} bugs!`);
                 } else {
                     const err = await response.json();
-                    this.showError(err.message || 'Gagal membuat task dari bug terpilih.');
+                    this.showError(err.message || 'Failed to create task from selected bugs.');
                 }
             } catch (error) {
                 console.error("Error bulk converting bugs to task:", error);
-                this.showError('Terjadi kesalahan saat membuat task.');
+                this.showError('An error occurred while creating task.');
             } finally {
                 this.isSubmittingBulkConvert = false;
             }
@@ -2434,7 +3074,7 @@ function qcDashboard() {
 
         async passAllTaskTestCases(taskId) {
             if (!this.permissions.canExecuteTests || this.isPassingAllTests) return;
-            if (!confirm('Apakah Anda yakin ingin menandai semua Test Case untuk task ini menjadi PASSED dan menyelesaikan bug terkait?')) return;
+            if (!confirm('Are you sure you want to mark all Test Cases for this task as PASSED and resolve linked bugs?')) return;
             
             this.isPassingAllTests = true;
             try {
@@ -2442,6 +3082,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
                 });
@@ -2457,13 +3098,13 @@ function qcDashboard() {
                             this.activeTask = updatedTask;
                         }
                     }
-                    this.showSuccess('Semua test case berhasil dinyatakan PASSED dan bug terkait telah terselesaikan!');
+                    this.showSuccess('All test cases marked as PASSED and linked bugs have been resolved!');
                 } else {
-                    this.showError('Gagal memperbarui status test cases.');
+                    this.showError('Failed to update test cases status.');
                 }
             } catch (error) {
                 console.error('Error passing all test cases:', error);
-                this.showError('Terjadi kesalahan saat memproses permintaan.');
+                this.showError('An error occurred while processing request.');
             } finally {
                 this.isPassingAllTests = false;
             }
@@ -2552,6 +3193,20 @@ function qcDashboard() {
             return null;
         },
 
+        findParentTestCase(childId, cases = this.projectTestCases) {
+            if (!childId) return null;
+            for (let tc of cases) {
+                if (tc.children && tc.children.length > 0) {
+                    if (tc.children.some(c => c.id === childId)) {
+                        return tc;
+                    }
+                    const found = this.findParentTestCase(childId, tc.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        },
+
         openViewTestCaseModal(tcOrId) {
             if (!tcOrId) return;
             const tcId = typeof tcOrId === 'object' ? tcOrId.id : tcOrId;
@@ -2582,20 +3237,235 @@ function qcDashboard() {
             }, 300);
         },
 
+        openEditBugModal(bugOrId) {
+            if (!this.permissions.canManageBugs || !bugOrId) return;
+            const bugId = typeof bugOrId === 'object' ? bugOrId.id : bugOrId;
+            const bug = this.projectBugs.find(b => b.id === bugId) || (typeof bugOrId === 'object' ? bugOrId : null);
+            if (!bug) return;
+
+            let initialSteps = [{ id: 'bug_step_' + Date.now(), text: '' }];
+            if (bug.steps_to_reproduce) {
+                if (Array.isArray(bug.steps_to_reproduce) && bug.steps_to_reproduce.length > 0) {
+                    initialSteps = bug.steps_to_reproduce.map((s, idx) => ({
+                        id: 'bug_step_' + Date.now() + '_' + idx,
+                        text: typeof s === 'object' && s !== null ? (s.text || '') : String(s)
+                    }));
+                } else if (typeof bug.steps_to_reproduce === 'string' && bug.steps_to_reproduce.trim() !== '') {
+                    const lines = bug.steps_to_reproduce.split(/\r\n|\r|\n/).map(l => l.trim()).filter(l => l !== '');
+                    if (lines.length > 0) {
+                        initialSteps = lines.map((l, idx) => ({
+                            id: 'bug_step_' + Date.now() + '_' + idx,
+                            text: l.replace(/^(\d+[\.\)]\s*|[-*•]\s*)/, '')
+                        }));
+                    }
+                }
+            }
+
+            this.editingBug = {
+                id: bug.id,
+                code: bug.code,
+                description: bug.description || '',
+                actual_result: bug.actual_result || '',
+                severity: bug.severity || 'Medium',
+                environment: bug.environment || '',
+                app_version: bug.app_version || '',
+                status: bug.status || 'open',
+                steps_to_reproduce: initialSteps,
+                attachment_path: bug.attachment_path || null,
+                remove_attachment: false,
+                test_case: bug.test_case || null,
+                project_task: bug.project_task || null,
+            };
+
+            this.endBugStepDrag();
+            this.isEditBugModalOpen = true;
+        },
+
+        closeEditBugModal() {
+            this.isEditBugModalOpen = false;
+            this.endBugStepDrag();
+            setTimeout(() => {
+                this.editingBug = null;
+            }, 300);
+        },
+
+        addBugStep() {
+            if (!this.editingBug) return;
+            this.editingBug.steps_to_reproduce.push({
+                id: 'bug_step_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                text: ''
+            });
+        },
+
+        removeBugStep(index) {
+            if (!this.editingBug) return;
+            if (this.editingBug.steps_to_reproduce.length > 1) {
+                this.editingBug.steps_to_reproduce.splice(index, 1);
+            }
+        },
+
+        startBugStepDrag(index, event) {
+            this.draggedBugStepIndex = index;
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', index.toString());
+            }
+        },
+
+        handleBugStepDragOver(index, event) {
+            if (this.draggedBugStepIndex === null || this.draggedBugStepIndex === index) {
+                this.dragOverBugStepIndex = null;
+                this.dragOverBugStepPosition = null;
+                return;
+            }
+            this.dragOverBugStepIndex = index;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            this.dragOverBugStepPosition = event.clientY < midY ? 'before' : 'after';
+        },
+
+        handleBugStepDragLeave(index, event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                if (this.dragOverBugStepIndex === index) {
+                    this.dragOverBugStepIndex = null;
+                    this.dragOverBugStepPosition = null;
+                }
+            }
+        },
+
+        dropBugStep(targetIndex) {
+            if (this.draggedBugStepIndex === null || !this.editingBug) return;
+            const fromIndex = this.draggedBugStepIndex;
+            const position = this.dragOverBugStepPosition || 'after';
+
+            if (fromIndex !== targetIndex) {
+                const steps = [...this.editingBug.steps_to_reproduce];
+                const [movedItem] = steps.splice(fromIndex, 1);
+                let insertIndex = targetIndex;
+                if (fromIndex < targetIndex) {
+                    insertIndex = insertIndex - 1;
+                }
+                if (position === 'after') {
+                    insertIndex = insertIndex + 1;
+                }
+                insertIndex = Math.max(0, Math.min(insertIndex, steps.length));
+                steps.splice(insertIndex, 0, movedItem);
+                this.editingBug.steps_to_reproduce = steps;
+            }
+
+            this.endBugStepDrag();
+        },
+
+        endBugStepDrag() {
+            this.draggedBugStepIndex = null;
+            this.dragOverBugStepIndex = null;
+            this.dragOverBugStepPosition = null;
+            this.canDragBugStep = false;
+        },
+
+        moveBugStepUp(index) {
+            if (!this.editingBug) return;
+            if (index > 0) {
+                const steps = [...this.editingBug.steps_to_reproduce];
+                const temp = steps[index];
+                steps[index] = steps[index - 1];
+                steps[index - 1] = temp;
+                this.editingBug.steps_to_reproduce = steps;
+            }
+        },
+
+        moveBugStepDown(index) {
+            if (!this.editingBug) return;
+            if (index < this.editingBug.steps_to_reproduce.length - 1) {
+                const steps = [...this.editingBug.steps_to_reproduce];
+                const temp = steps[index];
+                steps[index] = steps[index + 1];
+                steps[index + 1] = temp;
+                this.editingBug.steps_to_reproduce = steps;
+            }
+        },
+
+        async submitEditBug() {
+            if (!this.permissions.canManageBugs || this.isSubmittingBug || !this.editingBug) return;
+            this.isSubmittingBug = true;
+
+            try {
+                const cleanedSteps = this.editingBug.steps_to_reproduce
+                    .map(s => typeof s === 'object' && s !== null ? s.text : s)
+                    .filter(s => typeof s === 'string' && s.trim() !== '');
+
+                const formData = new FormData();
+                formData.append('description', this.editingBug.description);
+                formData.append('actual_result', this.editingBug.actual_result || '');
+                formData.append('severity', this.editingBug.severity || 'Medium');
+                formData.append('environment', this.editingBug.environment || '');
+                formData.append('app_version', this.editingBug.app_version || '');
+                formData.append('status', this.editingBug.status || 'open');
+                formData.append('remove_attachment', this.editingBug.remove_attachment ? '1' : '0');
+
+                cleanedSteps.forEach((step, idx) => {
+                    formData.append(`steps_to_reproduce[${idx}]`, step);
+                });
+
+                const fileInput = document.getElementById('edit_bug_attachment');
+                if (fileInput && fileInput.files[0]) {
+                    formData.append('attachment', fileInput.files[0]);
+                }
+
+                const response = await fetch(`/api/qc/bugs/${this.editingBug.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    const updatedBug = data.bug;
+                    const bugIndex = this.projectBugs.findIndex(b => b.id === updatedBug.id);
+                    if (bugIndex !== -1) {
+                        this.projectBugs[bugIndex] = { ...this.projectBugs[bugIndex], ...updatedBug };
+                    }
+
+                    if (this.viewingBug && this.viewingBug.id === updatedBug.id) {
+                        this.viewingBug = { ...this.viewingBug, ...updatedBug };
+                    }
+
+                    this.fetchTasks();
+                    this.fetchTestCases();
+
+                    this.closeEditBugModal();
+                    this.showSuccess('Bug report berhasil diperbarui.');
+                } else {
+                    this.showError(data.message || 'Gagal memperbarui bug report.');
+                }
+            } catch (error) {
+                console.error('Error updating bug:', error);
+                this.showError('Terjadi kesalahan saat menyimpan perubahan bug.');
+            } finally {
+                this.isSubmittingBug = false;
+            }
+        },
+
         openNewTestCaseModal(parentTC = null) {
             if (!this.permissions.canManageTestCases) return;
             this.parentTestCase = parentTC;
             this.editingTestCaseId = null;
+            this.isDuplicatingTestCase = false;
+            this.endStepDrag();
             this.newTestCase = {
                 title: '',
                 preconditions: '',
                 expected: '',
-                steps: [''],
+                steps: [{ id: 'step_' + Date.now(), text: '' }],
                 payload: '',
                 complexity: 'Low',
                 priority: 'Medium',
                 test_type: 'Functional',
-                automation_status: 'Manual'
+                automation_status: 'Manual',
+                app_version: parentTC ? (parentTC.app_version || '') : ''
             };
             this.isNewTestCaseModalOpen = true;
         },
@@ -2604,16 +3474,28 @@ function qcDashboard() {
             if (!this.permissions.canManageTestCases) return;
             this.editingTestCaseId = tc.id;
             this.parentTestCase = null;
+            this.isDuplicatingTestCase = false;
+            this.endStepDrag();
+
+            let initialSteps = [{ id: 'step_' + Date.now(), text: '' }];
+            if (tc.steps && Array.isArray(tc.steps) && tc.steps.length > 0) {
+                initialSteps = tc.steps.map((s, idx) => ({
+                    id: 'step_' + Date.now() + '_' + idx,
+                    text: (typeof s === 'object' && s !== null ? (s.text || '') : (s || '')).toString()
+                }));
+            }
+
             this.newTestCase = {
                 title: tc.title || '',
                 preconditions: tc.preconditions || '',
                 expected: tc.expected || '',
-                steps: (tc.steps && tc.steps.length > 0) ? [...tc.steps] : [''],
+                steps: initialSteps,
                 payload: tc.payload || '',
                 complexity: tc.complexity || 'Low',
                 priority: tc.priority || 'Medium',
                 test_type: tc.test_type || 'Functional',
-                automation_status: tc.automation_status || 'Manual'
+                automation_status: tc.automation_status || 'Manual',
+                app_version: tc.app_version || ''
             };
             this.isNewTestCaseModalOpen = true;
         },
@@ -2621,42 +3503,165 @@ function qcDashboard() {
         duplicateTestCase(tc) {
             if (!this.permissions.canManageTestCases) return;
             this.editingTestCaseId = null;
-            this.parentTestCase = tc.parent_id ? {id: tc.parent_id} : null; // Keep the same parent if it's a child
+            this.isDuplicatingTestCase = true;
+            this.endStepDrag();
+            
+            // Resolve parent: first check tc.parent_id, then fallback to tree hierarchy search
+            let parent = null;
+            if (tc.parent_id) {
+                parent = this.findTestCaseById(tc.parent_id);
+            }
+            if (!parent) {
+                parent = this.findParentTestCase(tc.id);
+            }
+            if (!parent && tc.parent_id) {
+                parent = { id: tc.parent_id, code: 'Parent', title: '' };
+            }
+            this.parentTestCase = parent;
+
+            let initialSteps = [{ id: 'step_' + Date.now(), text: '' }];
+            if (tc.steps && Array.isArray(tc.steps) && tc.steps.length > 0) {
+                initialSteps = tc.steps.map((s, idx) => ({
+                    id: 'step_' + Date.now() + '_' + idx,
+                    text: (typeof s === 'object' && s !== null ? (s.text || '') : (s || '')).toString()
+                }));
+            }
+
             this.newTestCase = {
                 title: tc.title ? tc.title + ' (Copy)' : '',
                 preconditions: tc.preconditions || '',
                 expected: tc.expected || '',
-                steps: (tc.steps && tc.steps.length > 0) ? [...tc.steps] : [''],
+                steps: initialSteps,
                 payload: tc.payload || '',
                 complexity: tc.complexity || 'Low',
                 priority: tc.priority || 'Medium',
                 test_type: tc.test_type || 'Functional',
-                automation_status: tc.automation_status || 'Manual'
+                automation_status: tc.automation_status || 'Manual',
+                app_version: tc.app_version || ''
             };
             this.isNewTestCaseModalOpen = true;
         },
 
         closeNewTestCaseModal() {
             this.isNewTestCaseModalOpen = false;
+            this.endStepDrag();
             setTimeout(() => {
                 this.editingTestCaseId = null;
+                this.isDuplicatingTestCase = false;
             }, 300);
+        },
+
+        addStep() {
+            this.newTestCase.steps.push({
+                id: 'step_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                text: ''
+            });
+        },
+
+        removeStep(index) {
+            if (this.newTestCase.steps.length > 1) {
+                this.newTestCase.steps.splice(index, 1);
+            }
+        },
+
+        startStepDrag(index, event) {
+            this.draggedStepIndex = index;
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', index.toString());
+            }
+        },
+
+        handleStepDragOver(index, event) {
+            if (this.draggedStepIndex === null || this.draggedStepIndex === index) {
+                this.dragOverStepIndex = null;
+                this.dragOverStepPosition = null;
+                return;
+            }
+            this.dragOverStepIndex = index;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            this.dragOverStepPosition = event.clientY < midY ? 'before' : 'after';
+        },
+
+        handleStepDragLeave(index, event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                if (this.dragOverStepIndex === index) {
+                    this.dragOverStepIndex = null;
+                    this.dragOverStepPosition = null;
+                }
+            }
+        },
+
+        dropStep(targetIndex) {
+            if (this.draggedStepIndex === null) return;
+            const fromIndex = this.draggedStepIndex;
+            const position = this.dragOverStepPosition || 'after';
+
+            if (fromIndex !== targetIndex) {
+                const steps = [...this.newTestCase.steps];
+                const [movedItem] = steps.splice(fromIndex, 1);
+                let insertIndex = targetIndex;
+                if (fromIndex < targetIndex) {
+                    insertIndex = insertIndex - 1;
+                }
+                if (position === 'after') {
+                    insertIndex = insertIndex + 1;
+                }
+                insertIndex = Math.max(0, Math.min(insertIndex, steps.length));
+                steps.splice(insertIndex, 0, movedItem);
+                this.newTestCase.steps = steps;
+            }
+
+            this.endStepDrag();
+        },
+
+        endStepDrag() {
+            this.draggedStepIndex = null;
+            this.dragOverStepIndex = null;
+            this.dragOverStepPosition = null;
+            this.canDragStep = false;
+        },
+
+        moveStepUp(index) {
+            if (index > 0) {
+                const steps = [...this.newTestCase.steps];
+                const temp = steps[index];
+                steps[index] = steps[index - 1];
+                steps[index - 1] = temp;
+                this.newTestCase.steps = steps;
+            }
+        },
+
+        moveStepDown(index) {
+            if (index < this.newTestCase.steps.length - 1) {
+                const steps = [...this.newTestCase.steps];
+                const temp = steps[index];
+                steps[index] = steps[index + 1];
+                steps[index + 1] = temp;
+                this.newTestCase.steps = steps;
+            }
         },
 
         async submitNewTestCase() {
             if (!this.permissions.canManageTestCases || this.isSubmittingTestCase) return;
             this.isSubmittingTestCase = true;
 
+            const cleanedSteps = this.newTestCase.steps
+                .map(s => typeof s === 'object' && s !== null ? s.text : s)
+                .filter(s => typeof s === 'string' && s.trim() !== '');
+
             const payload = {
                 title: this.newTestCase.title,
                 preconditions: this.newTestCase.preconditions,
                 expected: this.newTestCase.expected,
-                steps: this.newTestCase.steps.filter(s => s.trim() !== ''),
+                steps: cleanedSteps,
                 payload: this.newTestCase.payload,
                 complexity: this.newTestCase.complexity,
                 priority: this.newTestCase.priority,
                 test_type: this.newTestCase.test_type,
                 automation_status: this.newTestCase.automation_status,
+                app_version: this.newTestCase.app_version,
                 parent_id: this.parentTestCase ? this.parentTestCase.id : null
             };
 
@@ -2667,6 +3672,7 @@ function qcDashboard() {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify(payload)
@@ -2676,6 +3682,7 @@ function qcDashboard() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify(payload)
@@ -2683,17 +3690,32 @@ function qcDashboard() {
                 }
 
                 if (response.ok) {
-                    // Expand parent automatically so the user sees the newly added child (only if new)
-                    if (!this.editingTestCaseId && this.parentTestCase) {
-                        this.expandTestCase(this.projectTestCases, this.parentTestCase.id);
+                    const parentIdToExpand = this.parentTestCase ? this.parentTestCase.id : null;
+                    // Expand parent before fetching so that restoreExpandedState will keep it expanded
+                    if (!this.editingTestCaseId && parentIdToExpand) {
+                        this.expandTestCase(this.projectTestCases, parentIdToExpand);
                     }
                     await this.fetchProjectTestCases();
+                    // Also ensure parent is expanded in the new tree
+                    if (!this.editingTestCaseId && parentIdToExpand) {
+                        this.expandTestCase(this.projectTestCases, parentIdToExpand);
+                    }
                     this.closeNewTestCaseModal();
                 } else {
-                    this.showError('Gagal menyimpan test case.');
+                    let errorMsg = 'Gagal menyimpan test case.';
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.errors) {
+                            errorMsg = Object.values(errorData.errors).flat().join(', ');
+                        } else if (errorData.message) {
+                            errorMsg = errorData.message;
+                        }
+                    } catch (e) {}
+                    this.showError(errorMsg);
                 }
             } catch (error) {
                 console.error('Error submitting new test case:', error);
+                this.showError('Terjadi kesalahan jaringan. Silakan coba lagi.');
             } finally {
                 this.isSubmittingTestCase = false;
             }
@@ -2735,10 +3757,16 @@ function qcDashboard() {
             }
         },
 
-        openTaskModal(task) {
+        openTaskModal(task, initialTab = null) {
             this.activeTask = task;
             this.activeTaskComments = task.comments || [];
-            this.activeTab = 'test_cases';
+            if (initialTab) {
+                this.activeTab = initialTab;
+            } else if (task.testCases && task.testCases.length > 0) {
+                this.activeTab = 'test_cases';
+            } else {
+                this.activeTab = 'details';
+            }
             this.isTaskModalOpen = true;
             this.newCommentText = '';
             this.newCommentFile = null;
@@ -2755,10 +3783,10 @@ function qcDashboard() {
             }, 300);
         },
 
-        openTaskModalById(taskId) {
+        openTaskModalById(taskId, initialTab = null) {
             const task = this.tasks.find(t => t.id === taskId);
             if (task) {
-                this.openTaskModal(task);
+                this.openTaskModal(task, initialTab);
             }
         },
 
@@ -2768,15 +3796,20 @@ function qcDashboard() {
             try {
                 const response = await fetch(`/api/qc/tasks/${taskId}`, {
                     method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
-                if (response.ok) {
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && (data.success || data.status !== 'error')) {
                     this.closeTaskModal();
                     await this.fetchTasks();
                     await this.fetchProjectBugs();
+                    this.showSuccess('Task successfully deleted.');
+                } else {
+                    this.showError(data.message || 'Failed to delete task.');
                 }
             } catch (error) {
                 console.error("Error deleting task:", error);
+                this.showError('An error occurred while deleting the task.');
             }
         },
 
@@ -2786,14 +3819,26 @@ function qcDashboard() {
             try {
                 const response = await fetch(`/api/qc/test-cases/${testCaseId}`, {
                     method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
-                if (response.ok) {
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && (data.success || data.status !== 'error')) {
+                    if (this.activeTest && this.activeTest.id === testCaseId) {
+                        this.closeRunTestModal();
+                    }
+                    if (this.editingTestCase && this.editingTestCase.id === testCaseId) {
+                        this.closeEditTestCaseModal();
+                    }
                     await this.fetchProjectTestCases();
                     await this.fetchProjectBugs();
+                    await this.fetchTasks();
+                    this.showSuccess('Test case and its child items successfully deleted.');
+                } else {
+                    this.showError(data.message || 'Failed to delete test case.');
                 }
             } catch (error) {
                 console.error("Error deleting test case:", error);
+                this.showError('An error occurred while deleting the test case.');
             }
         },
 
@@ -2803,16 +3848,23 @@ function qcDashboard() {
             try {
                 const response = await fetch(`/api/qc/bugs/${bugId}`, {
                     method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
-                if (response.ok) {
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && (data.success || data.status !== 'error')) {
                     if (this.viewingBug && this.viewingBug.id === bugId) {
                         this.closeViewBugModal();
                     }
                     await this.fetchProjectBugs();
+                    await this.fetchProjectTestCases();
+                    await this.fetchTasks();
+                    this.showSuccess('Bug successfully deleted.');
+                } else {
+                    this.showError(data.message || 'Failed to delete bug.');
                 }
             } catch (error) {
                 console.error("Error deleting bug:", error);
+                this.showError('An error occurred while deleting the bug.');
             }
         },
 
@@ -2826,11 +3878,13 @@ function qcDashboard() {
                 this.bugActualResult = testCase.bug.actual_result || '';
                 this.bugSeverity = testCase.bug.severity || 'Medium';
                 this.bugEnvironment = testCase.bug.environment || '';
+                this.bugAppVersion = testCase.bug.app_version || testCase.app_version || '';
             } else {
                 this.bugDescription = '';
                 this.bugActualResult = '';
                 this.bugSeverity = 'Medium';
                 this.bugEnvironment = '';
+                this.bugAppVersion = testCase.app_version || '';
             }
             
             // Pre-fill steps to reproduce if test case has steps
@@ -2849,6 +3903,7 @@ function qcDashboard() {
         closeRunTestModal() {
             this.isRunTestOpen = false;
             this.isReportingBug = false;
+            this.bugAppVersion = '';
             setTimeout(() => {
                 this.activeTest = null;
             }, 300);
@@ -2868,6 +3923,7 @@ function qcDashboard() {
                         formData.append('severity', this.bugSeverity);
                         formData.append('actual_result', this.bugActualResult);
                         formData.append('environment', this.bugEnvironment);
+                        formData.append('app_version', this.bugAppVersion);
                         formData.append('create_task', this.createKanbanTask);
                         formData.append('assignee_id', this.bugAssigneeId);
                         
@@ -2914,9 +3970,9 @@ function qcDashboard() {
                         
                         if (result === 'failed') {
                             const bugCode = data.bug ? data.bug.code : '';
-                            this.showSuccess(`Test Case gagal. Bug tracker (${bugCode}) berhasil dihubungkan!`);
+                            this.showSuccess(`Test Case failed. Bug tracker (${bugCode}) successfully linked!`);
                         } else {
-                            this.showSuccess('Test Case berhasil (Passed) dan bug terkait telah diselesaikan.');
+                            this.showSuccess('Test Case passed and linked bug has been resolved.');
                         }
                         
                         this.closeRunTestModal();
@@ -2937,11 +3993,11 @@ function qcDashboard() {
                         }
                     } else {
                         const errorData = await response.json().catch(() => ({}));
-                        this.showError(errorData.message || 'Gagal memperbarui status test case.');
+                        this.showError(errorData.message || 'Failed to update test case status.');
                     }
                 } catch (error) {
                     console.error('Error submitting test result:', error);
-                    this.showError('Terjadi kesalahan saat memproses test execution.');
+                    this.showError('An error occurred while processing test execution.');
                 } finally {
                     this.isSubmittingTest = false;
                 }
@@ -2966,55 +4022,105 @@ function qcDashboard() {
             return false;
         },
 
-        openNewTaskModal() {
+        async openNewTaskModal(columnId = 'todo') {
             if (!this.permissions.canManageTasks) return;
+            if (this.permissions.isStaffOnly && (columnId === 'qc_in_progress' || columnId === 'done')) {
+                columnId = 'todo';
+            }
+            this.editingTaskId = null;
+            this.existingAttachment = null;
             this.newTask = {
                 title: '',
                 description: '',
                 assignee_id: '',
-                column_id: 'todo'
+                column_id: columnId
             };
+            const fileInput = document.getElementById('task_attachment');
+            if (fileInput) fileInput.value = '';
+            this.isNewTaskModalOpen = true;
+        },
+
+        openEditTaskModal(task) {
+            if (!this.permissions.canManageTasks) return;
+            if (this.permissions.isStaffOnly && (task.column_id === 'qc_in_progress' || task.column_id === 'done')) {
+                this.showError('Role Staff tidak dapat mengedit task pada kolom QC in Progress atau Done.');
+                return;
+            }
+            this.editingTaskId = task.id;
+            this.existingAttachment = task.attachment_path || null;
+            this.newTask = {
+                title: task.title || '',
+                description: task.description || '',
+                assignee_id: task.assignee_id ? String(task.assignee_id) : '',
+                column_id: task.column_id || 'todo'
+            };
+            const fileInput = document.getElementById('task_attachment');
+            if (fileInput) fileInput.value = '';
             this.isNewTaskModalOpen = true;
         },
 
         closeNewTaskModal() {
+            this.editingTaskId = null;
+            this.existingAttachment = null;
             this.isNewTaskModalOpen = false;
         },
 
         async submitNewTask() {
-            if (!this.permissions.canManageTasks || this.isSubmitting) return;
-            this.isSubmitting = true;
-
+            if (!this.permissions.canManageTasks || this.isSubmittingTask) return;
+            if (!this.newTask.title || !this.newTask.title.trim()) {
+                this.showError('Judul task wajib diisi.');
+                return;
+            }
+            this.isSubmittingTask = true;
             try {
                 const formData = new FormData();
-                formData.append('title', this.newTask.title);
-                formData.append('description', this.newTask.description);
-                formData.append('assignee_id', this.newTask.assignee_id);
-                formData.append('column_id', this.newTask.column_id);
-                
-                const taskFileInput = document.getElementById('task_attachment');
-                if (taskFileInput && taskFileInput.files[0]) {
-                    formData.append('attachment', taskFileInput.files[0]);
+                formData.append('title', this.newTask.title.trim());
+                if (this.newTask.description) {
+                    formData.append('description', this.newTask.description.trim());
+                }
+                if (this.newTask.assignee_id) {
+                    formData.append('assignee_id', this.newTask.assignee_id);
+                }
+                formData.append('column_id', this.newTask.column_id || 'todo');
+
+                const fileInput = document.getElementById('task_attachment');
+                if (fileInput && fileInput.files[0]) {
+                    formData.append('attachment', fileInput.files[0]);
                 }
 
-                const response = await fetch(`/api/projects/${this.projectId}/qc/tasks`, {
+                const url = this.editingTaskId 
+                    ? `/api/qc/tasks/${this.editingTaskId}` 
+                    : `/api/projects/${this.projectId}/qc/tasks`;
+
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: formData
                 });
 
-                if (response.ok) {
+                const data = await response.json();
+                if (response.ok && data.success) {
                     await this.fetchTasks();
+                    if (this.editingTaskId && this.activeTask && this.activeTask.id === this.editingTaskId) {
+                        const updated = this.tasks.find(t => t.id === this.editingTaskId);
+                        if (updated) {
+                            this.activeTask = updated;
+                        }
+                    }
+                    const msg = this.editingTaskId ? 'Task berhasil diperbarui.' : 'Task berhasil dibuat.';
                     this.closeNewTaskModal();
+                    this.showSuccess(msg);
                 } else {
-                    this.showError('Gagal menyimpan task baru.');
+                    this.showError(data.message || 'Gagal menyimpan task.');
                 }
             } catch (error) {
-                console.error('Error submitting new task:', error);
+                console.error('Error creating/updating task:', error);
+                this.showError('Terjadi kesalahan saat menyimpan task.');
             } finally {
-                this.isSubmitting = false;
+                this.isSubmittingTask = false;
             }
         },
         
@@ -3028,6 +4134,7 @@ function qcDashboard() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ column_id: columnId })
@@ -3049,11 +4156,17 @@ function qcDashboard() {
                     }
 
                     if (columnId === 'done') {
-                        this.showSuccess('Task selesai! Semua test case terkait telah dinyatakan PASSED dan bug terselesaikan.');
+                        this.showSuccess('Task completed! All linked test cases marked as PASSED and bugs resolved.');
+                    } else {
+                        this.showSuccess(`Task successfully moved to ${this.getColumnTitle(columnId)}!`);
                     }
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    this.showError(errorData.message || 'Failed to update task column.');
                 }
             } catch (error) {
                 console.error('Error updating task column:', error);
+                this.showError('An error occurred while moving task.');
             } finally {
                 this.isMovingTask = false;
                 this.movingToColumn = null;
@@ -3141,6 +4254,7 @@ function qcDashboard() {
                 const response = await fetch(`/api/qc/tasks/${this.activeTask.id}/comments`, {
                     method: 'POST',
                     headers: {
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: formData
@@ -3167,11 +4281,11 @@ function qcDashboard() {
                     });
                 } else {
                     const err = await response.json();
-                    this.showError(err.message || 'Gagal mengirim komentar.');
+                    this.showError(err.message || 'Failed to send comment.');
                 }
             } catch (error) {
                 console.error("Error submitting comment:", error);
-                this.showError('Terjadi kesalahan saat mengirim komentar.');
+                this.showError('An error occurred while sending comment.');
             } finally {
                 this.isSubmittingComment = false;
             }
@@ -3179,13 +4293,14 @@ function qcDashboard() {
 
         async deleteTaskComment(commentId) {
             if (!this.permissions.canComment) return;
-            if (!confirm('Apakah Anda yakin ingin menghapus komentar ini?')) return;
+            if (!confirm('Are you sure you want to delete this comment?')) return;
             this.deletingCommentId = commentId;
 
             try {
                 const response = await fetch(`/api/qc/comments/${commentId}`, {
                     method: 'DELETE',
                     headers: {
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
                 });
@@ -3199,14 +4314,14 @@ function qcDashboard() {
                     if (cardTask) {
                         cardTask.comments_count = this.activeTaskComments.length;
                     }
-                    this.showSuccess('Komentar berhasil dihapus.');
+                    this.showSuccess('Comment successfully deleted.');
                 } else {
                     const err = await response.json();
-                    this.showError(err.message || 'Gagal menghapus komentar.');
+                    this.showError(err.message || 'Failed to delete comment.');
                 }
             } catch (error) {
                 console.error("Error deleting comment:", error);
-                this.showError('Terjadi kesalahan saat menghapus komentar.');
+                this.showError('An error occurred while deleting comment.');
             } finally {
                 this.deletingCommentId = null;
             }

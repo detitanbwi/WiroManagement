@@ -82,6 +82,7 @@ class QcBugTrackerUiTest extends TestCase
         // Verify Alpine state default tab is active
         $response->assertSee("bugFilterTab: 'active'", false);
         $response->assertSee("details: ''", false);
+        $response->assertSee("version: ''", false);
         $response->assertSee("severity: ''", false);
         $response->assertSee("status: ''", false);
         $response->assertSee("testCase: ''", false);
@@ -89,22 +90,24 @@ class QcBugTrackerUiTest extends TestCase
 
         // Verify Tab order
         $content = $response->getContent();
-        $posActiveTab = strpos($content, 'Bug Aktif (Open)');
-        $posSolvedTab = strpos($content, 'Bug Solved / Resolved');
-        $posAllTab = strpos($content, 'Semua Bug');
+        $posActiveTab = strpos($content, 'Active Bugs (Open)');
+        $posSolvedTab = strpos($content, 'Resolved Bugs');
+        $posAllTab = strpos($content, 'All Bugs');
 
         $this->assertNotFalse($posActiveTab);
         $this->assertNotFalse($posSolvedTab);
         $this->assertNotFalse($posAllTab);
-        $this->assertTrue($posActiveTab < $posSolvedTab, 'Bug Aktif (Open) must precede Bug Solved / Resolved');
-        $this->assertTrue($posSolvedTab < $posAllTab, 'Bug Solved / Resolved must precede Semua Bug');
+        $this->assertTrue($posActiveTab < $posSolvedTab, 'Active Bugs (Open) must precede Resolved Bugs');
+        $this->assertTrue($posSolvedTab < $posAllTab, 'Resolved Bugs must precede All Bugs');
 
-        // Verify separate Severity and Status headers
+        // Verify separate Versi, Severity and Status headers
+        $this->assertStringContainsString('Versi</th>', $content);
         $this->assertStringContainsString('Severity</th>', $content);
         $this->assertStringContainsString('Status</th>', $content);
 
         // Verify column filter row inputs
         $this->assertStringContainsString('x-model="bugFilters.details"', $content);
+        $this->assertStringContainsString('x-model="bugFilters.version"', $content);
         $this->assertStringContainsString('x-model="bugFilters.severity"', $content);
         $this->assertStringContainsString('x-model="bugFilters.status"', $content);
         $this->assertStringContainsString('x-model="bugFilters.testCase"', $content);

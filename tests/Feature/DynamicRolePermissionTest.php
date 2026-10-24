@@ -28,7 +28,7 @@ class DynamicRolePermissionTest extends TestCase
 
         $response = $this->actingAs($superadmin)->get(route('roles.index'));
         $response->assertStatus(200);
-        $response->assertSee('Matriks Hak Akses');
+        $response->assertSee('Permission Matrix');
     }
 
     public function test_non_superadmin_is_forbidden_from_role_management(): void

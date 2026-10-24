@@ -9,6 +9,8 @@ use App\Models\TestCase;
 use App\Models\TaskBug;
 use App\Models\TaskComment;
 use App\Services\QcExportService;
+use App\Services\ProjectQcSummaryService;
+use App\Jobs\SendProjectQcSummaryJob;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -56,6 +58,7 @@ class QcController extends Controller
             $sourceBug = $task->bugs->first(fn($b) => $b->testCase !== null);
             $sourceTestCase = $sourceBug && $sourceBug->testCase ? [
                 'id' => $sourceBug->testCase->id,
+                'parent_id' => $sourceBug->testCase->parent_id,
                 'code' => $sourceBug->testCase->code,
                 'title' => $sourceBug->testCase->title,
                 'bug_code' => $sourceBug->code,
@@ -68,6 +71,7 @@ class QcController extends Controller
                 'priority' => $sourceBug->testCase->priority,
                 'test_type' => $sourceBug->testCase->test_type,
                 'automation_status' => $sourceBug->testCase->automation_status,
+                'app_version' => $sourceBug->testCase->app_version,
             ] : null;
 
             return [
@@ -76,6 +80,7 @@ class QcController extends Controller
                 'title' => $task->title,
                 'description' => $task->description,
                 'assignee' => $task->assignee ? $task->assignee->name : 'Unassigned',
+                'assignee_id' => $task->assignee_id,
                 'column_id' => $task->column_id,
                 'attachment_path' => $task->attachment_path,
                 'hasActiveBug' => $hasActiveBug,
@@ -92,6 +97,7 @@ class QcController extends Controller
                         'status' => $bug->status,
                         'actual_result' => $bug->actual_result,
                         'environment' => $bug->environment,
+                        'app_version' => $bug->app_version,
                         'attachment_path' => $bug->attachment_path,
                         'created_at' => $bug->created_at ? $bug->created_at->format('d M Y, H:i') : null,
                         'created_at_human' => $bug->created_at ? $bug->created_at->diffForHumans() : null,
@@ -102,6 +108,7 @@ class QcController extends Controller
                             'title' => $bug->testCase->title,
                             'status' => $bug->testCase->status,
                             'expected' => $bug->testCase->expected,
+                            'app_version' => $bug->testCase->app_version,
                         ] : null,
                     ];
                 }),
@@ -124,6 +131,7 @@ class QcController extends Controller
                         'priority' => $tc->priority,
                         'test_type' => $tc->test_type,
                         'automation_status' => $tc->automation_status,
+                        'app_version' => $tc->app_version,
                         'is_from_bug' => (bool)$task->bugs->firstWhere('test_case_id', $tc->id),
                         'bug_code' => $linkedBug ? $linkedBug->code : null,
                         'bug' => $linkedBug ? [
@@ -134,6 +142,7 @@ class QcController extends Controller
                             'description' => $linkedBug->description,
                             'actual_result' => $linkedBug->actual_result,
                             'environment' => $linkedBug->environment,
+                            'app_version' => $linkedBug->app_version,
                             'project_task_id' => $linkedBug->project_task_id,
                         ] : null,
                         'bugs' => $tcBugs->map(function($b) {
@@ -145,6 +154,7 @@ class QcController extends Controller
                                 'description' => $b->description,
                                 'actual_result' => $b->actual_result,
                                 'environment' => $b->environment,
+                                'app_version' => $b->app_version,
                                 'attachment_path' => $b->attachment_path,
                                 'created_at' => $b->created_at ? $b->created_at->format('d M Y, H:i') : null,
                                 'updated_at' => $b->updated_at ? $b->updated_at->format('d M Y, H:i') : null,
@@ -171,13 +181,48 @@ class QcController extends Controller
                         ] : null,
                         'created_at' => $comment->created_at ? $comment->created_at->format('d M Y, H:i') : null,
                         'created_at_human' => $comment->created_at ? $comment->created_at->diffForHumans() : null,
-                        'can_delete' => auth()->id() === $comment->user_id || in_array(auth()->user()?->role, ['superadmin', 'admin']),
+                        'can_delete' => auth()->id() === $comment->user_id || (auth()->user() && auth()->user()->hasAnyRole(['superadmin', 'admin'])),
                     ];
                 })->values()
             ];
         });
 
         return response()->json($formattedTasks);
+    }
+
+    /**
+     * Check if the authenticated user has only Staff/Developer role in the project.
+     */
+    protected function isStaffOnlyUser(Project $project): bool
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin() || $user->hasAnyRole(['superadmin', 'admin'])) {
+            return false;
+        }
+
+        $member = $project->getMember($user);
+        if ($member && !empty($member->getRoleSlugs())) {
+            $roles = $member->getRoleSlugs();
+            // If they have PM or QC project roles, they are not restricted
+            if (array_intersect($roles, ['pm', 'qc'])) {
+                return false;
+            }
+            // If they have Staff role and no PM/QC roles, they are restricted
+            if (in_array('staff', $roles)) {
+                return true;
+            }
+        }
+
+        // Fallback to global roles
+        if ($user->hasRole('staff') && !$user->hasAnyRole(['pm', 'qc'])) {
+            return true;
+        }
+
+        return false;
     }
 
     public function storeTask(Request $request, Project $project)
@@ -189,6 +234,17 @@ class QcController extends Controller
             'column_id' => 'required|in:todo,in_progress,ready_for_qc,qc_in_progress,done',
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240' // 10MB max
         ]);
+
+        // Staff role can only create tasks up to ready_for_qc
+        if ($this->isStaffOnlyUser($project)) {
+            $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
+            if (!in_array($request->column_id, $allowedStaffColumns)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Role Staff hanya dapat membuat task pada kolom To Do, In Progress, atau Ready for QC.',
+                ], 403);
+            }
+        }
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
@@ -205,7 +261,65 @@ class QcController extends Controller
             'attachment_path' => $attachmentPath
         ]);
 
-        return response()->json(['success' => true, 'task' => $task]);
+        return response()->json([
+            'success' => true,
+            'task' => $task->load('assignee')
+        ]);
+    }
+
+    public function updateTask(Request $request, ProjectTask $task)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'assignee_id' => 'nullable|exists:users,id',
+            'column_id' => 'required|in:todo,in_progress,ready_for_qc,qc_in_progress,done',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240' // 10MB max
+        ]);
+
+        // Staff role can only edit tasks within allowed columns (todo, in_progress, ready_for_qc)
+        if ($this->isStaffOnlyUser($task->project)) {
+            $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
+            if (!in_array($task->column_id, $allowedStaffColumns) || !in_array($request->column_id, $allowedStaffColumns)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Role Staff hanya dapat mengedit task pada kolom To Do, In Progress, atau Ready for QC.',
+                ], 403);
+            }
+        }
+
+        // Marking as done requires execute tests permission
+        if ($request->column_id === 'done' && $task->column_id !== 'done') {
+            if (!auth()->user()->can('qc.execute_tests')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Anda tidak memiliki izin untuk menandai Pass QC.',
+                ], 403);
+            }
+        }
+
+        $data = [
+            'title' => $request->title,
+            'description' => $request->description,
+            'assignee_id' => $request->assignee_id,
+            'column_id' => $request->column_id,
+        ];
+
+        if ($request->hasFile('attachment')) {
+            $data['attachment_path'] = $request->file('attachment')->store('attachments/tasks', 'public');
+        }
+
+        $task->update($data);
+
+        // When a task is marked as done (passed QC), update all associated test cases to passed and resolve bugs
+        if ($request->column_id === 'done') {
+            $this->markTaskTestCasesAsPassed($task);
+        }
+
+        return response()->json([
+            'success' => true,
+            'task' => $task->fresh()->load('assignee')
+        ]);
     }
 
     public function updateTaskColumn(Request $request, ProjectTask $task)
@@ -220,6 +334,17 @@ class QcController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Akses ditolak. Anda tidak memiliki izin untuk menandai Pass QC.',
+                ], 403);
+            }
+        }
+
+        // Staff role can only move tasks up to ready_for_qc
+        if ($this->isStaffOnlyUser($task->project)) {
+            $allowedStaffColumns = ['todo', 'in_progress', 'ready_for_qc'];
+            if (!in_array($task->column_id, $allowedStaffColumns) || !in_array($request->column_id, $allowedStaffColumns)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Role Staff hanya dapat mengubah posisi task hingga Ready for QC.',
                 ], 403);
             }
         }
@@ -271,10 +396,11 @@ class QcController extends Controller
             $request->validate([
                 'status' => 'required|in:passed,failed',
                 'bug_description' => 'required|string',
-                'steps_to_reproduce' => 'nullable|string',
+                'steps_to_reproduce' => 'nullable',
                 'severity' => 'nullable|string|in:Low,Medium,High,Critical',
                 'actual_result' => 'nullable|string',
                 'environment' => 'nullable|string',
+                'app_version' => 'nullable|string|max:100',
                 'create_task' => 'nullable|in:true,false,1,0', // FormData sends strings
                 'assignee_id' => 'nullable|exists:users,id',
                 'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240'
@@ -327,6 +453,7 @@ class QcController extends Controller
                     'severity' => $request->severity ?? $existingBug->severity,
                     'actual_result' => $request->actual_result,
                     'environment' => $request->environment,
+                    'app_version' => $request->app_version ?? $existingBug->app_version,
                     'attachment_path' => $attachmentPath ?? $existingBug->attachment_path,
                 ]);
                 $bug = $existingBug;
@@ -341,6 +468,7 @@ class QcController extends Controller
                     'severity' => $request->severity ?? 'Medium',
                     'actual_result' => $request->actual_result,
                     'environment' => $request->environment,
+                    'app_version' => $request->app_version,
                     'attachment_path' => $attachmentPath,
                     'status' => 'open'
                 ]);
@@ -396,6 +524,7 @@ class QcController extends Controller
 
                 $formatted = [
                     'id' => $testCase->id,
+                    'parent_id' => $testCase->parent_id,
                     'code' => $testCase->code,
                     'title' => $testCase->title,
                     'preconditions' => $testCase->preconditions,
@@ -407,6 +536,7 @@ class QcController extends Controller
                     'priority' => $testCase->priority,
                     'test_type' => $testCase->test_type,
                     'automation_status' => $testCase->automation_status,
+                    'app_version' => $testCase->app_version,
                     'is_expanded' => false, // For frontend Alpine state
                     'bug' => $activeBug ? [
                         'id' => $activeBug->id,
@@ -417,6 +547,7 @@ class QcController extends Controller
                         'steps_to_reproduce' => $activeBug->steps_to_reproduce,
                         'actual_result' => $activeBug->actual_result,
                         'environment' => $activeBug->environment,
+                        'app_version' => $activeBug->app_version,
                         'attachment_path' => $activeBug->attachment_path,
                         'created_at' => $activeBug->created_at ? $activeBug->created_at->format('d M Y, H:i') : null,
                         'created_at_human' => $activeBug->created_at ? $activeBug->created_at->diffForHumans() : null,
@@ -424,10 +555,12 @@ class QcController extends Controller
                         'project_task_id' => $activeBug->project_task_id,
                         'test_case' => [
                             'id' => $testCase->id,
+                            'parent_id' => $testCase->parent_id,
                             'code' => $testCase->code,
                             'title' => $testCase->title,
                             'status' => $testCase->status,
                             'expected' => $testCase->expected,
+                            'app_version' => $testCase->app_version,
                         ],
                     ] : null,
                     'bugs' => $testCase->bugs->map(function($b) use ($testCase) {
@@ -440,16 +573,19 @@ class QcController extends Controller
                             'steps_to_reproduce' => $b->steps_to_reproduce,
                             'actual_result' => $b->actual_result,
                             'environment' => $b->environment,
+                            'app_version' => $b->app_version,
                             'attachment_path' => $b->attachment_path,
                             'created_at' => $b->created_at ? $b->created_at->format('d M Y, H:i') : null,
                             'created_at_human' => $b->created_at ? $b->created_at->diffForHumans() : null,
                             'updated_at' => $b->updated_at ? $b->updated_at->format('d M Y, H:i') : null,
                             'test_case' => [
                                 'id' => $testCase->id,
+                                'parent_id' => $testCase->parent_id,
                                 'code' => $testCase->code,
                                 'title' => $testCase->title,
                                 'status' => $testCase->status,
                                 'expected' => $testCase->expected,
+                                'app_version' => $testCase->app_version,
                             ],
                             'project_task' => $b->projectTask ? [
                                 'id' => $b->projectTask->id,
@@ -481,7 +617,8 @@ class QcController extends Controller
             'complexity' => 'nullable|string|in:Low,Medium,High',
             'priority' => 'nullable|string|in:Low,Medium,High,Critical',
             'test_type' => 'nullable|string|in:Functional,UI/UX,API,Security,Performance,Edge Case',
-            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable'
+            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable',
+            'app_version' => 'nullable|string|max:100'
         ]);
 
         $testCase = TestCase::create([
@@ -497,6 +634,7 @@ class QcController extends Controller
             'priority' => $request->priority,
             'test_type' => $request->test_type,
             'automation_status' => $request->automation_status,
+            'app_version' => $request->app_version,
             'status' => 'pending'
         ]);
 
@@ -514,7 +652,8 @@ class QcController extends Controller
             'complexity' => 'nullable|string|in:Low,Medium,High',
             'priority' => 'nullable|string|in:Low,Medium,High,Critical',
             'test_type' => 'nullable|string|in:Functional,UI/UX,API,Security,Performance,Edge Case',
-            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable'
+            'automation_status' => 'nullable|string|in:Manual,Automated,Not Automatable',
+            'app_version' => 'nullable|string|max:100'
         ]);
 
         $testCase->update([
@@ -526,7 +665,8 @@ class QcController extends Controller
             'complexity' => $request->complexity,
             'priority' => $request->priority,
             'test_type' => $request->test_type,
-            'automation_status' => $request->automation_status
+            'automation_status' => $request->automation_status,
+            'app_version' => $request->app_version
         ]);
 
         return response()->json(['success' => true, 'testCase' => $testCase]);
@@ -621,6 +761,7 @@ class QcController extends Controller
                 'status' => $bug->status,
                 'actual_result' => $bug->actual_result,
                 'environment' => $bug->environment,
+                'app_version' => $bug->app_version,
                 'attachment_path' => $bug->attachment_path,
                 'created_at' => $bug->created_at ? $bug->created_at->format('d M Y, H:i') : 'Unknown',
                 'created_at_human' => $bug->created_at ? $bug->created_at->diffForHumans() : 'Unknown',
@@ -631,6 +772,7 @@ class QcController extends Controller
                     'title' => $bug->testCase->title,
                     'status' => $bug->testCase->status,
                     'expected' => $bug->testCase->expected,
+                    'app_version' => $bug->testCase->app_version,
                 ] : null,
                 'project_task' => $bug->projectTask ? [
                     'id' => $bug->projectTask->id,
@@ -739,14 +881,29 @@ class QcController extends Controller
 
     public function destroyTestCase(TestCase $testCase)
     {
-        // Recursive deletion handled by database constraints or model boot method if needed.
-        // Assuming cascade on delete is set, or we can just delete it directly.
-        $testCase->delete();
+        if ($testCase->project && $this->isStaffOnlyUser($testCase->project)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Role Staff tidak memiliki izin untuk menghapus test case.',
+            ], 403);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($testCase) {
+            $testCase->delete();
+        });
+
         return response()->json(['success' => true]);
     }
 
     public function destroyTask(ProjectTask $task)
     {
+        if ($this->isStaffOnlyUser($task->project)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Role Staff tidak memiliki izin untuk menghapus task.',
+            ], 403);
+        }
+
         if ($task->attachment_path) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($task->attachment_path);
         }
@@ -761,6 +918,93 @@ class QcController extends Controller
         }
         $bug->delete();
         return response()->json(['success' => true]);
+    }
+
+    public function updateBug(Request $request, TaskBug $bug)
+    {
+        $request->validate([
+            'description' => 'required|string',
+            'severity' => 'nullable|string|in:Low,Medium,High,Critical',
+            'actual_result' => 'nullable|string',
+            'environment' => 'nullable|string',
+            'app_version' => 'nullable|string|max:100',
+            'status' => 'nullable|string|in:open,in_progress,resolved,closed',
+            'steps_to_reproduce' => 'nullable',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240',
+            'remove_attachment' => 'nullable|in:true,false,1,0',
+        ]);
+
+        $data = [
+            'description' => $request->description,
+            'severity' => $request->severity ?? $bug->severity,
+            'actual_result' => $request->actual_result,
+            'environment' => $request->environment,
+            'app_version' => $request->app_version,
+        ];
+
+        if ($request->filled('status')) {
+            $data['status'] = $request->status;
+        }
+
+        // Steps to reproduce: only updates task_bugs.steps_to_reproduce in the task_bugs table.
+        // The test_cases table and testCase->steps remain completely untouched!
+        if ($request->has('steps_to_reproduce')) {
+            $data['steps_to_reproduce'] = $request->steps_to_reproduce;
+        }
+
+        // Handle attachment removal
+        if (filter_var($request->remove_attachment, FILTER_VALIDATE_BOOLEAN)) {
+            if ($bug->attachment_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($bug->attachment_path);
+                $data['attachment_path'] = null;
+            }
+        }
+
+        // Handle new attachment upload
+        if ($request->hasFile('attachment')) {
+            if ($bug->attachment_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($bug->attachment_path);
+            }
+            $data['attachment_path'] = $request->file('attachment')->store('attachments/bugs', 'public');
+        }
+
+        $bug->update($data);
+
+        $bug->load(['testCase', 'projectTask']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bug report berhasil diperbarui.',
+            'bug' => [
+                'id' => $bug->id,
+                'code' => $bug->code,
+                'description' => $bug->description,
+                'steps_to_reproduce' => $bug->steps_to_reproduce,
+                'severity' => $bug->severity,
+                'status' => $bug->status,
+                'actual_result' => $bug->actual_result,
+                'environment' => $bug->environment,
+                'app_version' => $bug->app_version,
+                'attachment_path' => $bug->attachment_path,
+                'created_at' => $bug->created_at ? $bug->created_at->format('d M Y, H:i') : null,
+                'created_at_human' => $bug->created_at ? $bug->created_at->diffForHumans() : null,
+                'updated_at' => $bug->updated_at ? $bug->updated_at->format('d M Y, H:i') : null,
+                'test_case' => $bug->testCase ? [
+                    'id' => $bug->testCase->id,
+                    'code' => $bug->testCase->code,
+                    'title' => $bug->testCase->title,
+                    'status' => $bug->testCase->status,
+                    'expected' => $bug->testCase->expected,
+                    'app_version' => $bug->testCase->app_version,
+                ] : null,
+                'project_task' => $bug->projectTask ? [
+                    'id' => $bug->projectTask->id,
+                    'code' => $bug->projectTask->code,
+                    'title' => $bug->projectTask->title,
+                    'column_id' => $bug->projectTask->column_id,
+                ] : null,
+            ]
+        ]);
     }
 
     public function getTaskComments(ProjectTask $task)
@@ -779,7 +1023,7 @@ class QcController extends Controller
                 ] : null,
                 'created_at' => $comment->created_at ? $comment->created_at->format('d M Y, H:i') : null,
                 'created_at_human' => $comment->created_at ? $comment->created_at->diffForHumans() : null,
-                'can_delete' => auth()->id() === $comment->user_id || in_array(auth()->user()?->role, ['superadmin', 'admin']),
+                'can_delete' => auth()->id() === $comment->user_id || (auth()->user() && auth()->user()->hasAnyRole(['superadmin', 'admin'])),
             ];
         });
 
@@ -827,7 +1071,7 @@ class QcController extends Controller
 
     public function destroyTaskComment(TaskComment $comment)
     {
-        if (auth()->id() !== $comment->user_id && !in_array(auth()->user()?->role, ['superadmin', 'admin'])) {
+        if (auth()->id() !== $comment->user_id && !(auth()->user() && auth()->user()->hasAnyRole(['superadmin', 'admin']))) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -838,5 +1082,72 @@ class QcController extends Controller
         $comment->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Send QA/QC summary email to all project members and PM synchronously.
+     */
+    public function sendSummaryEmail(Request $request, Project $project, ProjectQcSummaryService $summaryService)
+    {
+        $user = auth()->user();
+
+        // Strict authorization: SuperAdmin, Admin, or project member/PM with QC access
+        $isAuthorized = $user->isSuperAdmin() 
+            || $user->isAdmin()
+            || (($project->hasMember($user) || $project->pm_id === $user->id) && $user->canAccessProjectQc($project));
+
+        if (!$isAuthorized) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengirim ringkasan QA/QC pada proyek ini.'
+            ], 403);
+        }
+
+        // Verify that there are eligible recipients with personal email
+        $recipients = $summaryService->getRecipients($project);
+        if ($recipients->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ditemukan anggota proyek aktif yang memiliki alamat personal email untuk menerima ringkasan.'
+            ], 422);
+        }
+
+        // Execute synchronously
+        try {
+            $result = SendProjectQcSummaryJob::dispatchSync($project, $user->id);
+
+            $sentCount = $result['sent'] ?? $recipients->count();
+            $failedCount = $result['failed'] ?? 0;
+
+            $message = "Ringkasan QA/QC berhasil dikirim ke {$sentCount} anggota proyek.";
+            if ($failedCount > 0) {
+                $message .= " ({$failedCount} email gagal terkirim).";
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'sent_count' => $sentCount,
+                'failed_count' => $failedCount,
+                'recipients' => $recipients->map(fn($u) => [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $summaryService->getDestinationEmail($u),
+                    'personal_email' => $u->personal_email,
+                    'is_personal_email' => !empty($u->personal_email),
+                ]),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("[QA/QC Summary] Gagal mengirim ringkasan email untuk project #{$project->id}: {$e->getMessage()}", [
+                'exception' => $e,
+                'project_id' => $project->id,
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim ringkasan QA/QC: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

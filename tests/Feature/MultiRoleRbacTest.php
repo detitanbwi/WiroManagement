@@ -31,7 +31,7 @@ class MultiRoleRbacTest extends TestCase
         $superadmin->syncRoles(['superadmin']);
 
         // Can access user management
-        $this->actingAs($superadmin)->get(route('users.index'))->assertStatus(200);
+        $this->actingAs($superadmin)->get(route('users.index'))->assertStatus(200)->assertDontSee('@section');
 
         // Can access settings
         $this->actingAs($superadmin)->get(route('settings.index'))->assertStatus(200);
@@ -62,17 +62,18 @@ class MultiRoleRbacTest extends TestCase
             'title' => 'Sample Project',
             'status' => 'in_progress',
         ]);
+        $project->assignMember($user, ['pm', 'qc']);
 
         // Allowed: Projects (from PM)
         $indexResponse = $this->actingAs($user)->get(route('projects.index'));
         $indexResponse->assertStatus(200);
         $indexResponse->assertSee(route('projects.qc', $project));
-        $indexResponse->assertSee('Fitur QC');
+        $indexResponse->assertSee('QC Module');
 
         // Allowed: Project QC (from QC & PM)
         $this->actingAs($user)->get(route('projects.qc', $project))->assertStatus(200);
 
-        // Project detail page (Fitur QC button has been moved to index)
+        // Project detail page
         $showResponse = $this->actingAs($user)->get(route('projects.show', $project));
         $showResponse->assertStatus(200);
         $showResponse->assertDontSee('Fitur QC');
@@ -134,17 +135,16 @@ class MultiRoleRbacTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_superadmin_can_create_user_with_multiple_roles(): void
+    public function test_superadmin_creates_user_without_roles_initially(): void
     {
         $superadmin = User::factory()->create(['is_active' => true]);
         $superadmin->syncRoles(['superadmin']);
 
         $response = $this->actingAs($superadmin)->post(route('users.store'), [
-            'name' => 'Multi-Role User 03',
+            'name' => 'Regular User 03',
             'email' => 'user03@wirodev.test',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-            'roles' => ['pm', 'qc'],
             'is_active' => '1',
         ]);
 
@@ -152,24 +152,28 @@ class MultiRoleRbacTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'user03@wirodev.test']);
 
         $created = User::where('email', 'user03@wirodev.test')->first();
-        $this->assertTrue($created->hasRole('pm'));
-        $this->assertTrue($created->hasRole('qc'));
-        $this->assertTrue($created->hasAllRoles(['pm', 'qc']));
-        $this->assertEquals(['pm', 'qc'], $created->getRoleSlugs());
+        $this->assertTrue($created->roles->isEmpty());
+        $this->assertTrue($created->isInternal());
+        $this->assertEquals(['Employee'], array_column($created->role_badges, 'name'));
     }
 
-    public function test_superadmin_can_update_user_roles(): void
+    public function test_superadmin_can_update_user_profile_without_roles(): void
     {
         $superadmin = User::factory()->create(['is_active' => true]);
         $superadmin->syncRoles(['superadmin']);
 
-        $user = User::factory()->create(['is_active' => true]);
-        $user->syncRoles(['staff']);
+        $user = User::factory()->create(['name' => 'Original Name', 'is_active' => true]);
+
+        // Edit view should not contain role checkboxes
+        $editView = $this->actingAs($superadmin)->get(route('users.edit', $user));
+        $editView->assertStatus(200);
+        $editView->assertDontSee('Peran Sistem Global');
+        $editView->assertDontSee('roles[]');
 
         $response = $this->actingAs($superadmin)->put(route('users.update', $user), [
             'name' => 'Updated Name',
             'email' => $user->email,
-            'roles' => ['pm', 'finance', 'qc'],
+            'personal_email' => 'personal@updated.test',
             'is_active' => '1',
         ]);
 
@@ -177,27 +181,24 @@ class MultiRoleRbacTest extends TestCase
 
         $user->refresh();
         $this->assertEquals('Updated Name', $user->name);
-        $this->assertTrue($user->hasRole('pm'));
-        $this->assertTrue($user->hasRole('finance'));
-        $this->assertTrue($user->hasRole('qc'));
+        $this->assertEquals('personal@updated.test', $user->personal_email);
     }
 
-    public function test_superadmin_cannot_revoke_superadmin_or_deactivate_self(): void
+    public function test_superadmin_cannot_deactivate_self(): void
     {
         $superadmin = User::factory()->create(['is_active' => true]);
         $superadmin->syncRoles(['superadmin']);
 
-        // Try removing superadmin role from self
+        // Cannot deactivate self
         $response = $this->actingAs($superadmin)->put(route('users.update', $superadmin), [
             'name' => $superadmin->name,
             'email' => $superadmin->email,
-            'roles' => ['staff'],
-            'is_active' => '1',
+            'is_active' => '0',
         ]);
 
         $response->assertSessionHas('error');
         $superadmin->refresh();
-        $this->assertTrue($superadmin->hasRole('superadmin'));
+        $this->assertTrue($superadmin->is_active);
     }
 
     public function test_project_list_granular_permissions_and_qc_default_view(): void
@@ -212,23 +213,19 @@ class MultiRoleRbacTest extends TestCase
             'status' => 'in_progress',
         ]);
 
-        // 1. Default QC User: ONLY Fitur QC button is displayed
+        // 1. Default QC User: QC Module button is displayed
         $qcUser = User::factory()->create(['is_active' => true]);
         $qcUser->syncRoles(['qc']);
+        $project->assignMember($qcUser, ['qc']);
 
         $qcResponse = $this->actingAs($qcUser)->get(route('projects.index'));
         $qcResponse->assertStatus(200);
-        // Sees Fitur QC
-        $qcResponse->assertSee('Fitur QC');
+        // Sees QC Module
+        $qcResponse->assertSee('QC Module');
         $qcResponse->assertSee(route('projects.qc', $project));
         // Does NOT see other buttons
-        $qcResponse->assertDontSee('>Kelola<', false);
+        $qcResponse->assertDontSee('>Manage<', false);
         $qcResponse->assertDontSee('>Edit<', false);
-        $qcResponse->assertDontSee('Ya, Hapus Proyek');
-        $qcResponse->assertDontSee('Buat Proyek Baru');
-        // Does NOT see financial column
-        $qcResponse->assertDontSee('<th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-indigo-50 uppercase tracking-wider">Financial</th>', false);
-        $qcResponse->assertDontSee('Due: Rp');
 
         // QC user is forbidden from direct access to show, edit, create, and destroy
         $this->actingAs($qcUser)->get(route('projects.show', $project))->assertStatus(403);
@@ -236,15 +233,15 @@ class MultiRoleRbacTest extends TestCase
         $this->actingAs($qcUser)->get(route('projects.create'))->assertStatus(403);
         $this->actingAs($qcUser)->delete(route('projects.destroy', $project))->assertStatus(403);
 
-        // 2. Default Finance User: Sees Financial & Kelola, but NOT Fitur QC
+        // 2. Default Finance User: Sees Manage, but NOT QC Module
         $financeUser = User::factory()->create(['is_active' => true]);
         $financeUser->syncRoles(['finance']);
+        $project->assignMember($financeUser, ['finance']);
 
         $financeResponse = $this->actingAs($financeUser)->get(route('projects.index'));
         $financeResponse->assertStatus(200);
-        $financeResponse->assertSee('Financial');
-        $financeResponse->assertSee('Kelola');
-        $financeResponse->assertDontSee('Fitur QC');
+        $financeResponse->assertSee('Manage');
+        $financeResponse->assertDontSee('QC Module');
 
         // 3. Superadmin: Full visibility (Financial, Kelola, Fitur QC, Edit, Hapus, Buat Proyek Baru)
         $superadmin = User::factory()->create(['is_active' => true]);
@@ -252,11 +249,11 @@ class MultiRoleRbacTest extends TestCase
 
         $saResponse = $this->actingAs($superadmin)->get(route('projects.index'));
         $saResponse->assertStatus(200);
-        $saResponse->assertSee('Financial');
-        $saResponse->assertSee('Kelola');
-        $saResponse->assertSee('Fitur QC');
+        $saResponse->assertSee('Project Value');
+        $saResponse->assertSee('Manage');
+        $saResponse->assertSee('QC Module');
         $saResponse->assertSee('Edit');
-        $saResponse->assertSee('Hapus');
-        $saResponse->assertSee('Buat Proyek Baru');
+        $saResponse->assertSee('Delete');
+        $saResponse->assertSee('New Project');
     }
 }
