@@ -69,6 +69,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-qc', fn (User $user) => $user->hasAnyPermission(['qc.view', 'projects.qc']));
         Gate::define('manage-qc', fn (User $user) => $user->hasAnyPermission(['qc.manage_tasks', 'qc.manage_test_cases', 'qc.manage_bugs']));
 
+        // Gantt Chart & WBS mapped to granular permissions
+        Gate::define('access-gantt', fn (User $user) => $user->hasPermission('projects.gantt'));
+        Gate::define('manage-gantt', fn (User $user) => $user->hasPermission('projects.gantt_manage'));
+
+        // Internal Company Tasks mapped to granular permissions
+        Gate::define('view-company-tasks', fn (User $user) => $user->hasPermission('company_tasks.view'));
+        Gate::define('manage-company-tasks', fn (User $user) => $user->hasPermission('company_tasks.manage'));
+
         // AI Pricing Estimator mapped to granular permissions
         Gate::define('use-ai-pricing', fn (User $user) => $user->hasPermission('ai_pricing.use'));
     }

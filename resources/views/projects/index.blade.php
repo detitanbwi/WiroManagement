@@ -62,6 +62,10 @@
                                 <a href="{{ route('projects.show', $project) }}" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors font-medium">Kelola</a>
                                 @endcan
 
+                                @can('projects.gantt')
+                                <a href="{{ route('projects.gantt', $project) }}" class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors font-medium">Gantt</a>
+                                @endcan
+
                                 @canany(['projects.qc', 'qc.view'])
                                 <a href="{{ route('projects.qc', $project) }}" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors font-medium">Fitur QC</a>
                                 @endcanany

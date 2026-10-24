@@ -16,9 +16,11 @@
             <p class="text-sm md:text-base text-gray-600 mt-1">Client: <span class="font-semibold text-gray-900">{{ $project->client->name }}</span> {{ $project->client->company_name ? "({$project->client->company_name})" : '' }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 md:space-x-3">
+            @can('projects.gantt')
             <a href="{{ route('projects.gantt', $project) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-[10px] md:text-xs uppercase tracking-widest shadow-sm transition">
                 Gantt Chart
             </a>
+            @endcan
 
             @canany(['projects.qc', 'qc.view'])
             <a href="{{ route('projects.qc', $project) }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold text-[10px] md:text-xs uppercase tracking-widest shadow-sm transition">

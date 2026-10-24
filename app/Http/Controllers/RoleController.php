@@ -24,7 +24,9 @@ class RoleController extends Controller
             }])
             ->get();
 
-        return view('roles.index', compact('roles'));
+        $permissionGroups = Permission::all()->groupBy('group');
+
+        return view('roles.index', compact('roles', 'permissionGroups'));
     }
 
     /**

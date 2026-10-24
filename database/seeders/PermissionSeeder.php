@@ -37,6 +37,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'projects.manage', 'label' => 'Kelola Proyek', 'group' => 'Manajemen Proyek', 'description' => 'Mengakses tombol kelola untuk melihat detail proyek, invoice, dan ringkasan.'],
             ['name' => 'projects.view_financial', 'label' => 'Lihat Finansial Proyek', 'group' => 'Manajemen Proyek', 'description' => 'Melihat tampilan kolom keuangan, nilai proyek, dan sisa tagihan pada daftar proyek.'],
             ['name' => 'projects.qc', 'label' => 'Akses Fitur QC Proyek', 'group' => 'Manajemen Proyek', 'description' => 'Melihat tombol dan mengakses fitur papan pengujian QA/QC proyek.'],
+            ['name' => 'projects.gantt', 'label' => 'Akses Fitur Gantt Chart', 'group' => 'Manajemen Proyek', 'description' => 'Melihat tombol dan mengakses tampilan visual diagram Gantt Chart & timeline WBS proyek.'],
+            ['name' => 'projects.gantt_manage', 'label' => 'Kelola Gantt Chart & WBS', 'group' => 'Manajemen Proyek', 'description' => 'Membuat tugas WBS baru, memperbarui jadwal & durasi interaktif, menghubungkan dependensi antar tugas, dan menghapus tugas Gantt.'],
             ['name' => 'projects.edit', 'label' => 'Edit Proyek', 'group' => 'Manajemen Proyek', 'description' => 'Mengubah informasi proyek, timeline, dan spesifikasi.'],
             ['name' => 'projects.delete', 'label' => 'Hapus Proyek', 'group' => 'Manajemen Proyek', 'description' => 'Menghapus proyek dari sistem.'],
             ['name' => 'projects.status', 'label' => 'Ubah Status Proyek', 'group' => 'Manajemen Proyek', 'description' => 'Memperbarui alur status proyek (in_progress, completed, dll).'],
@@ -60,6 +62,10 @@ class PermissionSeeder extends Seeder
 
             // Modul: AI Estimator
             ['name' => 'ai_pricing.use', 'label' => 'Gunakan AI Pricing', 'group' => 'AI Estimator', 'description' => 'Menjalankan fitur kalkulasi estimasi harga proyek cerdas berbasis AI.'],
+
+            // Modul: Operasional Internal Perusahaan
+            ['name' => 'company_tasks.view', 'label' => 'Lihat Task Internal', 'group' => 'Operasional Internal', 'description' => 'Melihat papan kanban aktivitas, pertemuan klien, dan agenda internal perusahaan.'],
+            ['name' => 'company_tasks.manage', 'label' => 'Kelola Task Internal', 'group' => 'Operasional Internal', 'description' => 'Membuat, mengedit, memindahkan status, dan menghapus task internal perusahaan.'],
         ];
 
         foreach ($permissions as $p) {
@@ -73,33 +79,36 @@ class PermissionSeeder extends Seeder
             'admin' => [
                 'users.view', 'users.create', 'users.edit',
                 'clients.view', 'clients.create', 'clients.edit', 'clients.portal_credentials',
-                'projects.view', 'projects.create', 'projects.manage', 'projects.view_financial', 'projects.qc', 'projects.edit', 'projects.status',
+                'projects.view', 'projects.create', 'projects.manage', 'projects.view_financial', 'projects.qc', 'projects.gantt', 'projects.gantt_manage', 'projects.edit', 'projects.status',
                 'qc.view', 'qc.manage_tasks', 'qc.manage_test_cases', 'qc.manage_bugs', 'qc.comments',
                 'finance.view', 'finance.transactions', 'invoices.manage', 'quotations.manage', 'payments.manage', 'expenses.manage',
                 'ai_pricing.use',
+                'company_tasks.view', 'company_tasks.manage',
             ],
             'pm' => [
                 'clients.view', 'clients.portal_credentials',
-                'projects.view', 'projects.create', 'projects.manage', 'projects.view_financial', 'projects.qc', 'projects.edit', 'projects.status',
+                'projects.view', 'projects.create', 'projects.manage', 'projects.view_financial', 'projects.qc', 'projects.gantt', 'projects.gantt_manage', 'projects.edit', 'projects.status',
                 'qc.view', 'qc.manage_tasks', 'qc.manage_test_cases', 'qc.manage_bugs', 'qc.comments',
                 'invoices.manage', 'quotations.manage',
                 'ai_pricing.use',
+                'company_tasks.view', 'company_tasks.manage',
             ],
             'finance' => [
-                'clients.view', 'projects.view', 'projects.manage', 'projects.view_financial',
+                'clients.view', 'projects.view', 'projects.manage', 'projects.view_financial', 'projects.gantt',
                 'finance.view', 'finance.transactions', 'finance.bank_accounts',
                 'invoices.manage', 'quotations.manage', 'payments.manage', 'expenses.manage',
             ],
             'qc' => [
                 'projects.view',
-                'projects.qc',
+                'projects.qc', 'projects.gantt',
                 'qc.view', 'qc.manage_tasks', 'qc.manage_test_cases', 'qc.execute_tests', 'qc.manage_bugs', 'qc.comments',
             ],
             'staff' => [
                 'projects.view',
-                'projects.qc',
+                'projects.qc', 'projects.gantt',
                 'qc.view', 'qc.comments',
                 'ai_pricing.use',
+                'company_tasks.view',
             ],
         ];
 

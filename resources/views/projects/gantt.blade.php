@@ -195,7 +195,7 @@
     }
 </style>
 
-<div class="space-y-6 pb-16" x-data="ganttManager()" x-init="initData()">
+<div class="space-y-6 pb-16" x-data="ganttManager({{ auth()->user()->can('projects.gantt_manage') ? 'true' : 'false' }})" x-init="initData()">
     <!-- Top Header -->
     <div class="bg-white rounded-xl shadow-xs border border-gray-200 px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -222,12 +222,19 @@
             <a href="{{ route('projects.show', $project) }}" class="px-3.5 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-xs transition-colors">
                 &larr; Detail Proyek
             </a>
+            @can('projects.gantt_manage')
             <button @click="openCreateModal(null)" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-xs shadow-xs transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
                 Tambah Tugas Utama
             </button>
+            @else
+            <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Mode Hanya Lihat (Read-only)
+            </span>
+            @endcan
         </div>
     </div>
 
@@ -437,11 +444,11 @@
                         <tr x-transition:enter="transition ease-out duration-150"
                             x-transition:enter-start="opacity-0 -translate-y-1"
                             x-transition:enter-end="opacity-100 translate-y-0"
-                            draggable="true"
-                            @dragstart="startDragging(task, $event)"
-                            @dragover="handleDragOver(task, $event)"
-                            @drop.prevent="dropOnTask(task)"
-                            @dragend="resetDrag()"
+                            :draggable="canManage"
+                            @dragstart="canManage && startDragging(task, $event)"
+                            @dragover="canManage && handleDragOver(task, $event)"
+                            @drop.prevent="canManage && dropOnTask(task)"
+                            @dragend="canManage && resetDrag()"
                             :class="{
                                 'bg-slate-50/70 font-semibold': task.is_parent,
                                 'hover:bg-gray-50/60': !task.is_parent,
@@ -452,12 +459,13 @@
                             
                             <!-- Drag Handle -->
                             <td class="py-3 px-2 text-center">
-                                <div class="cursor-grab active:cursor-grabbing text-gray-300 hover:text-indigo-600 transition-colors inline-flex items-center justify-center p-1 rounded"
+                                <div x-show="canManage" class="cursor-grab active:cursor-grabbing text-gray-300 hover:text-indigo-600 transition-colors inline-flex items-center justify-center p-1 rounded"
                                      title="Tahan & geser untuk mengubah urutan atau memasukkan ke tugas lain">
                                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M7 4a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0zM7 16a2 2 0 11-4 0 2 2 0 014 0zM17 4a2 2 0 11-4 0 2 2 0 014 0zM17 10a2 2 0 11-4 0 2 2 0 014 0zM17 16a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
                                 </div>
+                                <span x-show="!canManage" class="text-gray-300 select-none">&bull;</span>
                             </td>
 
                             <!-- WBS Code & Quick Order Selector -->
@@ -466,13 +474,15 @@
                                     <span class="inline-block px-1.5 py-0.5 rounded text-[11px] font-mono font-bold shrink-0"
                                           :class="task.is_parent ? 'bg-slate-200 text-slate-800' : 'bg-white text-gray-700 shadow-2xs'"
                                           x-text="task.wbs_code"></span>
-                                    <select @change="reorderTask(task, $event.target.value)" 
-                                            class="cursor-pointer text-[10px] font-bold py-0.5 px-1 rounded border border-gray-200 bg-white hover:border-indigo-500 focus:border-indigo-500 text-gray-700 hover:text-indigo-600 transition-colors shadow-2xs"
-                                            :title="'Ubah urutan tugas (posisi saat ini: #' + (getTaskIndex(task) + 1) + ' dari ' + getSiblingCount(task) + ' tugas)'">
-                                        <template x-for="n in getSiblingCount(task)" :key="n">
-                                            <option :value="n" :selected="n === (getTaskIndex(task) + 1)" x-text="'#' + n"></option>
-                                        </template>
-                                    </select>
+                                    <template x-if="canManage">
+                                        <select @change="reorderTask(task, $event.target.value)" 
+                                                class="cursor-pointer text-[10px] font-bold py-0.5 px-1 rounded border border-gray-200 bg-white hover:border-indigo-500 focus:border-indigo-500 text-gray-700 hover:text-indigo-600 transition-colors shadow-2xs"
+                                                :title="'Ubah urutan tugas (posisi saat ini: #' + (getTaskIndex(task) + 1) + ' dari ' + getSiblingCount(task) + ' tugas)'">
+                                            <template x-for="n in getSiblingCount(task)" :key="n">
+                                                <option :value="n" :selected="n === (getTaskIndex(task) + 1)" x-text="'#' + n"></option>
+                                            </template>
+                                        </select>
+                                    </template>
                                 </div>
                             </td>
 
@@ -577,60 +587,65 @@
 
                             <!-- Actions & Position Controls -->
                             <td class="py-3 px-4 text-center">
-                                <div class="inline-flex items-center gap-1">
-                                    <!-- Move Up button -->
-                                    <button @click="moveUp(task)" 
-                                            :disabled="!canMoveUp(task) || isMovingTask"
-                                            :class="canMoveUp(task) ? 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50' : 'text-gray-300 cursor-not-allowed'"
-                                            title="Geser ke atas"
-                                            class="p-1 rounded transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                                    </button>
+                                <template x-if="canManage">
+                                    <div class="inline-flex items-center gap-1">
+                                        <!-- Move Up button -->
+                                        <button @click="moveUp(task)" 
+                                                :disabled="!canMoveUp(task) || isMovingTask"
+                                                :class="canMoveUp(task) ? 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50' : 'text-gray-300 cursor-not-allowed'"
+                                                title="Geser ke atas"
+                                                class="p-1 rounded transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                        </button>
 
-                                    <!-- Move Down button -->
-                                    <button @click="moveDown(task)" 
-                                            :disabled="!canMoveDown(task) || isMovingTask"
-                                            :class="canMoveDown(task) ? 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50' : 'text-gray-300 cursor-not-allowed'"
-                                            title="Geser ke bawah"
-                                            class="p-1 rounded transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                                    </button>
+                                        <!-- Move Down button -->
+                                        <button @click="moveDown(task)" 
+                                                :disabled="!canMoveDown(task) || isMovingTask"
+                                                :class="canMoveDown(task) ? 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50' : 'text-gray-300 cursor-not-allowed'"
+                                                title="Geser ke bawah"
+                                                class="p-1 rounded transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
 
-                                    <!-- Move / Re-parent Dropdown Button -->
-                                    <button @click="openMoveModal(task)" 
-                                            title="Pindahkan ke induk lain / jadikan tugas utama"
-                                            class="p-1 rounded text-indigo-600 hover:bg-indigo-50 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                                    </button>
+                                        <!-- Move / Re-parent Dropdown Button -->
+                                        <button @click="openMoveModal(task)" 
+                                                title="Pindahkan ke induk lain / jadikan tugas utama"
+                                                class="p-1 rounded text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                                        </button>
 
-                                    <!-- Add Subtask button -->
-                                    <button @click="openCreateModal(task.db_id)" 
-                                            title="Tambah Sub-tugas di bawah ini"
-                                            class="p-1 rounded text-emerald-600 hover:bg-emerald-50 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                                    </button>
+                                        <!-- Add Subtask button -->
+                                        <button @click="openCreateModal(task.db_id)" 
+                                                title="Tambah Sub-tugas di bawah ini"
+                                                class="p-1 rounded text-emerald-600 hover:bg-emerald-50 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                        </button>
 
-                                    <!-- Manage Dependencies / Link Lines Button -->
-                                    <button @click="openLinkModal(task)" 
-                                            title="Atur Garis Hubung / Ketergantungan Tugas"
-                                            class="p-1 rounded text-amber-600 hover:bg-amber-50 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                                    </button>
+                                        <!-- Manage Dependencies / Link Lines Button -->
+                                        <button @click="openLinkModal(task)" 
+                                                title="Atur Garis Hubung / Ketergantungan Tugas"
+                                                class="p-1 rounded text-amber-600 hover:bg-amber-50 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                        </button>
 
-                                    <!-- Edit Task -->
-                                    <button @click="openEditModal(task)" 
-                                            title="Edit Tugas"
-                                            class="p-1 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                    </button>
+                                        <!-- Edit Task -->
+                                        <button @click="openEditModal(task)" 
+                                                title="Edit Tugas"
+                                                class="p-1 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        </button>
 
-                                    <!-- Delete Task -->
-                                    <button @click="deleteTask(task.db_id)" 
-                                            title="Hapus Tugas"
-                                            class="p-1 rounded text-red-500 hover:bg-red-50 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
-                                </div>
+                                        <!-- Delete Task -->
+                                        <button @click="deleteTask(task.db_id)" 
+                                                title="Hapus Tugas"
+                                                class="p-1 rounded text-red-500 hover:bg-red-50 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                                <template x-if="!canManage">
+                                    <span class="text-[11px] font-semibold text-slate-400 italic">Hanya lihat</span>
+                                </template>
                             </td>
                         </tr>
 
@@ -1053,8 +1068,9 @@
 </div>
 
 <script>
-function ganttManager() {
+function ganttManager(canManage = true) {
     return {
+        canManage: canManage,
         projectId: {{ $project->id }},
         project: {
             title: '{{ addslashes($project->title) }}',
@@ -1519,6 +1535,7 @@ function ganttManager() {
             };
 
             this.ganttInstance = new Gantt("#gantt-target", frappeTasks, {
+                readonly: !self.canManage,
                 header_height: 48,
                 column_width: self.viewMode === 'Day' ? 32 : (self.viewMode === 'Week' ? 50 : 70),
                 step: 24,
@@ -1611,6 +1628,7 @@ function ganttManager() {
                                 </div>
                             </div>
 
+                            ${self.canManage ? `
                             <!-- Footer Actions -->
                             <div class="flex items-center justify-end pt-1.5 border-t border-slate-100">
                                 <button type="button" 
@@ -1621,12 +1639,13 @@ function ganttManager() {
                                     </svg>
                                     Edit Tugas
                                 </button>
-                            </div>
+                            </div>` : ''}
                         </div>
                     `;
                 },
 
                 on_date_change: function(task, start, end) {
+                    if (!self.canManage) return;
                     const startStr = self.formatYmd(start);
                     const endStr = self.formatYmd(end);
                     self.debounceInteractive(task._task_data.db_id, {
@@ -1636,6 +1655,7 @@ function ganttManager() {
                 },
 
                 on_progress_change: function(task, progress) {
+                    if (!self.canManage) return;
                     if (task._task_data.is_parent) {
                         self.notifyToast('Progres Otomatis', 'Progres tugas utama dikalkulasi otomatis dari sub-tugasnya.', 'info');
                         task.progress = task._task_data.progress;
@@ -1648,7 +1668,9 @@ function ganttManager() {
                 },
 
                 on_click: function(task) {
-                    self.openEditModal(task._task_data);
+                    if (self.canManage) {
+                        self.openEditModal(task._task_data);
+                    }
                 }
             });
 

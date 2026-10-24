@@ -18,6 +18,11 @@ class DashboardController extends Controller
         
         $recentProjects = Project::with('client')->latest()->take(5)->get();
         $unpaidInvoices = Invoice::with(['project.client'])->where('status', '!=', 'paid')->latest()->take(5)->get();
+        $upcomingCompanyTasks = \App\Models\CompanyTask::with(['client', 'assignees', 'assignee'])
+            ->whereIn('status', ['todo', 'in_progress', 'waiting_client'])
+            ->orderByRaw('CASE WHEN meeting_time IS NOT NULL THEN meeting_time ELSE due_date END ASC')
+            ->take(5)
+            ->get();
 
         return view('dashboard', compact(
             'totalClients', 
@@ -25,7 +30,8 @@ class DashboardController extends Controller
             'totalContractValue', 
             'totalPaid',
             'recentProjects',
-            'unpaidInvoices'
+            'unpaidInvoices',
+            'upcomingCompanyTasks'
         ));
     }
 }

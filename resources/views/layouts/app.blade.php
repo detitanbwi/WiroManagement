@@ -102,6 +102,18 @@
                     </li>
                     @endcan
 
+                    @can('company_tasks.view')
+                    <li>
+                        <a href="{{ route('company-tasks.index') }}"
+                            class="flex items-center px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('company-tasks.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('company-tasks.*') ? 'text-white' : 'text-gray-400 group-hover:text-primary' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                            </svg>
+                            Task Internal
+                        </a>
+                    </li>
+                    @endcan
+
                     @can('ai_pricing.use')
                     <li>
                         <a href="{{ route('ai-pricing.index') }}"

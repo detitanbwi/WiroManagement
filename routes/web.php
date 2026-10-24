@@ -11,6 +11,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ProjectExpenseController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\QcController;
+use App\Http\Controllers\CompanyTaskController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
@@ -64,14 +65,22 @@ Route::middleware(['auth', 'internal'])->group(function () {
 
     // Projects Management
     Route::resource('projects', ProjectController::class);
-    Route::get('projects/{project}/gantt', [ProjectController::class, 'gantt'])->name('projects.gantt');
-    Route::get('projects/{project}/gantt/data', [ProjectGanttController::class, 'data'])->name('projects.gantt.data');
-    Route::post('projects/{project}/gantt/tasks', [ProjectGanttController::class, 'store'])->name('projects.gantt.tasks.store');
-    Route::put('projects/gantt/tasks/{task}', [ProjectGanttController::class, 'update'])->name('projects.gantt.tasks.update');
-    Route::post('projects/gantt/tasks/{task}/move', [ProjectGanttController::class, 'move'])->name('projects.gantt.tasks.move');
-    Route::post('projects/gantt/tasks/{task}/reorder', [ProjectGanttController::class, 'reorder'])->name('projects.gantt.tasks.reorder');
-    Route::post('projects/gantt/tasks/{task}/interactive', [ProjectGanttController::class, 'updateInteractive'])->name('projects.gantt.tasks.interactive');
-    Route::delete('projects/gantt/tasks/{task}', [ProjectGanttController::class, 'destroy'])->name('projects.gantt.tasks.destroy');
+
+    // Gantt Chart & WBS Routes (Protected by Gantt view & manage permissions)
+    Route::middleware('permission:projects.gantt')->group(function () {
+        Route::get('projects/{project}/gantt', [ProjectController::class, 'gantt'])->name('projects.gantt');
+        Route::get('projects/{project}/gantt/data', [ProjectGanttController::class, 'data'])->name('projects.gantt.data');
+
+        Route::middleware('permission:projects.gantt_manage')->group(function () {
+            Route::post('projects/{project}/gantt/tasks', [ProjectGanttController::class, 'store'])->name('projects.gantt.tasks.store');
+            Route::put('projects/gantt/tasks/{task}', [ProjectGanttController::class, 'update'])->name('projects.gantt.tasks.update');
+            Route::post('projects/gantt/tasks/{task}/move', [ProjectGanttController::class, 'move'])->name('projects.gantt.tasks.move');
+            Route::post('projects/gantt/tasks/{task}/reorder', [ProjectGanttController::class, 'reorder'])->name('projects.gantt.tasks.reorder');
+            Route::post('projects/gantt/tasks/{task}/interactive', [ProjectGanttController::class, 'updateInteractive'])->name('projects.gantt.tasks.interactive');
+            Route::delete('projects/gantt/tasks/{task}', [ProjectGanttController::class, 'destroy'])->name('projects.gantt.tasks.destroy');
+        });
+    });
+
     Route::post('projects/{project}/status', [ProjectController::class, 'updateStatus'])
         ->name('projects.status.update')
         ->middleware('permission:projects.status');
@@ -180,5 +189,22 @@ Route::middleware(['auth', 'internal'])->group(function () {
         Route::post('/{id}/chat', [\App\Http\Controllers\AiPricingController::class, 'chat'])->name('chat');
         Route::post('/{id}/update-modules', [\App\Http\Controllers\AiPricingController::class, 'updateModules'])->name('update-modules');
         Route::delete('/{id}', [\App\Http\Controllers\AiPricingController::class, 'deleteSession'])->name('delete');
+    });
+
+    // Internal Company Tasks & Kanban (company_tasks.view, company_tasks.manage)
+    Route::middleware('permission:company_tasks.view')->group(function () {
+        Route::get('/company-tasks', [CompanyTaskController::class, 'index'])->name('company-tasks.index');
+        Route::post('/company-tasks', [CompanyTaskController::class, 'store'])
+            ->name('company-tasks.store')
+            ->middleware('permission:company_tasks.manage');
+        Route::put('/company-tasks/{companyTask}', [CompanyTaskController::class, 'update'])
+            ->name('company-tasks.update')
+            ->middleware('permission:company_tasks.manage');
+        Route::post('/company-tasks/{companyTask}/move', [CompanyTaskController::class, 'move'])
+            ->name('company-tasks.move')
+            ->middleware('permission:company_tasks.manage');
+        Route::delete('/company-tasks/{companyTask}', [CompanyTaskController::class, 'destroy'])
+            ->name('company-tasks.destroy')
+            ->middleware('permission:company_tasks.manage');
     });
 });
