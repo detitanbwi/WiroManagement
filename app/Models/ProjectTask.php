@@ -45,7 +45,7 @@ class ProjectTask extends Model
             'project_task_dependencies',
             'successor_id',
             'predecessor_id'
-        )->withPivot('type', 'lag_days')->withTimestamps();
+        )->withPivot('project_id', 'type', 'lag_days')->withTimestamps();
     }
 
     public function successors()
@@ -55,7 +55,7 @@ class ProjectTask extends Model
             'project_task_dependencies',
             'predecessor_id',
             'successor_id'
-        )->withPivot('type', 'lag_days')->withTimestamps();
+        )->withPivot('project_id', 'type', 'lag_days')->withTimestamps();
     }
 
     public function isParent(): bool

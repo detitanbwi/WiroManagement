@@ -66,11 +66,18 @@ class TaskProgressService
             } else {
                 $this->recalculateProjectProgress($parent->project_id);
             }
+        } else {
+            // If parent no longer has children, recalculate upwards and project progress
+            if ($parent->parent_id) {
+                $this->recalculateParent($parent);
+            } else {
+                $this->recalculateProjectProgress($parent->project_id);
+            }
         }
     }
 
     /**
-     * Recalculate project overall progress based on root-level tasks.
+     * Recalculate project overall progress based on leaf tasks (work packages).
      */
     public function recalculateProjectProgress(int $projectId): void
     {
@@ -79,15 +86,13 @@ class TaskProgressService
             return;
         }
 
-        // Project overall progress is based on root tasks
-        $rootProgress = ProjectTask::where('project_id', $projectId)
-            ->whereNull('parent_id')
+        // Project overall progress is based on leaf tasks (tasks without children)
+        $leafProgress = ProjectTask::where('project_id', $projectId)
+            ->doesntHave('children')
             ->avg('progress');
 
-        if ($rootProgress !== null) {
-            $project->updateQuietly([
-                'progress_percentage' => (int) round($rootProgress)
-            ]);
-        }
+        $project->updateQuietly([
+            'progress_percentage' => $leafProgress !== null ? (int) round($leafProgress) : 0
+        ]);
     }
 }

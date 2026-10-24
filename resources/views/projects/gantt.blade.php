@@ -11,9 +11,16 @@
     /* Frappe Gantt Custom Modern Styling */
     .gantt-container {
         overflow-x: auto !important;
-        overflow-y: hidden !important;
+        overflow-y: visible !important;
         border-radius: 0.75rem;
         background: #ffffff;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        position: relative;
+    }
+    .gantt {
+        display: block;
+        margin-bottom: 0 !important;
     }
     .gantt .grid-header {
         fill: #f8fafc;
@@ -40,8 +47,12 @@
         fill: #64748b;
     }
     .gantt .today-highlight {
-        fill: #eff6ff;
-        opacity: 0.7;
+        fill: #fef3c7 !important;
+        opacity: 0.75 !important;
+        stroke: #f59e0b !important;
+        stroke-width: 1.5px !important;
+        stroke-opacity: 0.45 !important;
+        pointer-events: none !important;
     }
     .gantt .arrow {
         stroke: #6366f1;
@@ -105,37 +116,82 @@
         fill: #cbd5e1 !important;
     }
 
-    /* Custom Tooltip Popup */
+    /* Custom Compact Light Gantt Popup Banner */
+    .gantt-container .popup-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        z-index: 1000 !important;
+        pointer-events: auto !important;
+        filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.08));
+    }
+    .gantt-container .popup-wrapper .pointer {
+        display: none !important;
+    }
+
     .gantt-popup {
-        background: #1e293b;
-        color: #f8fafc;
-        border-radius: 0.5rem;
-        padding: 10px 14px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        font-family: 'Inter', sans-serif;
-        font-size: 12px;
+        background: #ffffff;
+        color: #0f172a;
+        border-radius: 0.75rem;
+        padding: 12px 14px;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-size: 11.5px;
         line-height: 1.4;
-        max-width: 280px;
+        width: 320px;
+        max-width: calc(100vw - 24px);
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
         z-index: 1000;
+        transition: all 0.15s ease;
     }
     .gantt-popup .title {
         font-weight: 700;
         font-size: 13px;
-        color: #ffffff;
-        margin-bottom: 4px;
-    }
-    .gantt-popup .subtitle {
-        color: #94a3b8;
-        font-size: 11px;
-        margin-bottom: 6px;
+        color: #0f172a;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        line-height: 1.35;
+        word-break: break-word;
     }
     .gantt-popup .badge {
-        display: inline-block;
-        padding: 2px 6px;
+        display: inline-flex;
+        align-items: center;
+        padding: 1.5px 6px;
         border-radius: 4px;
-        font-size: 10px;
+        font-size: 9.5px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+    .gantt-popup-desc {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 6px 8px;
+        margin-top: 5px;
+        margin-bottom: 7px;
+    }
+    .gantt-popup-desc .desc-label {
+        font-size: 9px;
         font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 3.5px;
+    }
+    .gantt-popup-desc .desc-content {
+        font-size: 11px;
+        line-height: 1.45;
+        color: #334155;
+        max-height: 80px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
     }
 </style>
 
@@ -180,7 +236,12 @@
         <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-200 flex items-center justify-between">
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Tugas (WBS)</p>
-                <p class="text-2xl font-bold text-gray-900 mt-1" x-text="tasks.length">0</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1" x-text="leafTasks.length">0</p>
+                <template x-if="parentTasks.length > 0">
+                    <p class="text-[11px] text-gray-400 mt-0.5">
+                        <span class="font-medium text-gray-600" x-text="parentTasks.length"></span> Induk &bull; <span class="font-medium text-gray-600" x-text="leafTasks.length"></span> Anak Tugas
+                    </p>
+                </template>
             </div>
             <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -191,6 +252,9 @@
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Progres Proyek</p>
                 <p class="text-2xl font-bold text-indigo-600 mt-1" x-text="project.progress_percentage + '%'">0%</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">
+                    Rata-rata dari <span class="font-medium text-gray-600" x-text="leafTasks.length"></span> tugas pengerjaan
+                </p>
             </div>
             <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
                 %
@@ -200,7 +264,10 @@
         <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-200 flex items-center justify-between">
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Selesai (Completed)</p>
-                <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="tasks.filter(t => t.progress >= 100).length">0</p>
+                <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="completedTasksCount">0</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">
+                    <span class="font-medium text-emerald-600" x-text="(leafTasks.length > 0 ? Math.round((completedTasksCount / leafTasks.length) * 100) : 0) + '%'"></span> dari total tugas (<span x-text="completedTasksCount"></span>/<span x-text="leafTasks.length"></span> selesai)
+                </p>
             </div>
             <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -210,7 +277,10 @@
         <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-200 flex items-center justify-between">
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Sedang Berjalan</p>
-                <p class="text-2xl font-bold text-amber-600 mt-1" x-text="tasks.filter(t => t.progress > 0 && t.progress < 100).length">0</p>
+                <p class="text-2xl font-bold text-amber-600 mt-1" x-text="inProgressTasksCount">0</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">
+                    <span class="font-medium text-amber-600" x-text="(leafTasks.length > 0 ? Math.round((inProgressTasksCount / leafTasks.length) * 100) : 0) + '%'"></span> berjalan &bull; <span x-text="todoTasksCount"></span> belum dimulai
+                </p>
             </div>
             <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -219,7 +289,7 @@
     </div>
 
     <!-- Gantt Chart Timeline View Card -->
-    <div class="bg-white rounded-xl shadow-xs border border-gray-200 p-6 flex flex-col space-y-4">
+    <div class="bg-white rounded-xl shadow-xs border border-gray-200 p-6 pb-4 flex flex-col space-y-4">
         <!-- Gantt Controls Toolbar -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-gray-100">
             <!-- Mode Switcher -->
@@ -265,11 +335,15 @@
                     <span class="w-3 h-3 rounded-xs bg-[#94a3b8]"></span> 
                     <span>Belum Dimulai (0%)</span>
                 </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-xs bg-amber-100 border border-amber-400"></span> 
+                    <span class="text-amber-800 font-medium">Hari Ini (Today)</span>
+                </span>
             </div>
         </div>
 
         <!-- SVG Container for Frappe Gantt -->
-        <div class="relative min-h-[300px]">
+        <div class="relative">
             <div x-show="loading" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20">
                 <div class="inline-flex items-center gap-2 text-sm text-indigo-600 font-semibold">
                     <svg class="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
@@ -326,24 +400,52 @@
                         <th class="py-3 px-4 w-40 text-center">Aksi & Posisi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <template x-for="task in tasks" :key="task.id">
-                        <tr x-show="isTaskVisible(task)"
-                            x-transition:enter="transition ease-out duration-150"
+                <template x-for="task in tasks" :key="task.id">
+                    <tbody class="border-b border-gray-100/80 transition-colors"
+                           x-show="isTaskVisible(task)"
+                           @dragleave="handleDragLeave(task, $event)">
+
+                        <!-- Spacer Drop Area (Before Task) - Opens space between tasks -->
+                        <tr x-show="draggedTask && draggedTask.db_id !== task.db_id && dragOverTarget === task.db_id && dragOverPosition === 'before'"
+                            x-transition:enter="transition-all ease-out duration-150"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            @dragover.prevent.stop="dragOverTarget = task.db_id; dragOverPosition = 'before'"
+                            @drop.prevent="dropOnTask(task)"
+                            class="bg-indigo-50/40">
+                            <td colspan="9" class="p-1.5">
+                                <div :style="'padding-left: ' + (task.level * 1.5) + 'rem;'">
+                                    <div class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 border-2 border-dashed border-indigo-400 rounded-xl flex items-center justify-center gap-3 text-indigo-700 shadow-inner select-none cursor-pointer group hover:border-indigo-600 hover:bg-indigo-100/60 transition-all">
+                                        <div class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0 animate-bounce">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                                            </svg>
+                                        </div>
+                                        <span class="font-extrabold text-xs text-indigo-900 tracking-wide">Taruh di sini</span>
+                                        <span class="text-[11px] font-medium text-indigo-600">
+                                            &bull; Sisipkan sebelum <span class="font-bold underline decoration-indigo-300" x-text="task.title"></span>
+                                        </span>
+                                        <span class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                            <span x-text="task.level === 0 ? 'Tugas Utama' : 'Sub-tugas Level ' + (task.level + 1)"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Main Task Row -->
+                        <tr x-transition:enter="transition ease-out duration-150"
                             x-transition:enter-start="opacity-0 -translate-y-1"
                             x-transition:enter-end="opacity-100 translate-y-0"
                             draggable="true"
                             @dragstart="startDragging(task, $event)"
                             @dragover="handleDragOver(task, $event)"
-                            @dragleave="handleDragLeave(task, $event)"
                             @drop.prevent="dropOnTask(task)"
                             @dragend="resetDrag()"
                             :class="{
                                 'bg-slate-50/70 font-semibold': task.is_parent,
                                 'hover:bg-gray-50/60': !task.is_parent,
                                 'opacity-40': draggedTask?.db_id === task.db_id,
-                                'border-t-2 border-indigo-600 bg-indigo-50/50': dragOverTarget === task.db_id && dragOverPosition === 'before',
-                                'border-b-2 border-indigo-600 bg-indigo-50/50': dragOverTarget === task.db_id && dragOverPosition === 'after',
                                 'bg-indigo-100/70 ring-2 ring-indigo-500 ring-inset': dragOverTarget === task.db_id && dragOverPosition === 'inside'
                             }"
                             class="transition-colors">
@@ -402,12 +504,34 @@
                                         </svg>
                                     </template>
 
-                                    <span :class="task.is_parent ? 'text-slate-900 font-bold' : 'text-gray-800'" x-text="task.title"></span>
-
-                                    <template x-if="task.is_parent">
-                                        <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200" 
-                                              x-text="task.children_count + ' sub'"></span>
-                                    </template>
+                                    <div class="flex flex-col min-w-0">
+                                        <div class="flex items-center">
+                                            <span :class="task.is_parent ? 'text-slate-900 font-bold' : 'text-gray-800'" x-text="task.title"></span>
+                                            <template x-if="task.is_parent">
+                                                <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200" 
+                                                      x-text="task.children_count + ' sub'"></span>
+                                            </template>
+                                            <template x-if="dragOverTarget === task.db_id && dragOverPosition === 'inside'">
+                                                <span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white shadow-xs animate-pulse">
+                                                    📥 Jadikan Sub-tugas
+                                                </span>
+                                            </template>
+                                        </div>
+                                        <!-- Dependencies indicators -->
+                                        <template x-if="task.dependency_details && task.dependency_details.length > 0">
+                                            <div class="flex items-center gap-1 mt-1 flex-wrap">
+                                                <template x-for="dep in task.dependency_details" :key="dep.id">
+                                                    <span @click.stop="openLinkModal(task)"
+                                                          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 cursor-pointer transition-colors"
+                                                          :title="'Garis hubung dari: [' + dep.wbs_code + '] ' + dep.title + ' (Klik untuk ubah)'">
+                                                        <svg class="w-2.5 h-2.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                                        <span class="font-mono font-bold" x-text="dep.wbs_code"></span>
+                                                        <span class="truncate max-w-[120px]" x-text="dep.title"></span>
+                                                    </span>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
                                 </div>
                             </td>
 
@@ -486,6 +610,13 @@
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                                     </button>
 
+                                    <!-- Manage Dependencies / Link Lines Button -->
+                                    <button @click="openLinkModal(task)" 
+                                            title="Atur Garis Hubung / Ketergantungan Tugas"
+                                            class="p-1 rounded text-amber-600 hover:bg-amber-50 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                    </button>
+
                                     <!-- Edit Task -->
                                     <button @click="openEditModal(task)" 
                                             title="Edit Tugas"
@@ -502,8 +633,46 @@
                                 </div>
                             </td>
                         </tr>
-                    </template>
-                </tbody>
+
+                        <!-- Spacer Drop Area (After Task) - Opens space between tasks -->
+                        <tr x-show="draggedTask && draggedTask.db_id !== task.db_id && dragOverTarget === task.db_id && dragOverPosition === 'after'"
+                            x-transition:enter="transition-all ease-out duration-150"
+                            x-transition:enter-start="opacity-0 translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            @dragover.prevent.stop="dragOverTarget = task.db_id; dragOverPosition = 'after'"
+                            @drop.prevent="dropOnTask(task)"
+                            class="bg-indigo-50/40">
+                            <td colspan="9" class="p-1.5">
+                                <div :style="'padding-left: ' + (task.level * 1.5) + 'rem;'">
+                                    <div class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 border-2 border-dashed border-indigo-400 rounded-xl flex items-center justify-center gap-3 text-indigo-700 shadow-inner select-none cursor-pointer group hover:border-indigo-600 hover:bg-indigo-100/60 transition-all">
+                                        <div class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0 animate-bounce">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                                            </svg>
+                                        </div>
+                                        <span class="font-extrabold text-xs text-indigo-900 tracking-wide">Taruh di sini</span>
+                                        <span class="text-[11px] font-medium text-indigo-600">
+                                            &bull; Sisipkan setelah <span class="font-bold underline decoration-indigo-300" x-text="task.title"></span>
+                                        </span>
+                                        <span class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                            <span x-text="task.level === 0 ? 'Tugas Utama' : 'Sub-tugas Level ' + (task.level + 1)"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </template>
+
+                <template x-if="tasks.length === 0">
+                    <tbody>
+                        <tr>
+                            <td colspan="9" class="p-8 text-center text-gray-400 text-sm">
+                                Belum ada tugas dalam proyek ini.
+                            </td>
+                        </tr>
+                    </tbody>
+                </template>
             </table>
         </div>
 
@@ -547,22 +716,22 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                 class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
                 
                 <form @submit.prevent="saveTask()">
                     <div class="bg-white px-6 pt-6 pb-4">
                         <div class="flex justify-between items-center pb-3 border-b border-gray-100">
                             <h3 class="text-lg font-bold text-gray-900" x-text="isEdit ? 'Edit Tugas WBS' : (formData.parent_id ? 'Tambah Sub-tugas' : 'Tambah Tugas Utama')"></h3>
-                            <button type="button" @click="modalOpen = false" class="text-gray-400 hover:text-gray-600">
+                            <button type="button" @click="modalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
 
-                        <div class="space-y-4 mt-4 text-xs">
+                        <div class="space-y-4 mt-4">
                             <!-- Parent Task Selector -->
                             <div>
-                                <label class="block font-semibold text-gray-700 mb-1">Tugas Induk (Parent Task / WBS Level 1)</label>
-                                <select x-model="formData.parent_id" class="w-full rounded-lg border-gray-300 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Tugas Induk (Parent Task / WBS Level 1)</label>
+                                <select x-model="formData.parent_id" class="w-full rounded-lg border-gray-300 text-sm py-2 px-3 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-gray-800">
                                     <option value="">-- Tanpa Induk (Tugas Utama / WBS Level 1) --</option>
                                     <template x-for="p in potentialParents" :key="p.db_id">
                                         <option :value="p.db_id" x-text="(p.wbs_code ? p.wbs_code + ' - ' : '') + p.title"></option>
@@ -574,8 +743,8 @@
                             <!-- Position / Sort Order (in edit mode) -->
                             <template x-if="isEdit">
                                 <div>
-                                    <label class="block font-semibold text-gray-700 mb-1">Nomor Urutan (Posisi di dalam Induk)</label>
-                                    <select x-model="formData.sort_order" class="w-full rounded-lg border-gray-300 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Nomor Urutan (Posisi di dalam Induk)</label>
+                                    <select x-model="formData.sort_order" class="w-full rounded-lg border-gray-300 text-sm py-2 px-3 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-gray-800">
                                         <template x-for="n in getFormSiblingCount()" :key="n">
                                             <option :value="n" x-text="'Urutan #' + n" :selected="n === formData.sort_order"></option>
                                         </template>
@@ -586,15 +755,26 @@
 
                             <!-- Title -->
                             <div>
-                                <label class="block font-semibold text-gray-700 mb-1">Judul Tugas <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-gray-800 mb-1.5">Judul Tugas <span class="text-red-500">*</span></label>
                                 <input type="text" x-model="formData.title" required placeholder="Contoh: Modul 1: Dashboard"
-                                       class="w-full rounded-lg border-gray-300 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="w-full rounded-lg border-gray-300 text-sm py-2.5 px-3.5 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 placeholder:text-gray-400 text-gray-900 font-medium">
+                            </div>
+
+                            <!-- Description -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <label class="block text-sm font-semibold text-gray-800">Deskripsi Tugas</label>
+                                    <span class="text-[11px] text-gray-400 font-normal">Opsional</span>
+                                </div>
+                                <textarea x-model="formData.description" rows="5" placeholder="Tuliskan rincian atau catatan tugas ini..."
+                                          class="w-full rounded-lg border-gray-300 text-sm leading-relaxed p-3.5 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 placeholder:text-gray-400 text-gray-900 font-normal resize-y min-h-[110px]"></textarea>
+                                <p class="text-[11px] text-gray-500 mt-1">Rincian tugas untuk membantu tim memahami cakupan pekerjaan.</p>
                             </div>
 
                             <!-- Assignee -->
                             <div>
-                                <label class="block font-semibold text-gray-700 mb-1">Penanggung Jawab (Assignee)</label>
-                                <select x-model="formData.assignee_id" class="w-full rounded-lg border-gray-300 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Penanggung Jawab (Assignee)</label>
+                                <select x-model="formData.assignee_id" class="w-full rounded-lg border-gray-300 text-sm py-2 px-3 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-gray-800">
                                     <option value="">-- Belum Ditentukan --</option>
                                     <template x-for="user in users" :key="user.id">
                                         <option :value="user.id" x-text="user.name"></option>
@@ -605,22 +785,22 @@
                             <!-- Dates -->
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block font-semibold text-gray-700 mb-1">Tanggal Mulai <span class="text-red-500">*</span></label>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Tanggal Mulai <span class="text-red-500">*</span></label>
                                     <input type="date" x-model="formData.start_date" required
-                                           class="w-full rounded-lg border-gray-300 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                           class="w-full rounded-lg border-gray-300 text-sm py-2 px-3 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-gray-800">
                                 </div>
                                 <div>
-                                    <label class="block font-semibold text-gray-700 mb-1">Tenggat Waktu <span class="text-red-500">*</span></label>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Tenggat Waktu <span class="text-red-500">*</span></label>
                                     <input type="date" x-model="formData.due_date" required
-                                           class="w-full rounded-lg border-gray-300 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                           class="w-full rounded-lg border-gray-300 text-sm py-2 px-3 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-gray-800">
                                 </div>
                             </div>
 
                             <!-- Progress (Auto-calculated if has children) -->
                             <div>
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-gray-700">Progres Pengerjaan (%)</label>
-                                    <span class="font-mono font-bold text-indigo-600" x-text="formData.progress + '%'"></span>
+                                    <label class="text-xs font-semibold text-gray-700">Progres Pengerjaan (%)</label>
+                                    <span class="font-mono font-bold text-indigo-600 text-xs" x-text="formData.progress + '%'"></span>
                                 </div>
                                 <template x-if="editingTaskHasChildren">
                                     <div class="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-amber-800 text-[11px]">
@@ -640,24 +820,44 @@
                                 </template>
                             </div>
 
-                            <!-- Dependency -->
+                            <!-- Garis Hubung / Dependensi (Predecessors) -->
                             <div>
-                                <label class="block font-semibold text-gray-700 mb-1">Dependensi (Tugas Sebelumnya / Predecessor)</label>
-                                <select x-model="formData.dependency_ids" multiple class="w-full rounded-lg border-gray-300 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500 h-24">
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-xs font-semibold text-gray-700">
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                            Garis Hubung / Tugas Prasyarat (Predecessors)
+                                        </span>
+                                    </label>
+                                    <span class="text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full" 
+                                          x-text="(formData.dependency_ids ? formData.dependency_ids.length : 0) + ' prasyarat terhubung'"></span>
+                                </div>
+                                <div class="max-h-36 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-1 bg-gray-50/50">
                                     <template x-for="t in potentialDependencies" :key="t.db_id">
-                                        <option :value="t.db_id" x-text="(t.wbs_code ? t.wbs_code + ' ' : '') + t.title"></option>
+                                        <label class="flex items-center gap-2.5 p-1.5 rounded hover:bg-white hover:shadow-2xs cursor-pointer transition-all border border-transparent hover:border-gray-200 select-none">
+                                            <input type="checkbox" :value="t.db_id" x-model="formData.dependency_ids"
+                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5">
+                                            <div class="flex items-center gap-1.5 min-w-0">
+                                                <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 shrink-0" 
+                                                      x-text="t.wbs_code || '-'"></span>
+                                                <span class="text-xs text-gray-800 font-medium truncate" x-text="t.title"></span>
+                                            </div>
+                                        </label>
                                     </template>
-                                </select>
-                                <p class="text-[10px] text-gray-400 mt-1">Tahan Ctrl/Command untuk memilih lebih dari satu tugas.</p>
+                                    <template x-if="potentialDependencies.length === 0">
+                                        <p class="text-xs text-gray-400 italic py-2 text-center">Tidak ada tugas lain yang tersedia sebagai prasyarat.</p>
+                                    </template>
+                                </div>
+                                <p class="text-[11px] text-gray-500 mt-1">Centang tugas yang harus selesai terlebih dahulu agar garis panah penghubung muncul di diagram Gantt.</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2.5">
-                        <button type="button" @click="modalOpen = false" class="px-4 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="modalOpen = false" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                             Batal
                         </button>
-                        <button type="submit" :disabled="saving" class="inline-flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-xs shadow-xs transition-colors disabled:opacity-50">
+                        <button type="submit" :disabled="saving" class="inline-flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm shadow-xs transition-colors disabled:opacity-50">
                             <span x-show="!saving" x-text="isEdit ? 'Simpan Perubahan' : 'Buat Tugas'"></span>
                             <span x-show="saving">Menyimpan...</span>
                         </button>
@@ -747,6 +947,109 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Atur Garis Hubung / Dependensi Tugas (Quick Link Modal) -->
+    <div x-show="linkModalOpen" 
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         aria-labelledby="modal-link-title" 
+         role="dialog" 
+         aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="linkModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity" 
+                 @click="linkModalOpen = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="linkModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                
+                <div class="bg-gradient-to-r from-amber-600 via-amber-700 to-indigo-700 px-6 py-4 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 bg-white/20 rounded-xl backdrop-blur-xs">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold leading-6">Atur Garis Hubung (Dependensi)</h3>
+                            <p class="text-xs text-amber-100">Hubungkan tugas ini dengan tugas lain pada diagram Gantt</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="linkModalOpen = false" class="text-white/80 hover:text-white rounded-lg p-1 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-4 text-xs">
+                    <!-- Task Target Info -->
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200/80">
+                        <span class="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-0.5">Tugas Sasaran (Successor):</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-white text-amber-900 border border-amber-200 shadow-2xs" x-text="taskToLink?.wbs_code || '-'"></span>
+                            <span class="font-bold text-sm text-amber-950 truncate" x-text="taskToLink?.title"></span>
+                        </div>
+                        <p class="text-[11px] text-amber-700 mt-1.5 leading-relaxed">
+                            Diagram Gantt akan otomatis menggambar <strong>garis panah</strong> dari tugas-tugas prasyarat yang dicentang di bawah menuju ke tugas ini.
+                        </p>
+                    </div>
+
+                    <!-- Checklist -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="font-bold text-gray-700 text-xs">Pilih Tugas Prasyarat (Predecessors):</label>
+                            <span class="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full" 
+                                  x-text="selectedLinkIds.length + ' tugas terhubung'"></span>
+                        </div>
+                        <div class="max-h-60 overflow-y-auto border border-gray-200 rounded-xl p-2 space-y-1.5 bg-gray-50/50">
+                            <template x-for="t in eligibleLinkDependencies" :key="t.db_id">
+                                <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white hover:shadow-2xs cursor-pointer transition-all border border-transparent hover:border-gray-200 select-none">
+                                    <input type="checkbox" :value="t.db_id" x-model="selectedLinkIds"
+                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 shrink-0" 
+                                              x-text="t.wbs_code || '-'"></span>
+                                        <span class="text-xs text-gray-800 font-medium truncate" x-text="t.title"></span>
+                                    </div>
+                                </label>
+                            </template>
+                            <template x-if="eligibleLinkDependencies.length === 0">
+                                <p class="text-xs text-gray-400 italic py-4 text-center">Tidak ada tugas lain yang tersedia sebagai prasyarat.</p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 flex justify-between items-center">
+                    <button type="button" 
+                            @click="selectedLinkIds = []" 
+                            class="text-xs text-red-600 hover:text-red-800 font-medium hover:underline">
+                        Hapus Semua Garis Hubung
+                    </button>
+                    <div class="flex gap-2.5">
+                        <button type="button" @click="linkModalOpen = false" class="px-4 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Batal
+                        </button>
+                        <button type="button" @click="saveLinks()" :disabled="saving" class="inline-flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-xs shadow-xs transition-colors disabled:opacity-50">
+                            <span x-show="!saving">Simpan Hubungan</span>
+                            <span x-show="saving">Menyimpan...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -767,8 +1070,10 @@ function ganttManager() {
         isEdit: false,
         currentEditId: null,
         editingTaskHasChildren: false,
+        interactiveTimers: {},
         formData: {
             title: '',
+            description: '',
             parent_id: '',
             assignee_id: '',
             start_date: '',
@@ -776,6 +1081,27 @@ function ganttManager() {
             progress: 0,
             sort_order: 1,
             dependency_ids: []
+        },
+
+        // Leaf Tasks and Parent Tasks Computed Properties
+        get leafTasks() {
+            return this.tasks.filter(t => !t.is_parent);
+        },
+
+        get parentTasks() {
+            return this.tasks.filter(t => t.is_parent);
+        },
+
+        get completedTasksCount() {
+            return this.leafTasks.filter(t => t.progress >= 100).length;
+        },
+
+        get inProgressTasksCount() {
+            return this.leafTasks.filter(t => t.progress > 0 && t.progress < 100).length;
+        },
+
+        get todoTasksCount() {
+            return this.leafTasks.filter(t => !t.progress || t.progress === 0).length;
         },
 
         // WBS Hierarchy & Collapse State
@@ -790,6 +1116,52 @@ function ganttManager() {
         taskToMove: null,
         moveTargetParentId: '',
         moveTargetOrder: 1,
+
+        // Link Lines & Dependencies State
+        linkModalOpen: false,
+        taskToLink: null,
+        selectedLinkIds: [],
+
+        openLinkModal(task) {
+            this.taskToLink = task;
+            this.selectedLinkIds = (task.dependencies || []).map(id => parseInt(id.replace('task_', '')));
+            this.linkModalOpen = true;
+        },
+
+        get eligibleLinkDependencies() {
+            if (!this.taskToLink) return [];
+            const sourceId = this.taskToLink.db_id;
+            return this.tasks.filter(t => t.db_id !== sourceId);
+        },
+
+        async saveLinks() {
+            if (!this.taskToLink) return;
+            this.saving = true;
+            try {
+                const res = await fetch(`/projects/gantt/tasks/${this.taskToLink.db_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        dependency_ids: this.selectedLinkIds
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Gagal menyimpan garis ketergantungan.');
+
+                this.linkModalOpen = false;
+                this.notifyToast('Garis Terhubung', 'Garis ketergantungan tugas berhasil diperbarui.');
+                await this.initData();
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Error', err.message, 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
 
         toggleCollapse(taskId) {
             if (this.collapsedTaskIds.includes(taskId)) {
@@ -979,16 +1351,28 @@ function ganttManager() {
             const rect = rowEl.getBoundingClientRect();
             const y = event.clientY - rect.top;
 
-            if (y < rect.height * 0.25) {
-                this.dragOverPosition = 'before';
-            } else if (y > rect.height * 0.75) {
-                this.dragOverPosition = 'after';
+            // When hovering over a parent task, middle area (between 35% and 65%) nests as subtask.
+            // Top 35% is 'before' and bottom 35% is 'after' (opens space between tasks).
+            // For leaf tasks, top 50% is 'before' and bottom 50% is 'after' (always insert between tasks).
+            if (task.is_parent) {
+                if (y < rect.height * 0.35) {
+                    this.dragOverPosition = 'before';
+                } else if (y > rect.height * 0.65) {
+                    this.dragOverPosition = 'after';
+                } else {
+                    this.dragOverPosition = 'inside';
+                }
             } else {
-                this.dragOverPosition = 'inside';
+                if (y < rect.height * 0.5) {
+                    this.dragOverPosition = 'before';
+                } else {
+                    this.dragOverPosition = 'after';
+                }
             }
         },
 
         handleDragLeave(task, event) {
+            // Only clear drag over state if leaving the task tbody group completely
             if (!event.currentTarget.contains(event.relatedTarget)) {
                 if (this.dragOverTarget === task.db_id) {
                     this.dragOverTarget = null;
@@ -1000,7 +1384,7 @@ function ganttManager() {
         async dropOnTask(targetTask) {
             if (!this.draggedTask) return;
             const targetId = targetTask ? targetTask.db_id : null;
-            const position = this.dragOverPosition || 'inside';
+            const position = this.dragOverPosition || 'before';
             await this.executeMove(this.draggedTask.db_id, targetId, position);
         },
 
@@ -1116,6 +1500,24 @@ function ganttManager() {
             }));
 
             const self = this;
+
+            // Global helpers for Gantt banner/popup buttons
+            window.ganttEditTask = (dbId) => {
+                const task = self.tasks.find(t => t.db_id === dbId);
+                if (task) {
+                    if (self.ganttInstance && self.ganttInstance.popup) {
+                        self.ganttInstance.popup.hide();
+                    }
+                    self.openEditModal(task);
+                }
+            };
+
+            window.ganttClosePopup = () => {
+                if (self.ganttInstance && self.ganttInstance.popup) {
+                    self.ganttInstance.popup.hide();
+                }
+            };
+
             this.ganttInstance = new Gantt("#gantt-target", frappeTasks, {
                 header_height: 48,
                 column_width: self.viewMode === 'Day' ? 32 : (self.viewMode === 'Week' ? 50 : 70),
@@ -1130,14 +1532,96 @@ function ganttManager() {
 
                 custom_popup_html: function(task) {
                     const d = task._task_data;
-                    const assigneeName = d.assignee ? d.assignee.name : 'Belum di-assign';
-                    const parentTag = d.is_parent ? '<span class="badge bg-slate-700 text-white ml-2">Auto-Rollup</span>' : '';
+                    const assigneeName = d.assignee ? d.assignee.name : 'Belum Ditentukan';
+                    const isParent = d.is_parent;
+                    const progress = Math.round(d.progress || 0);
+
+                    // Status & Badge (Light Theme)
+                    let statusBadge = '';
+                    if (isParent) {
+                        statusBadge = '<span class="badge bg-amber-50 text-amber-800 border border-amber-200">Induk (' + (d.children_count || 0) + ' Sub)</span>';
+                    } else if (progress >= 100) {
+                        statusBadge = '<span class="badge bg-emerald-50 text-emerald-700 border border-emerald-200">Selesai (100%)</span>';
+                    } else if (progress > 0) {
+                        statusBadge = '<span class="badge bg-blue-50 text-blue-700 border border-blue-200">Sedang Dikerjakan</span>';
+                    } else {
+                        statusBadge = '<span class="badge bg-slate-100 text-slate-600 border border-slate-200">Belum Mulai</span>';
+                    }
+
+                    // Description text (Compact)
+                    const descHtml = d.description && d.description.trim() !== ''
+                        ? `<div class="gantt-popup-desc">
+                            <div class="desc-label">
+                                <svg class="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+                                </svg>
+                                Deskripsi
+                            </div>
+                            <div class="desc-content">${self.escapeHtml(d.description)}</div>
+                           </div>`
+                        : `<div class="text-[10.5px] text-slate-400 italic py-0.5">Tidak ada deskripsi</div>`;
+
                     return `
                         <div class="gantt-popup">
-                            <div class="title">${d.name} ${parentTag}</div>
-                            <div class="subtitle">Assignee: ${assigneeName}</div>
-                            <div style="font-size: 11px; margin-bottom: 4px;">📅 ${d.start} &rarr; ${d.end} (${d.duration_days} Hari)</div>
-                            <div style="font-size: 11px; font-weight: bold; color: #818cf8;">Progres: ${d.progress}%</div>
+                            <!-- Header with WBS & Close button -->
+                            <div class="flex items-center justify-between gap-1.5 pb-1.5 border-b border-slate-100">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="badge bg-slate-100 text-slate-700 border border-slate-200 font-mono">
+                                        WBS ${d.wbs_code || '-'}
+                                    </span>
+                                    ${statusBadge}
+                                </div>
+                                <button type="button" 
+                                        onclick="window.ganttClosePopup()" 
+                                        class="text-slate-400 hover:text-slate-700 p-0.5 rounded hover:bg-slate-100 transition-colors cursor-pointer"
+                                        title="Tutup banner">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Title -->
+                            <div class="title">${self.escapeHtml(d.title)}</div>
+
+                            <!-- Description Box -->
+                            ${descHtml}
+
+                            <!-- Concise Meta Rows -->
+                            <div class="space-y-1.5 py-1.5 border-t border-slate-100 text-[11px]">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-slate-400 text-[10.5px] shrink-0">PIC:</span>
+                                    <span class="font-medium text-slate-800 truncate">${self.escapeHtml(assigneeName)}</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-slate-400 text-[10.5px] shrink-0">Jadwal:</span>
+                                    <span class="font-medium text-slate-700">${d.start} &rarr; ${d.end} <span class="text-slate-400 font-normal">(${d.duration_days}h)</span></span>
+                                </div>
+                            </div>
+
+                            <!-- Progress Track -->
+                            <div class="pt-1 pb-1.5">
+                                <div class="flex items-center justify-between text-[10.5px] mb-1">
+                                    <span class="text-slate-400">Progres</span>
+                                    <span class="font-bold text-slate-800">${progress}%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200/60">
+                                    <div class="h-full rounded-full transition-all duration-300 ${progress >= 100 ? 'bg-emerald-500' : 'bg-indigo-600'}" 
+                                         style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Footer Actions -->
+                            <div class="flex items-center justify-end pt-1.5 border-t border-slate-100">
+                                <button type="button" 
+                                        onclick="window.ganttEditTask(${d.db_id})" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px] border border-indigo-200 transition-colors cursor-pointer">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Edit Tugas
+                                </button>
+                            </div>
                         </div>
                     `;
                 },
@@ -1145,7 +1629,7 @@ function ganttManager() {
                 on_date_change: function(task, start, end) {
                     const startStr = self.formatYmd(start);
                     const endStr = self.formatYmd(end);
-                    self.updateInteractive(task._task_data.db_id, {
+                    self.debounceInteractive(task._task_data.db_id, {
                         start_date: startStr,
                         due_date: endStr
                     });
@@ -1154,10 +1638,11 @@ function ganttManager() {
                 on_progress_change: function(task, progress) {
                     if (task._task_data.is_parent) {
                         self.notifyToast('Progres Otomatis', 'Progres tugas utama dikalkulasi otomatis dari sub-tugasnya.', 'info');
-                        self.initData();
+                        task.progress = task._task_data.progress;
+                        self.refreshFrappeGanttTasks();
                         return;
                     }
-                    self.updateInteractive(task._task_data.db_id, {
+                    self.debounceInteractive(task._task_data.db_id, {
                         progress: progress
                     });
                 },
@@ -1166,6 +1651,69 @@ function ganttManager() {
                     self.openEditModal(task._task_data);
                 }
             });
+
+            // Smart auto-repositioning for the banner/popup horizontally and vertically
+            const originalShowPopup = this.ganttInstance.show_popup.bind(this.ganttInstance);
+            this.ganttInstance.show_popup = function(options) {
+                originalShowPopup(options);
+                if (self.ganttInstance && self.ganttInstance.popup_wrapper) {
+                    const popupEl = self.ganttInstance.popup_wrapper;
+                    const targetEl = options.target_element;
+                    if (targetEl && popupEl) {
+                        const targetRect = targetEl.getBBox ? targetEl.getBBox() : targetEl.getBoundingClientRect();
+                        const popupWidth = popupEl.offsetWidth || 320;
+                        const popupHeight = popupEl.offsetHeight || 220;
+                        const svgWidth = self.ganttInstance.$svg ? (self.ganttInstance.$svg.clientWidth || self.ganttInstance.$svg.getBoundingClientRect().width) : 2000;
+                        
+                        // Horizontal auto-positioning: keep within horizontal boundary
+                        const currentLeft = parseFloat(popupEl.style.left) || 0;
+                        if (currentLeft + popupWidth > svgWidth - 20) {
+                            const newLeft = Math.max(10, targetRect.x - popupWidth - 12);
+                            popupEl.style.left = newLeft + 'px';
+                        }
+
+                        // Vertical auto-positioning: flip above the bar if popup would overflow bottom edge
+                        const containerEl = self.ganttInstance.$container || popupEl.parentElement;
+                        const containerHeight = containerEl ? containerEl.scrollHeight : (self.ganttInstance.$svg ? parseFloat(self.ganttInstance.$svg.getAttribute('height')) : 1000);
+                        const currentTop = parseFloat(popupEl.style.top) || targetRect.y;
+
+                        if (currentTop + popupHeight > containerHeight - 10) {
+                            const aboveTop = targetRect.y - popupHeight - 10;
+                            if (aboveTop >= 10) {
+                                popupEl.style.top = aboveTop + 'px';
+                            } else {
+                                const clampedTop = Math.max(10, containerHeight - popupHeight - 10);
+                                popupEl.style.top = clampedTop + 'px';
+                            }
+                        }
+
+                        // Smoothly scroll into view if the banner touches the viewport bottom
+                        setTimeout(() => {
+                            if (popupEl && typeof popupEl.scrollIntoView === 'function') {
+                                const rect = popupEl.getBoundingClientRect();
+                                if (rect.bottom > window.innerHeight - 20) {
+                                    popupEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            }
+                        }, 50);
+                    }
+                }
+            };
+        },
+
+        refreshFrappeGanttTasks() {
+            if (!this.ganttInstance || this.tasks.length === 0) return;
+            const frappeTasks = this.tasks.map(t => ({
+                id: t.id,
+                name: t.name,
+                start: t.start,
+                end: t.end,
+                progress: t.progress,
+                dependencies: t.dependencies || [],
+                custom_class: t.custom_class || 'bar-task',
+                _task_data: t
+            }));
+            this.ganttInstance.refresh(frappeTasks);
         },
 
         setViewMode(mode) {
@@ -1192,6 +1740,18 @@ function ganttManager() {
             return dateStr;
         },
 
+        escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.toString().replace(/[&<>"']/g, m => map[m]);
+        },
+
         openCreateModal(parentId = null) {
             this.isEdit = false;
             this.currentEditId = null;
@@ -1208,6 +1768,7 @@ function ganttManager() {
 
             this.formData = {
                 title: '',
+                description: '',
                 parent_id: parentId ? parentId : '',
                 assignee_id: '',
                 start_date: startStr,
@@ -1226,6 +1787,7 @@ function ganttManager() {
 
             this.formData = {
                 title: task.title,
+                description: task.description || '',
                 parent_id: task.parent_db_id || '',
                 assignee_id: task.assignee_id || '',
                 start_date: task.start,
@@ -1278,7 +1840,49 @@ function ganttManager() {
             }
         },
 
-        async updateInteractive(taskId, payload) {
+        debounceInteractive(taskId, payload) {
+            // 1. Optimistic in-place update for WBS table and local tasks array
+            const localTask = this.tasks.find(t => t.db_id === taskId);
+            if (localTask) {
+                if (payload.start_date) localTask.start = payload.start_date;
+                if (payload.due_date) localTask.end = payload.due_date;
+                if (payload.start_date && payload.due_date) {
+                    const s = new Date(payload.start_date);
+                    const e = new Date(payload.due_date);
+                    localTask.duration_days = Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1);
+                }
+                if (payload.progress !== undefined) {
+                    localTask.progress = payload.progress;
+                    if (localTask.progress >= 100) {
+                        localTask.status = 'completed';
+                        localTask.custom_class = 'bar-completed';
+                    } else if (localTask.progress > 0) {
+                        localTask.status = 'in_progress';
+                        localTask.custom_class = 'bar-inprogress';
+                    } else {
+                        localTask.status = 'todo';
+                        localTask.custom_class = 'bar-task';
+                    }
+                }
+            }
+
+            // 2. Debounce per task: cancel pending timer for this task if user drags again
+            if (this.interactiveTimers[taskId]) {
+                clearTimeout(this.interactiveTimers[taskId]);
+            }
+
+            // 3. Wait 350ms after user releases mouse before sending background sync
+            this.interactiveTimers[taskId] = setTimeout(() => {
+                this.sendInteractiveUpdate(taskId, payload);
+                delete this.interactiveTimers[taskId];
+            }, 350);
+        },
+
+        updateInteractive(taskId, payload) {
+            this.debounceInteractive(taskId, payload);
+        },
+
+        async sendInteractiveUpdate(taskId, payload) {
             try {
                 const res = await fetch(`/projects/gantt/tasks/${taskId}/interactive`, {
                     method: 'POST',
@@ -1289,11 +1893,47 @@ function ganttManager() {
                     },
                     body: JSON.stringify(payload)
                 });
-                if (res.ok) {
-                    await this.initData();
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.message || 'Gagal memperbarui timeline');
+                }
+
+                // Update project progress KPI card without full page refresh
+                if (data.project && data.project.progress_percentage !== undefined) {
+                    this.project.progress_percentage = data.project.progress_percentage;
+                }
+
+                // Sync exact task attributes confirmed by server
+                if (data.task) {
+                    const target = this.tasks.find(t => t.db_id === data.task.db_id);
+                    if (target) {
+                        Object.assign(target, data.task);
+                    }
+                }
+
+                // Sync ancestor tasks that were updated by rollup
+                let ancestorDatesChanged = false;
+                if (data.ancestors && data.ancestors.length > 0) {
+                    data.ancestors.forEach(anc => {
+                        const parentTask = this.tasks.find(t => t.db_id === anc.db_id);
+                        if (parentTask) {
+                            if (parentTask.start !== anc.start || parentTask.end !== anc.end) {
+                                ancestorDatesChanged = true;
+                            }
+                            Object.assign(parentTask, anc);
+                        }
+                    });
+                }
+
+                // Refresh Gantt bars only if an ancestor's bar dates expanded/shrank
+                if (ancestorDatesChanged) {
+                    this.refreshFrappeGanttTasks();
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Interactive sync error:', err);
+                this.notifyToast('Gagal Sinkronisasi', err.message, 'warning');
+                // Silently reload all data if sync fails
+                await this.initData();
             }
         },
 

@@ -24,7 +24,7 @@ class ProjectGanttController extends Controller
     public function data(Project $project)
     {
         $allTasks = $project->tasks()
-            ->with(['assignee:id,name', 'dependencies:id', 'children:id,parent_id'])
+            ->with(['assignee:id,name', 'dependencies:id,title,wbs_code', 'children:id,parent_id'])
             ->withCount('children')
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
@@ -81,8 +81,10 @@ class ProjectGanttController extends Controller
                 'sort_order'    => (int) $task->sort_order,
                 'wbs_code'      => $task->wbs_code ?: (string)$task->id,
                 'title'         => $task->title,
+                'description'   => $task->description,
                 'name'          => ($task->wbs_code ? $task->wbs_code . ' ' : '') . $task->title,
                 'is_parent'     => $isParent,
+                'is_leaf'       => !$isParent,
                 'children_count'=> $task->children_count,
                 'assignee'      => $task->assignee ? [
                     'id'   => $task->assignee->id,
@@ -93,11 +95,20 @@ class ProjectGanttController extends Controller
                 'end'           => $dueDate,
                 'duration_days' => $task->duration_days ?: max(1, Carbon::parse($startDate)->diffInDays(Carbon::parse($dueDate)) + 1),
                 'progress'      => (float) $task->progress,
-                'status'        => $task->status ?: ($task->progress >= 100 ? 'completed' : ($task->progress > 0 ? 'in_progress' : 'todo')),
-                'dependencies'  => $task->dependencies->map(fn($dep) => 'task_' . $dep->id)->values()->toArray(),
-                'custom_class'  => $customClass,
+                'status'        => $isParent ? 'parent' : ($task->status ?: ($task->progress >= 100 ? 'completed' : ($task->progress > 0 ? 'in_progress' : 'todo'))),
+                'dependencies'         => $task->dependencies->map(fn($dep) => 'task_' . $dep->id)->values()->toArray(),
+                'dependency_details'   => $task->dependencies->map(fn($dep) => [
+                    'id'       => $dep->id,
+                    'wbs_code' => $dep->wbs_code,
+                    'title'    => $dep->title,
+                ])->values()->toArray(),
+                'custom_class'         => $customClass,
             ];
         });
+
+        // Recalculate project progress based on leaf tasks to guarantee fresh percentage
+        $this->progressService->recalculateProjectProgress($project->id);
+        $project->refresh();
 
         $users = User::select('id', 'name')->where('is_active', true)->orderBy('name')->get();
 
@@ -107,7 +118,7 @@ class ProjectGanttController extends Controller
                 'title'               => $project->title,
                 'start_date'          => $project->start_date ? Carbon::parse($project->start_date)->format('Y-m-d') : null,
                 'end_date'            => $project->end_date ? Carbon::parse($project->end_date)->format('Y-m-d') : null,
-                'progress_percentage' => $project->progress_percentage ?: 0,
+                'progress_percentage' => (int) ($project->progress_percentage ?: 0),
             ],
             'tasks' => $formattedTasks,
             'users' => $users,
@@ -121,6 +132,7 @@ class ProjectGanttController extends Controller
     {
         $validated = $request->validate([
             'title'          => 'required|string|max:255',
+            'description'    => 'nullable|string',
             'parent_id'      => 'nullable|exists:project_tasks,id',
             'assignee_id'    => 'nullable|exists:users,id',
             'start_date'     => 'required|date',
@@ -147,6 +159,7 @@ class ProjectGanttController extends Controller
             'parent_id'     => $parentId,
             'code'          => 'TSK-' . strtoupper(substr(uniqid(), -6)),
             'title'         => $validated['title'],
+            'description'   => $validated['description'] ?? null,
             'assignee_id'   => $validated['assignee_id'] ?? null,
             'start_date'    => $startDate->format('Y-m-d'),
             'due_date'      => $dueDate->format('Y-m-d'),
@@ -159,7 +172,15 @@ class ProjectGanttController extends Controller
 
         // Attach dependencies if provided
         if (!empty($validated['dependency_ids'])) {
-            $task->dependencies()->sync($validated['dependency_ids']);
+            $syncData = [];
+            foreach ($validated['dependency_ids'] as $depId) {
+                $syncData[$depId] = [
+                    'project_id' => $project->id,
+                    'type'       => 'FS',
+                    'lag_days'   => 0,
+                ];
+            }
+            $task->dependencies()->sync($syncData);
         }
 
         return response()->json([
@@ -176,6 +197,7 @@ class ProjectGanttController extends Controller
     {
         $validated = $request->validate([
             'title'          => 'sometimes|required|string|max:255',
+            'description'    => 'nullable|string',
             'parent_id'      => 'nullable|exists:project_tasks,id',
             'assignee_id'    => 'nullable|exists:users,id',
             'start_date'     => 'sometimes|required|date',
@@ -210,6 +232,9 @@ class ProjectGanttController extends Controller
 
         if (isset($validated['title'])) {
             $updateData['title'] = $validated['title'];
+        }
+        if (array_key_exists('description', $validated)) {
+            $updateData['description'] = $validated['description'];
         }
         if (array_key_exists('parent_id', $validated)) {
             $newParentId = $validated['parent_id'] ? (int)$validated['parent_id'] : null;
@@ -246,8 +271,16 @@ class ProjectGanttController extends Controller
         $task->update($updateData);
 
         // Update dependencies
-        if (isset($validated['dependency_ids'])) {
-            $task->dependencies()->sync($validated['dependency_ids']);
+        if (array_key_exists('dependency_ids', $validated)) {
+            $syncData = [];
+            foreach ($validated['dependency_ids'] ?? [] as $depId) {
+                $syncData[$depId] = [
+                    'project_id' => $task->project_id,
+                    'type'       => 'FS',
+                    'lag_days'   => 0,
+                ];
+            }
+            $task->dependencies()->sync($syncData);
         }
 
         // Apply reordering if sort_order specified
@@ -488,15 +521,61 @@ class ProjectGanttController extends Controller
             $progress = (float)$validated['progress'];
             $updateData['progress'] = $progress;
             $updateData['status'] = $progress >= 100 ? 'completed' : ($progress > 0 ? 'in_progress' : 'todo');
+            $updateData['column_id'] = $progress >= 100 ? 'done' : ($progress > 0 ? 'in_progress' : 'todo');
         }
 
         if (!empty($updateData)) {
             $task->update($updateData);
         }
 
+        $freshTask = $task->fresh(['assignee', 'dependencies']);
+        $isParent = $freshTask->children()->exists();
+        $customClass = 'bar-task';
+        if ($isParent) {
+            $customClass = 'bar-parent';
+        } elseif ($freshTask->progress >= 100) {
+            $customClass = 'bar-completed';
+        } elseif ($freshTask->progress > 0) {
+            $customClass = 'bar-inprogress';
+        }
+
+        // Collect updated ancestors (parents, grandparents) whose dates/progress rolled up
+        $ancestors = [];
+        $currParentId = $freshTask->parent_id;
+        while ($currParentId) {
+            $parent = ProjectTask::find($currParentId);
+            if (!$parent) break;
+            $ancestors[] = [
+                'id'            => 'task_' . $parent->id,
+                'db_id'         => $parent->id,
+                'start'         => $parent->start_date ? Carbon::parse($parent->start_date)->format('Y-m-d') : null,
+                'end'           => $parent->due_date ? Carbon::parse($parent->due_date)->format('Y-m-d') : null,
+                'duration_days' => $parent->duration_days ?: 1,
+                'progress'      => (float) $parent->progress,
+                'status'        => $parent->status,
+            ];
+            $currParentId = $parent->parent_id;
+        }
+
+        $project = Project::find($freshTask->project_id);
+
         return response()->json([
-            'success' => true,
-            'task'    => $task->fresh(['assignee', 'dependencies'])
+            'success'   => true,
+            'message'   => 'Tugas berhasil diperbarui.',
+            'task'      => [
+                'id'            => 'task_' . $freshTask->id,
+                'db_id'         => $freshTask->id,
+                'start'         => $freshTask->start_date ? Carbon::parse($freshTask->start_date)->format('Y-m-d') : null,
+                'end'           => $freshTask->due_date ? Carbon::parse($freshTask->due_date)->format('Y-m-d') : null,
+                'duration_days' => $freshTask->duration_days ?: 1,
+                'progress'      => (float) $freshTask->progress,
+                'status'        => $freshTask->status,
+                'custom_class'  => $customClass,
+            ],
+            'ancestors' => $ancestors,
+            'project'   => [
+                'progress_percentage' => (int) ($project?->progress_percentage ?: 0),
+            ]
         ]);
     }
 
