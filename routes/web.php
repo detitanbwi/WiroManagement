@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectGanttController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\PaymentController;
@@ -63,6 +64,14 @@ Route::middleware(['auth', 'internal'])->group(function () {
 
     // Projects Management
     Route::resource('projects', ProjectController::class);
+    Route::get('projects/{project}/gantt', [ProjectController::class, 'gantt'])->name('projects.gantt');
+    Route::get('projects/{project}/gantt/data', [ProjectGanttController::class, 'data'])->name('projects.gantt.data');
+    Route::post('projects/{project}/gantt/tasks', [ProjectGanttController::class, 'store'])->name('projects.gantt.tasks.store');
+    Route::put('projects/gantt/tasks/{task}', [ProjectGanttController::class, 'update'])->name('projects.gantt.tasks.update');
+    Route::post('projects/gantt/tasks/{task}/move', [ProjectGanttController::class, 'move'])->name('projects.gantt.tasks.move');
+    Route::post('projects/gantt/tasks/{task}/reorder', [ProjectGanttController::class, 'reorder'])->name('projects.gantt.tasks.reorder');
+    Route::post('projects/gantt/tasks/{task}/interactive', [ProjectGanttController::class, 'updateInteractive'])->name('projects.gantt.tasks.interactive');
+    Route::delete('projects/gantt/tasks/{task}', [ProjectGanttController::class, 'destroy'])->name('projects.gantt.tasks.destroy');
     Route::post('projects/{project}/status', [ProjectController::class, 'updateStatus'])
         ->name('projects.status.update')
         ->middleware('permission:projects.status');

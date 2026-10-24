@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
+use App\Models\ProjectTask;
+use App\Observers\ProjectTaskObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        ProjectTask::observe(ProjectTaskObserver::class);
+
         // Super Admin bypass & dynamic permission check from database
         Gate::before(function (User $user, string $ability) {
             if ($user->isSuperAdmin()) {

@@ -51,6 +51,11 @@ class ProjectController extends Controller
         return view('projects.qc', compact('project', 'users'));
     }
 
+    public function gantt(Project $project)
+    {
+        return view('projects.gantt', compact('project'));
+    }
+
     public function edit(Project $project)
     {
         abort_unless(auth()->user()->can('projects.edit'), 403, 'Akses ditolak. Anda tidak memiliki izin untuk mengedit proyek ini.');
