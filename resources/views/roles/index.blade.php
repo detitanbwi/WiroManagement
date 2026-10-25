@@ -124,34 +124,34 @@
         <div>
             <div class="flex items-center gap-2 mb-1">
                 <a href="{{ route('users.index') }}" class="text-xs font-bold text-gray-400 hover:text-primary uppercase tracking-wider transition">
-                    Manajemen Pengguna
+                    User Management
                 </a>
                 <span class="text-gray-300">&bull;</span>
-                <span class="text-xs font-bold text-primary uppercase tracking-wider">Peran & Izin</span>
+                <span class="text-xs font-bold text-primary uppercase tracking-wider">Roles &amp; Permissions</span>
             </div>
-            <h1 class="text-2xl md:text-3xl font-black text-gray-800 tracking-tight">Peran & Matriks Hak Akses (RBAC)</h1>
-            <p class="text-gray-500 text-sm mt-0.5">Kelola peran dinamis dan konfigurasikan matriks hak akses (*granular permissions*) untuk seluruh modul sistem.</p>
+            <h1 class="text-2xl md:text-3xl font-black text-gray-800 tracking-tight">Roles &amp; Permission Matrix (RBAC)</h1>
+            <p class="text-gray-500 text-sm mt-0.5">Manage dynamic roles and configure granular permissions across all system modules.</p>
         </div>
         <div class="flex items-center flex-wrap gap-2.5">
             <a href="{{ route('users.index') }}" class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-bold uppercase tracking-wider text-xs transition shadow-xs">
                 <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                Daftar Pengguna
+                User List
             </a>
             @can('roles.manage')
             <a href="{{ route('roles.create') }}" class="inline-flex items-center px-5 py-2.5 bg-primary hover:bg-blue-800 text-white rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-blue-100 transition">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                Tambah Peran Baru
+                + New Role
             </a>
             @endcan
         </div>
     </div>
 
-    <!-- Quick Stat Overview Bar -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <!-- Quick Stat Overview Bar (3 Columns) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Peran</p>
-                <p class="text-2xl font-black text-gray-800 mt-0.5">{{ $roles->count() }} Peran</p>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Roles</p>
+                <p class="text-2xl font-black text-gray-800 mt-0.5">{{ $roles->count() }} Roles</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -160,8 +160,8 @@
 
         <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Hak Akses</p>
-                <p class="text-2xl font-black text-primary mt-0.5">{{ \App\Models\Permission::count() }} Izin</p>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Permissions</p>
+                <p class="text-2xl font-black text-primary mt-0.5">{{ \App\Models\Permission::count() }} Permissions</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center font-bold">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -170,24 +170,11 @@
 
         <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
             <div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Modul Sistem</p>
-                <p class="text-2xl font-black text-emerald-600 mt-0.5">{{ $permissionGroups->count() }} Modul</p>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">System Modules</p>
+                <p class="text-2xl font-black text-emerald-600 mt-0.5">{{ $permissionGroups->count() }} Modules</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-            </div>
-        </div>
-
-        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
-            <div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Fitur Baru Aktif</p>
-                <div class="flex items-center gap-1.5 mt-1">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Gantt</span>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Task Internal</span>
-                </div>
-            </div>
-            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
         </div>
     </div>
@@ -199,14 +186,14 @@
                     :class="activeTab === 'matrix' ? 'bg-white text-gray-900 shadow-xs font-black' : 'text-gray-500 hover:text-gray-800 font-bold'"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs transition">
                 <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                <span>Matriks Hak Akses (Tabel Lengkap)</span>
+                <span>Permission Matrix (Full Table)</span>
                 <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-primary">Live</span>
             </button>
             <button type="button" @click="activeTab = 'cards'"
                     :class="activeTab === 'cards' ? 'bg-white text-gray-900 shadow-xs font-black' : 'text-gray-500 hover:text-gray-800 font-bold'"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs transition">
                 <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                <span>Kartu Profil Peran</span>
+                <span>Role Profile Cards</span>
                 <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-gray-200 text-gray-700">{{ $roles->count() }}</span>
             </button>
         </div>
@@ -214,14 +201,14 @@
         <!-- Filter & Search (Active on Matrix view) -->
         <div x-show="activeTab === 'matrix'" class="flex items-center flex-wrap gap-2">
             <div class="relative">
-                <input type="text" x-model="searchQuery" placeholder="Cari izin, modul, kode..."
+                <input type="text" x-model="searchQuery" placeholder="Search permissions, modules, codes..."
                        class="w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-2xs">
                 <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <button type="button" x-show="searchQuery" @click="searchQuery = ''" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold">&times;</button>
             </div>
 
             <select x-model="selectedGroup" class="text-xs rounded-xl border-gray-200 py-1.5 focus:border-primary focus:ring-primary shadow-2xs text-gray-700">
-                <option value="all">Semua Modul ({{ $permissionGroups->count() }})</option>
+                <option value="all">All Modules ({{ $permissionGroups->count() }})</option>
                 @foreach($permissionGroups as $groupName => $perms)
                     <option value="{{ $groupName }}">{{ $groupName }} ({{ $perms->count() }})</option>
                 @endforeach
@@ -240,8 +227,8 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                     </span>
                     <div>
-                        <span class="font-black text-gray-800">Navigasi Kolom Peran:</span>
-                        <span class="text-gray-500 text-[11px] ml-1">Total <strong class="text-gray-800">{{ $roles->count() }} Peran</strong>. Geser horizontal dengan tombol panah atau bilah scroll di bawah ini.</span>
+                        <span class="font-black text-gray-800">Role Column Navigation:</span>
+                        <span class="text-gray-500 text-[11px] ml-1">Total <strong class="text-gray-800">{{ $roles->count() }} Roles</strong>. Scroll horizontally with arrows or the scrollbar below.</span>
                     </div>
                 </div>
 
@@ -249,10 +236,10 @@
                 <div class="flex items-center gap-2">
                     <!-- Quick Jump to Role Dropdown -->
                     <div class="flex items-center gap-1.5">
-                        <label class="text-[11px] font-bold text-gray-500 hidden md:inline">Lompat:</label>
+                        <label class="text-[11px] font-bold text-gray-500 hidden md:inline">Jump:</label>
                         <select @change="jumpToRole($event.target.value); $event.target.value = ''"
                                 class="text-xs py-1.5 px-3 rounded-xl border-gray-200 bg-white font-semibold text-gray-700 shadow-2xs focus:border-primary focus:ring-primary cursor-pointer hover:border-blue-300 transition">
-                            <option value="">Lompat ke Peran...</option>
+                            <option value="">Jump to Role...</option>
                             @foreach($roles as $role)
                                 <option value="{{ $role->slug }}">{{ $role->name }}</option>
                             @endforeach
@@ -262,7 +249,7 @@
                     <!-- Gesture / Scroll hints -->
                     <span class="hidden xl:inline-flex items-center gap-1.5 text-[11px] text-gray-500 bg-white border border-gray-200 px-2.5 py-1 rounded-xl font-medium shadow-2xs">
                         <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>
-                        <span>Tarik tabel atau putar roda mouse pada header</span>
+                        <span>Drag table or scroll mouse wheel on header</span>
                     </span>
 
                     <!-- Scroll Buttons Left / Right -->
@@ -270,15 +257,15 @@
                         <button type="button" @click="scrollTable('left')" :disabled="!canScrollLeft"
                                 :class="canScrollLeft ? 'text-gray-700 hover:bg-blue-50 hover:text-primary cursor-pointer' : 'text-gray-300 cursor-not-allowed'"
                                 class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition"
-                                title="Geser ke kiri (Peran sebelumnya)">
+                                title="Scroll left (Previous role)">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-                            <span class="hidden sm:inline">Kiri</span>
+                            <span class="hidden sm:inline">Left</span>
                         </button>
                         <button type="button" @click="scrollTable('right')" :disabled="!canScrollRight"
                                 :class="canScrollRight ? 'text-gray-700 hover:bg-blue-50 hover:text-primary cursor-pointer' : 'text-gray-300 cursor-not-allowed'"
                                 class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition"
-                                title="Geser ke kanan (Peran selanjutnya)">
-                            <span class="hidden sm:inline">Kanan</span>
+                                title="Scroll right (Next role)">
+                            <span class="hidden sm:inline">Right</span>
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     </div>
@@ -286,12 +273,12 @@
                     <!-- Height Toggle Button -->
                     <button type="button" @click="isExpanded = !isExpanded; $nextTick(() => updateScrollMetrics())"
                             class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-xs font-bold transition shadow-2xs cursor-pointer"
-                            :title="isExpanded ? 'Kunci scrollbar di dalam layar' : 'Buka tinggi penuh tabel'">
+                            :title="isExpanded ? 'Lock scrollbar in viewport' : 'Expand full table height'">
                         <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path x-show="!isExpanded" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
                             <path x-show="isExpanded" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
-                        <span x-text="isExpanded ? 'Tinggi Standar' : 'Layar Penuh'"></span>
+                        <span x-text="isExpanded ? 'Default Height' : 'Full Height'"></span>
                     </button>
                 </div>
             </div>
@@ -325,7 +312,7 @@
                             <!-- Corner Anchor Header Cell (Sticky top & left) -->
                             <th class="py-3.5 px-5 text-xs font-black text-gray-700 uppercase tracking-wider w-80 min-w-[320px] max-w-[320px] sticky top-0 left-0 bg-gray-100 z-40 border-r border-gray-200 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)]">
                                 <div class="flex items-center justify-between">
-                                    <span>Modul & Hak Akses</span>
+                                    <span>Modules &amp; Permissions</span>
                                     <span class="text-[10px] font-mono text-gray-400">Key</span>
                                 </div>
                             </th>
@@ -339,13 +326,13 @@
                                     <div class="flex items-center gap-1.5">
                                         <span class="text-[10px] font-medium text-gray-400">
                                             @if($role->slug === 'superadmin')
-                                                Bypass Mutlak
+                                                Absolute Bypass
                                             @else
-                                                {{ $role->permissions_count }} Izin
+                                                {{ $role->permissions_count }} Permissions
                                             @endif
                                         </span>
                                         @can('roles.manage')
-                                        <a href="{{ route('roles.edit', $role) }}" class="text-[10px] font-bold text-primary hover:underline" title="Konfigurasi Izin {{ $role->name }}">
+                                        <a href="{{ route('roles.edit', $role) }}" class="text-[10px] font-bold text-primary hover:underline" title="Configure Permissions for {{ $role->name }}">
                                             Edit
                                         </a>
                                         @endcan
@@ -368,18 +355,12 @@
                                         <span class="text-xs font-black text-gray-800 uppercase tracking-wider truncate">{{ $groupName }}</span>
                                     </div>
                                     <span class="text-[10px] text-gray-500 font-bold bg-white px-1.5 py-0.5 rounded border border-gray-200 shrink-0">
-                                        {{ $groupPermissions->count() }} Izin
+                                        {{ $groupPermissions->count() }} Permissions
                                     </span>
                                 </div>
                             </td>
                             <!-- Remaining Role Columns Span -->
-                            <td colspan="{{ $roles->count() }}" class="py-2.5 px-4 bg-slate-50 border-t border-b border-gray-200">
-                                @if(in_array($groupName, ['Operasional Internal', 'Manajemen Proyek']))
-                                <span class="inline-flex items-center text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                    Termasuk Fitur Baru (Gantt & Task Internal)
-                                </span>
-                                @endif
-                            </td>
+                            <td colspan="{{ $roles->count() }}" class="py-2.5 px-4 bg-slate-50 border-t border-b border-gray-200"></td>
                         </tr>
 
                         <!-- Permission Items Rows -->
@@ -395,7 +376,7 @@
                                     <span class="font-bold text-gray-900">{{ $permission->label }}</span>
                                     @if($isNewFeature)
                                     <span class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
-                                        Baru
+                                        New
                                     </span>
                                     @endif
                                 </div>
@@ -410,15 +391,15 @@
                             @endphp
                             <td class="py-3 px-3 text-center border-l border-gray-100 align-middle">
                                 @if($role->slug === 'superadmin')
-                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200" title="Super Admin memiliki akses mutlak tanpa batas">
+                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200" title="Super Admin has absolute and unrestricted access">
                                         Bypass
                                     </span>
                                 @elseif($hasPerm)
-                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs mx-auto" title="Peran {{ $role->name }} memiliki izin {{ $permission->label }}">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs mx-auto" title="Role {{ $role->name }} has permission: {{ $permission->label }}">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                     </span>
                                 @else
-                                    <span class="text-gray-300 font-bold text-sm select-none" title="Peran {{ $role->name }} tidak memiliki izin ini">&minus;</span>
+                                    <span class="text-gray-300 font-bold text-sm select-none" title="Role {{ $role->name }} does not have this permission">&minus;</span>
                                 @endif
                             </td>
                             @endforeach
@@ -434,19 +415,19 @@
                 <div class="flex items-center flex-wrap gap-4">
                     <span class="inline-flex items-center gap-1.5">
                         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></span>
-                        <span class="font-medium text-gray-700">Diberikan (Granted)</span>
+                        <span class="font-medium text-gray-700">Granted</span>
                     </span>
                     <span class="inline-flex items-center gap-1.5">
                         <span class="text-gray-300 font-bold">&minus;</span>
-                        <span class="font-medium text-gray-500">Tidak Diberikan</span>
+                        <span class="font-medium text-gray-500">Not Granted</span>
                     </span>
                     <span class="inline-flex items-center gap-1.5">
                         <span class="px-1.5 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">Bypass</span>
-                        <span class="font-medium text-purple-700">Super Admin (Full Mutlak)</span>
+                        <span class="font-medium text-purple-700">Super Admin (Full Bypass)</span>
                     </span>
                 </div>
                 <div class="text-[11px] text-gray-400">
-                    💡 <strong>Tips:</strong> Tekan <strong>Shift + Scroll Mouse</strong> atau gunakan tombol <strong>Kiri / Kanan</strong> di atas untuk menggeser kolom peran dengan cepat.
+                    💡 <strong>Tips:</strong> Use <strong>Shift + Mouse Wheel</strong> or the <strong>Left / Right</strong> buttons above to scroll role columns quickly.
                 </div>
             </div>
         </div>
@@ -464,8 +445,8 @@
                                 {{ $role->name }}
                             </span>
                             @if($role->is_system)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200" title="Peran inti sistem bawaan">
-                                    Sistem
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200" title="Core built-in system role">
+                                    System
                                 </span>
                             @endif
                         </div>
@@ -475,22 +456,22 @@
                     </div>
 
                     <p class="text-xs text-gray-600 leading-relaxed mb-4 min-h-[32px]">
-                        {{ $role->description ?: 'Tidak ada deskripsi peran.' }}
+                        {{ $role->description ?: 'No role description provided.' }}
                     </p>
 
                     <!-- Statistics & Badges -->
                     <div class="grid grid-cols-2 gap-2 p-3 rounded-xl bg-gray-50/80 border border-gray-100 text-center mb-4">
                         <div>
-                            <div class="text-xs text-gray-400 font-bold uppercase tracking-wider">Pengguna</div>
-                            <div class="text-base font-black text-gray-800">{{ $role->users_count }} Akun</div>
+                            <div class="text-xs text-gray-400 font-bold uppercase tracking-wider">Users</div>
+                            <div class="text-base font-black text-gray-800">{{ $role->users_count }} Accounts</div>
                         </div>
                         <div>
-                            <div class="text-xs text-gray-400 font-bold uppercase tracking-wider">Hak Akses</div>
+                            <div class="text-xs text-gray-400 font-bold uppercase tracking-wider">Permissions</div>
                             <div class="text-base font-black text-primary">
                                 @if($role->slug === 'superadmin')
-                                    Semua (Full)
+                                    All (Full)
                                 @else
-                                    {{ $role->permissions_count }} Izin
+                                    {{ $role->permissions_count }} Permissions
                                 @endif
                             </div>
                         </div>
@@ -498,14 +479,14 @@
 
                     <!-- Preview Active Permissions -->
                     <div>
-                        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Cakupan Izin Utama:</div>
+                        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Core Permission Scope:</div>
                         <div class="flex flex-wrap gap-1">
                             @if($role->slug === 'superadmin')
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                                    Bypass Mutlak Seluruh Modul & Fitur
+                                    Absolute Bypass for All Modules &amp; Features
                                 </span>
                             @elseif($role->permissions->isEmpty())
-                                <span class="text-xs text-gray-400 italic">Belum ada izin yang dikonfigurasi.</span>
+                                <span class="text-xs text-gray-400 italic">No permissions configured yet.</span>
                             @else
                                 @foreach($role->permissions->take(7) as $perm)
                                     <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
@@ -514,7 +495,7 @@
                                 @endforeach
                                 @if($role->permissions->count() > 7)
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600">
-                                        +{{ $role->permissions->count() - 7 }} lainnya
+                                        +{{ $role->permissions->count() - 7 }} more
                                     </span>
                                 @endif
                             @endif
@@ -527,22 +508,22 @@
                     @can('roles.manage')
                     <a href="{{ route('roles.edit', $role) }}" class="inline-flex items-center text-xs font-bold text-primary hover:text-blue-800 transition">
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        Konfigurasi Izin & Edit
+                        Configure Permissions &amp; Edit
                     </a>
 
                     @if(!$role->is_system && $role->users_count === 0)
-                    <form action="{{ route('roles.destroy', $role) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus peran {{ $role->name }}?')">
+                    <form action="{{ route('roles.destroy', $role) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete role {{ $role->name }}?')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="text-xs font-bold text-rose-500 hover:text-rose-700 transition">
-                            Hapus
+                            Delete
                         </button>
                     </form>
                     @elseif(!$role->is_system)
-                        <span class="text-[10px] font-medium text-gray-400" title="Tidak dapat dihapus karena masih digunakan oleh pengguna">Digunakan</span>
+                        <span class="text-[10px] font-medium text-gray-400" title="Cannot be deleted because it is assigned to active users">In Use</span>
                     @endif
                     @else
-                    <span class="text-xs text-gray-400 italic">Hanya lihat</span>
+                    <span class="text-xs text-gray-400 italic">View only</span>
                     @endcan
                 </div>
             </div>
