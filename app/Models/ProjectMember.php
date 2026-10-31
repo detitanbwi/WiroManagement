@@ -16,7 +16,17 @@ class ProjectMember extends Model
     protected $fillable = [
         'project_id',
         'user_id',
+        'role_in_project',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (ProjectMember $member) {
+            ProjectMemberRate::where('project_id', $member->project_id)
+                ->where('user_id', $member->user_id)
+                ->delete();
+        });
+    }
 
     public function project(): BelongsTo
     {
@@ -26,6 +36,32 @@ class ProjectMember extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function memberRate(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ProjectMemberRate::class, 'user_id', 'user_id')
+                    ->where('project_id', $this->project_id);
+    }
+
+    public function getRatePerHourAttribute(): ?float
+    {
+        return $this->memberRate ? (float) $this->memberRate->rate_per_hour : null;
+    }
+
+    public function getWeekendMultiplierAttribute(): float
+    {
+        return $this->memberRate ? (float) $this->memberRate->weekend_multiplier : 1.10;
+    }
+
+    public function getOvertimeMultiplierAttribute(): float
+    {
+        return $this->memberRate ? (float) $this->memberRate->overtime_multiplier : 1.20;
+    }
+
+    public function getDisplayPositionAttribute(): string
+    {
+        return $this->role_in_project ?: ($this->memberRate?->role_slug ?: 'Staff Proyek');
     }
 
     public function roles(): BelongsToMany

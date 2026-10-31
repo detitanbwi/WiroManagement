@@ -14,6 +14,10 @@ class TaskProgressService
      */
     public function recalculateParent(ProjectTask $task): void
     {
+        if (($task->type ?? 'gantt') !== 'gantt') {
+            return;
+        }
+
         if (!$task->parent_id) {
             $this->recalculateProjectProgress($task->project_id);
             return;
@@ -26,6 +30,7 @@ class TaskProgressService
 
         // Aggregate statistics from direct children
         $childStats = ProjectTask::where('parent_id', $parent->id)
+            ->where('type', 'gantt')
             ->selectRaw('
                 COUNT(*) as total_children,
                 AVG(progress) as avg_progress,
@@ -86,8 +91,9 @@ class TaskProgressService
             return;
         }
 
-        // Project overall progress is based on leaf tasks (tasks without children)
+        // Project overall progress is based on leaf tasks (tasks without children) of type 'gantt'
         $leafProgress = ProjectTask::where('project_id', $projectId)
+            ->where('type', 'gantt')
             ->doesntHave('children')
             ->avg('progress');
 

@@ -12,6 +12,7 @@ class WbsService
     public function reindexProjectWbs(int $projectId): void
     {
         $rootTasks = ProjectTask::where('project_id', $projectId)
+            ->gantt()
             ->whereNull('parent_id')
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
@@ -37,6 +38,7 @@ class WbsService
     private function reindexChildren(ProjectTask $parentTask, string $parentWbs): void
     {
         $children = ProjectTask::where('parent_id', $parentTask->id)
+            ->gantt()
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
             ->get();
@@ -62,13 +64,16 @@ class WbsService
         if ($parentId) {
             $parent = ProjectTask::find($parentId);
             if ($parent) {
-                $count = ProjectTask::where('parent_id', $parentId)->count();
+                $count = ProjectTask::where('parent_id', $parentId)
+                    ->gantt()
+                    ->count();
                 $prefix = $parent->wbs_code ?: '1';
                 return "{$prefix}." . ($count + 1);
             }
         }
 
         $rootCount = ProjectTask::where('project_id', $projectId)
+            ->gantt()
             ->whereNull('parent_id')
             ->count();
 

@@ -8,6 +8,10 @@ class ProjectTask extends Model
 {
     protected $guarded = [];
 
+    protected $attributes = [
+        'type' => 'gantt',
+    ];
+
     protected $casts = [
         'start_date' => 'date:Y-m-d',
         'due_date' => 'date:Y-m-d',
@@ -15,6 +19,16 @@ class ProjectTask extends Model
         'duration_days' => 'integer',
         'sort_order' => 'integer',
     ];
+
+    public function scopeGantt($query)
+    {
+        return $query->where('type', 'gantt');
+    }
+
+    public function scopeQc($query)
+    {
+        return $query->where('type', 'qc');
+    }
 
     public function project()
     {

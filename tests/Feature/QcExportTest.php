@@ -41,6 +41,7 @@ class QcExportTest extends BaseTestCase
 
         $task = ProjectTask::create([
             'project_id' => $project->id,
+            'type' => 'qc',
             'code' => 'TSK-TEST-1',
             'title' => 'Test Task 1',
             'description' => 'Test task description',

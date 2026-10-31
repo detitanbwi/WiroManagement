@@ -21,6 +21,7 @@ class ProjectQcSummaryService
     {
         // 1. Kanban Tasks Aggregation
         $taskStats = ProjectTask::where('project_id', $project->id)
+            ->qc()
             ->selectRaw("
                 COUNT(*) as total,
                 COUNT(CASE WHEN column_id = 'todo' THEN 1 END) as todo,
@@ -168,6 +169,7 @@ class ProjectQcSummaryService
         // 3. Fallback: If no project_user records exist yet, check task assignees who have valid personal_email
         if ($recipients->isEmpty()) {
             $taskAssigneeIds = ProjectTask::where('project_id', $project->id)
+                ->qc()
                 ->whereNotNull('assignee_id')
                 ->pluck('assignee_id')
                 ->unique();

@@ -126,9 +126,9 @@
             </p>
         </div>
         <div class="p-4 rounded-lg shadow-md bg-gradient-to-br from-amber-500 to-orange-400 text-white">
-            <p class="text-[10px] text-amber-100 font-bold uppercase tracking-wider">Expenses</p>
-            <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->total_expenses, 0, ',', '.') }}</p>
-            <p class="text-[10px] text-amber-100 mt-2 italic">Total operational costs</p>
+            <p class="text-[10px] text-amber-100 font-bold uppercase tracking-wider">Total Beban (COGS)</p>
+            <p class="text-xl font-bold text-white mt-1 uppercase">Rp {{ number_format($project->cogs(false), 0, ',', '.') }}</p>
+            <p class="text-[10px] text-amber-100 mt-2 italic">Upah: Rp {{ number_format($project->totalLaborCost(false), 0, ',', '.') }} | Ops: Rp {{ number_format($project->totalInfraCost(false), 0, ',', '.') }}</p>
         </div>
     </div>
     @endcanany
@@ -406,6 +406,684 @@
                 @endcan
             </div>
             @endcanany
+
+            <!-- Section: Log Kerja & Biaya Tenaga Kerja (Project Labor Costs) -->
+            @canany(['finance.work_logs.view', 'finance.work_logs.manage', 'projects.manage', 'finance.view'])
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" x-data="{
+                openAddWorkLog: false,
+                editWorkLog: null,
+                members: {{ json_encode($project->members->map(function($m) {
+                    return [
+                        'user_id' => $m->user_id,
+                        'name' => $m->user->name ?? 'User',
+                        'role_in_project' => $m->role_in_project ?: ($m->memberRate?->role_slug ?: 'Staff Proyek'),
+                        'rate_per_hour' => (float)($m->rate_per_hour ?: 0),
+                        'weekend_multiplier' => (float)($m->weekend_multiplier ?: 1.10),
+                        'overtime_multiplier' => (float)($m->overtime_multiplier ?: 1.20),
+                    ];
+                })) }},
+                masterRates: {{ json_encode($manHourRates) }},
+                date_ranges: [
+                    { start_date: '{{ date('Y-m-d') }}', end_date: '{{ date('Y-m-d') }}', hours_per_day: 8, is_weekend: false, is_overtime: false }
+                ],
+                form: {
+                    user_id: '',
+                    role_in_project: '',
+                    skill_level: 'middle',
+                    work_date: '{{ date('Y-m-d') }}',
+                    end_date: '{{ date('Y-m-d') }}',
+                    hours_per_day: 8.0,
+                    days_count: 1,
+                    hours_worked: 8.0,
+                    base_rate: 0,
+                    source_account_type: 'office_account',
+                    is_weekend: false,
+                    is_overtime: false,
+                    payment_status: 'unpaid',
+                    payment_date: '',
+                    notes: '',
+                },
+                get uniqueRoles() {
+                    const roles = [];
+                    (this.masterRates || []).forEach(r => {
+                        if (r.role_slug && !roles.includes(r.role_slug)) {
+                            roles.push(r.role_slug);
+                        }
+                    });
+                    return roles;
+                },
+                formatRoleName(slug) {
+                    if (!slug) return '';
+                    const map = {
+                        'developer': 'Developer',
+                        'pm': 'Project Manager (PM)',
+                        'qc': 'Quality Control (QC)',
+                        'designer': 'UI/UX Designer',
+                        'devops': 'DevOps'
+                    };
+                    if (map[slug.toLowerCase()]) return map[slug.toLowerCase()];
+                    return slug.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                },
+                init() {
+                    if (this.uniqueRoles.length > 0) {
+                        this.form.role_in_project = this.uniqueRoles[0];
+                    }
+                    if (this.members.length > 0) {
+                        this.form.user_id = this.members[0].user_id;
+                        this.onMemberChange();
+                    } else {
+                        this.onRoleOrSkillChange();
+                    }
+                    this.checkDateFlags();
+                },
+                onMemberChange() {
+                    const selected = this.members.find(m => m.user_id == this.form.user_id);
+                    if (selected) {
+                        const memberRole = (selected.role_in_project || '').toLowerCase().trim();
+                        const matchedRate = this.masterRates.find(r => 
+                            r.role_slug.toLowerCase() === memberRole || 
+                            r.role_slug.toLowerCase().replace(/_/g, ' ') === memberRole
+                        );
+                        if (matchedRate) {
+                            this.form.role_in_project = matchedRate.role_slug;
+                        } else if (selected.role_in_project) {
+                            this.form.role_in_project = selected.role_in_project;
+                        }
+
+                        if (selected.rate_per_hour && parseFloat(selected.rate_per_hour) > 0) {
+                            this.form.base_rate = parseFloat(selected.rate_per_hour);
+                        } else {
+                            this.onRoleOrSkillChange();
+                        }
+                    }
+                },
+                onRoleOrSkillChange() {
+                    if (!this.form.role_in_project) return;
+                    const level = this.form.skill_level || 'middle';
+                    const match = this.masterRates.find(r => 
+                        r.role_slug.toLowerCase() === this.form.role_in_project.toLowerCase() && 
+                        r.skill_level.toLowerCase() === level.toLowerCase()
+                    );
+                    if (match) {
+                        this.form.base_rate = parseFloat(match.base_rate_per_hour || match.base_rate || 0);
+                    }
+                },
+                addDateRange() {
+                    const last = this.date_ranges[this.date_ranges.length - 1];
+                    const nextDate = last ? last.end_date : '{{ date('Y-m-d') }}';
+                    const nextHpd = last ? last.hours_per_day : 8;
+                    this.date_ranges.push({
+                        start_date: nextDate,
+                        end_date: nextDate,
+                        hours_per_day: nextHpd,
+                        is_weekend: false,
+                        is_overtime: false
+                    });
+                },
+                removeDateRange(idx) {
+                    if (this.date_ranges.length > 1) {
+                        this.date_ranges.splice(idx, 1);
+                    }
+                },
+                calculateDays(startDate, endDate) {
+                    if (!startDate || !endDate) return 1;
+                    const start = new Date(startDate + 'T00:00:00');
+                    const end = new Date(endDate + 'T00:00:00');
+                    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
+                    const diffTime = end.getTime() - start.getTime();
+                    return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                },
+                getRangeDays(range) {
+                    if (!range || !range.start_date || !range.end_date) return 0;
+                    return this.calculateDays(range.start_date, range.end_date);
+                },
+                onEditRangeChange() {
+                    if (!this.editWorkLog) return;
+                    if (this.form.end_date && this.form.work_date && this.form.end_date < this.form.work_date) {
+                        this.form.end_date = this.form.work_date;
+                    }
+                    this.form.days_count = this.calculateDays(this.form.work_date, this.form.end_date);
+                    const hpd = parseFloat(this.form.hours_per_day) || 0;
+                    this.form.hours_worked = parseFloat((this.form.days_count * hpd).toFixed(2));
+                    this.checkDateFlags();
+                    this.checkHoursFlags();
+                },
+                get totalCalculatedDays() {
+                    if (this.editWorkLog) {
+                        return this.form.days_count || 1;
+                    }
+                    return this.date_ranges.reduce((sum, r) => sum + this.getRangeDays(r), 0);
+                },
+                get totalCalculatedHours() {
+                    if (this.editWorkLog) {
+                        const days = this.form.days_count || 1;
+                        const hpd = parseFloat(this.form.hours_per_day) || 0;
+                        return parseFloat((days * hpd).toFixed(2));
+                    }
+                    return this.date_ranges.reduce((sum, r) => {
+                        const days = this.getRangeDays(r);
+                        const hpd = parseFloat(r.hours_per_day) || 0;
+                        return sum + (days * hpd);
+                    }, 0);
+                },
+                checkDateFlags() {
+                    if (!this.form.work_date) return;
+                    const d = new Date(this.form.work_date);
+                    const day = d.getDay();
+                    this.form.is_weekend = (day === 0 || day === 6);
+                },
+                checkHoursFlags() {
+                    const hpd = this.editWorkLog ? parseFloat(this.form.hours_per_day || 0) : parseFloat(this.form.hours_worked || 0);
+                    this.form.is_overtime = hpd > 8;
+                },
+                get calculatedNominal() {
+                    const rate = parseFloat(this.form.base_rate) || 0;
+                    if (this.editWorkLog && (!this.date_ranges || this.date_ranges.length === 0)) {
+                        const hours = parseFloat(this.form.hours_worked) || 0;
+                        return Math.round(hours * rate * (this.form.is_weekend ? 1.10 : 1.0) * (this.form.is_overtime ? 1.20 : 1.0));
+                    }
+
+                    let total = 0;
+                    this.date_ranges.forEach(r => {
+                        const days = this.getRangeDays(r);
+                        const hpd = parseFloat(r.hours_per_day) || 0;
+                        if (days > 0 && hpd > 0) {
+                            const weekendMult = r.is_weekend ? 1.10 : 1.0;
+                            const overtimeMult = r.is_overtime ? 1.20 : 1.0;
+                            total += Math.round(days * hpd * rate * weekendMult * overtimeMult);
+                        }
+                    });
+                    return total;
+                },
+                formatRp(val) {
+                    return new Intl.NumberFormat('id-ID').format(val || 0);
+                },
+                resetForm() {
+                    this.editWorkLog = null;
+                    this.date_ranges = [
+                        { start_date: '{{ date('Y-m-d') }}', end_date: '{{ date('Y-m-d') }}', hours_per_day: 8, is_weekend: false, is_overtime: false }
+                    ];
+                    this.form = {
+                        user_id: this.members.length > 0 ? this.members[0].user_id : '',
+                        role_in_project: this.uniqueRoles.length > 0 ? this.uniqueRoles[0] : '',
+                        skill_level: 'middle',
+                        work_date: '{{ date('Y-m-d') }}',
+                        end_date: '{{ date('Y-m-d') }}',
+                        hours_per_day: 8.0,
+                        days_count: 1,
+                        hours_worked: 8.0,
+                        base_rate: 0,
+                        source_account_type: 'office_account',
+                        is_weekend: false,
+                        is_overtime: false,
+                        payment_status: 'unpaid',
+                        payment_date: '',
+                        notes: '',
+                    };
+                    if (this.members.length > 0) {
+                        this.onMemberChange();
+                    } else {
+                        this.onRoleOrSkillChange();
+                    }
+                    this.checkDateFlags();
+                },
+                openEdit(log) {
+                    this.editWorkLog = log;
+                    const workDate = log.work_date ? log.work_date.substring(0, 10) : '{{ date('Y-m-d') }}';
+                    const endDate = log.end_date ? log.end_date.substring(0, 10) : workDate;
+                    const days = parseInt(log.days_count) || this.calculateDays(workDate, endDate);
+                    const hpd = parseFloat(log.hours_per_day) || (days > 0 ? (parseFloat(log.hours_worked) / days) : parseFloat(log.hours_worked)) || 8.0;
+                    const totalHours = parseFloat(log.hours_worked) || (days * hpd);
+
+                    this.form = {
+                        user_id: log.user_id,
+                        role_in_project: log.role_in_project || '',
+                        skill_level: 'middle',
+                        work_date: workDate,
+                        end_date: endDate,
+                        hours_per_day: hpd,
+                        days_count: days,
+                        hours_worked: totalHours,
+                        base_rate: parseFloat(log.base_rate) || 0,
+                        source_account_type: log.source_account_type,
+                        is_weekend: !!log.is_weekend,
+                        is_overtime: !!log.is_overtime,
+                        payment_status: log.payment_status,
+                        payment_date: log.payment_date ? log.payment_date.substring(0, 10) : '',
+                        notes: log.notes || '',
+                    };
+
+                    let ranges = log.date_ranges_data;
+                    if (typeof ranges === 'string') {
+                        try { ranges = JSON.parse(ranges); } catch (e) { ranges = null; }
+                    }
+                    if (Array.isArray(ranges) && ranges.length > 0) {
+                        this.date_ranges = JSON.parse(JSON.stringify(ranges)).map(r => ({
+                            start_date: (r.start_date || '').substring(0, 10),
+                            end_date: (r.end_date || r.start_date || '').substring(0, 10),
+                            hours_per_day: parseFloat(r.hours_per_day) || 8.0,
+                            is_weekend: !!r.is_weekend,
+                            is_overtime: !!r.is_overtime
+                        }));
+                    } else {
+                        this.date_ranges = [
+                            {
+                                start_date: workDate,
+                                end_date: endDate,
+                                hours_per_day: hpd,
+                                is_weekend: !!log.is_weekend,
+                                is_overtime: !!log.is_overtime
+                            }
+                        ];
+                    }
+
+                    this.checkDateFlags();
+                    this.openAddWorkLog = true;
+                }
+            }">
+                <div class="px-6 py-4 border-b border-indigo-600 flex flex-wrap justify-between items-center gap-2 bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 text-white">
+                    <div>
+                        <h3 class="text-lg font-bold text-white shadow-sm flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Log Kerja & Upah Tim
+                        </h3>
+                        <p class="text-xs text-indigo-100 mt-0.5">
+                            Beban HPP Tenaga Kerja Langsung: <span class="font-bold text-white">Rp {{ number_format($project->totalLaborCost(false), 0, ',', '.') }}</span>
+                            (Terbayar: <span class="font-bold text-emerald-200">Rp {{ number_format($project->totalLaborCost(true), 0, ',', '.') }}</span>)
+                        </p>
+                    </div>
+                    @canany(['finance.work_logs.manage', 'projects.manage'])
+                    <button type="button" @click="resetForm(); openAddWorkLog = true" class="text-xs font-bold text-indigo-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm uppercase tracking-wider transition-colors cursor-pointer">
+                        + Catat Log Kerja
+                    </button>
+                    @endcanany
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-xs">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-5 py-3 text-left font-semibold text-gray-500 uppercase">Tanggal & Tim</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase">Posisi di Proyek</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-500 uppercase">Durasi</th>
+                                <th class="px-4 py-3 text-right font-semibold text-gray-500 uppercase">Rate & Upah</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-500 uppercase">Status</th>
+                                <th class="px-5 py-3 text-right font-semibold text-gray-500 uppercase">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            @forelse($project->workLogs as $log)
+                            <tr class="hover:bg-blue-50/30 transition-colors">
+                                <td class="px-5 py-3.5 whitespace-nowrap">
+                                    <div class="font-bold text-gray-900">
+                                        @php
+                                            $rangesData = is_array($log->date_ranges_data) ? $log->date_ranges_data : (is_string($log->date_ranges_data) ? json_decode($log->date_ranges_data, true) : null);
+                                            $rangeCount = is_array($rangesData) ? count($rangesData) : 0;
+                                            $daysCount = $log->days_count ?? ($log->end_date ? $log->work_date->diffInDays($log->end_date) + 1 : 1);
+                                        @endphp
+
+                                        @if($log->end_date && $log->end_date->ne($log->work_date))
+                                            <div>{{ $log->work_date->format('d/m/Y') }} - {{ $log->end_date->format('d/m/Y') }}</div>
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 mt-0.5">
+                                                @if($rangeCount > 1)
+                                                    {{ $daysCount }} hari kerja ({{ $rangeCount }} periode kerja)
+                                                @else
+                                                    ({{ $daysCount }} hari kerja)
+                                                @endif
+                                            </span>
+                                        @else
+                                            <div>{{ $log->work_date ? $log->work_date->format('d/m/Y') : '-' }}</div>
+                                            @if($daysCount > 1)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 mt-0.5">
+                                                    @if($rangeCount > 1)
+                                                        {{ $daysCount }} hari kerja ({{ $rangeCount }} periode kerja)
+                                                    @else
+                                                        ({{ $daysCount }} hari kerja)
+                                                    @endif
+                                                </span>
+                                            @endif
+                                        @endif
+
+                                        @if($rangeCount > 1)
+                                            <div class="mt-1 space-y-0.5 text-[10px] text-gray-500 font-normal">
+                                                @foreach($rangesData as $r)
+                                                    @php
+                                                        $rStart = !empty($r['start_date']) ? \Carbon\Carbon::parse($r['start_date'])->format('d/m') : '';
+                                                        $rEnd = !empty($r['end_date']) ? \Carbon\Carbon::parse($r['end_date'])->format('d/m') : $rStart;
+                                                        $rDays = $r['days_count'] ?? 1;
+                                                        $rHours = $r['hours_worked'] ?? ($rDays * ($r['hours_per_day'] ?? 8));
+                                                        $rTags = [];
+                                                        if (!empty($r['is_weekend'])) $rTags[] = 'Weekend';
+                                                        if (!empty($r['is_overtime'])) $rTags[] = 'Lembur';
+                                                        $tagStr = !empty($rTags) ? ' - ' . implode(', ', $rTags) : '';
+                                                    @endphp
+                                                    <div>&bull; {{ $rStart }} - {{ $rEnd }} ({{ $rDays }} hari, {{ number_format($rHours, 0) }} jam{{ $tagStr }})</div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="text-[11px] text-gray-600 font-medium mt-0.5">{{ $log->user->name ?? 'User #' . $log->user_id }}</div>
+                                </td>
+                                <td class="px-4 py-3.5 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        {{ $log->role_in_project ?: 'Staff' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5 whitespace-nowrap text-center">
+                                    <span class="font-bold text-gray-800">{{ number_format($log->hours_worked, 1, ',', '.') }} jam</span>
+                                    @if(($log->days_count ?? 1) > 1 || ($log->end_date && $log->end_date->ne($log->work_date)))
+                                        <div class="text-[10px] text-gray-500 font-medium mt-0.5">
+                                            ({{ number_format($log->hours_per_day ?? ($log->hours_worked / max(1, $log->days_count ?? 1)), 1, ',', '.') }} jam/hari &times; {{ $log->days_count ?? ($log->work_date->diffInDays($log->end_date) + 1) }} hari)
+                                        </div>
+                                    @endif
+                                    <div class="flex items-center justify-center gap-1 mt-0.5">
+                                        @if($log->is_weekend)
+                                            <span class="px-1 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800">Weekend</span>
+                                        @endif
+                                        @if($log->is_overtime)
+                                            <span class="px-1 py-0.2 rounded text-[9px] font-bold bg-purple-100 text-purple-800">Lembur</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3.5 whitespace-nowrap text-right">
+                                    <div class="text-[11px] text-gray-500 font-mono">Rp {{ number_format($log->base_rate, 0, ',', '.') }}/jam</div>
+                                    <div class="font-bold text-gray-900 text-sm">Rp {{ number_format($log->calculated_nominal, 0, ',', '.') }}</div>
+                                </td>
+                                <td class="px-4 py-3.5 whitespace-nowrap text-center">
+                                    @if($log->payment_status === 'paid')
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            Paid
+                                        </span>
+                                    @elseif($log->payment_status === 'pending_approval')
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                                            Pending
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-100 text-rose-800 border border-rose-200">
+                                            Unpaid
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-5 py-3.5 whitespace-nowrap text-right space-x-2">
+                                    @canany(['finance.work_logs.manage', 'projects.manage'])
+                                    @if($log->payment_status !== 'paid')
+                                    <form action="{{ route('finance.work-logs.update', $log) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('PUT')
+                                        <input type="hidden" name="user_id" value="{{ $log->user_id }}">
+                                        <input type="hidden" name="project_id" value="{{ $project->id }}">
+                                        <input type="hidden" name="work_date" value="{{ $log->work_date ? $log->work_date->toDateString() : date('Y-m-d') }}">
+                                        <input type="hidden" name="end_date" value="{{ $log->end_date ? $log->end_date->toDateString() : ($log->work_date ? $log->work_date->toDateString() : date('Y-m-d')) }}">
+                                        <input type="hidden" name="hours_per_day" value="{{ $log->hours_per_day ?? ($log->hours_worked / max(1, $log->days_count ?? 1)) }}">
+                                        <input type="hidden" name="days_count" value="{{ $log->days_count ?? 1 }}">
+                                        <input type="hidden" name="hours_worked" value="{{ $log->hours_worked }}">
+                                        <input type="hidden" name="role_in_project" value="{{ $log->role_in_project }}">
+                                        <input type="hidden" name="source_account_type" value="{{ $log->source_account_type }}">
+                                        <input type="hidden" name="base_rate" value="{{ $log->base_rate }}">
+                                        <input type="hidden" name="is_weekend" value="{{ $log->is_weekend ? '1' : '0' }}">
+                                        <input type="hidden" name="is_overtime" value="{{ $log->is_overtime ? '1' : '0' }}">
+                                        <input type="hidden" name="payment_status" value="paid">
+                                        <input type="hidden" name="payment_date" value="{{ date('Y-m-d') }}">
+                                        <button type="submit" class="text-xs font-bold text-emerald-600 hover:text-emerald-800 transition cursor-pointer" title="Tandai Sudah Dibayar">
+                                            Bayar
+                                        </button>
+                                    </form>
+                                    <span class="text-gray-300">|</span>
+                                    @endif
+                                    <button type="button" @click="openEdit({{ json_encode($log) }})" class="text-xs font-bold text-amber-600 hover:text-amber-800 transition cursor-pointer">
+                                        Edit
+                                    </button>
+                                    <span class="text-gray-300">|</span>
+                                    <form action="{{ route('finance.work-logs.destroy', $log) }}" method="POST" class="inline" onsubmit="return confirm('Hapus log kerja ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-xs font-bold text-rose-600 hover:text-rose-800 transition cursor-pointer">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                    @else
+                                    <span class="text-xs text-gray-400 italic">Lihat</span>
+                                    @endcanany
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-400 italic">
+                                    Belum ada log kerja yang dicatat untuk proyek ini.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                        @if($project->workLogs->count() > 0)
+                        <tfoot class="bg-gray-50 border-t border-gray-200">
+                            <tr>
+                                <td colspan="2" class="px-5 py-3 font-bold text-gray-700 uppercase tracking-wider text-[11px]">
+                                    TOTAL TENAGA KERJA ({{ $project->workLogs->count() }} LOG)
+                                </td>
+                                <td class="px-4 py-3 text-center font-bold text-gray-900">
+                                    {{ number_format($project->workLogs->sum('hours_worked'), 1, ',', '.') }} jam
+                                </td>
+                                <td class="px-4 py-3 text-right font-black text-indigo-700 text-sm">
+                                    Rp {{ number_format($project->totalLaborCost(false), 0, ',', '.') }}
+                                </td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                        @endif
+                    </table>
+                </div>
+
+                <!-- Modal: Add / Edit Work Log in Project Detail -->
+                @canany(['finance.work_logs.manage', 'projects.manage'])
+                <template x-if="openAddWorkLog">
+                    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="openAddWorkLog = false"></div>
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+                            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                                <form :action="editWorkLog ? ('/finance/work-logs/' + editWorkLog.id) : '{{ route('finance.work-logs.store') }}'" method="POST">
+                                    @csrf
+                                    <template x-if="editWorkLog">
+                                        <input type="hidden" name="_method" value="PUT">
+                                    </template>
+                                    <input type="hidden" name="project_id" value="{{ $project->id }}">
+
+                                    <div class="bg-white px-6 pt-6 pb-4 sm:p-6 sm:pb-4 space-y-4">
+                                        <h3 class="text-lg font-black text-gray-900 uppercase tracking-wider" x-text="editWorkLog ? 'Edit Log Jam Kerja' : 'Catat Log Kerja & Upah Proyek'"></h3>
+                                        <p class="text-xs text-gray-500">Pencatatan jam kerja otomatis menghitung upah sesuai tarif anggota pada proyek ini.</p>
+
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Anggota Tim <span class="text-red-500">*</span></label>
+                                            <select name="user_id" x-model="form.user_id" @change="onMemberChange()" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
+                                                <option value="">-- Pilih Anggota Tim --</option>
+                                                @foreach($project->members as $m)
+                                                    <option value="{{ $m->user_id }}">{{ $m->user->name ?? 'User #' . $m->user_id }} ({{ $m->display_position }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Posisi Fungsional <span class="text-red-500">*</span></label>
+                                                <select name="role_in_project" x-model="form.role_in_project" @change="onRoleOrSkillChange()" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border font-medium">
+                                                    <option value="">-- Pilih Posisi --</option>
+                                                    @php
+                                                        $roleOptions = $manHourRates->pluck('role_slug')->merge($project->workLogs->pluck('role_in_project'))->filter()->unique();
+                                                    @endphp
+                                                    @foreach($roleOptions as $slug)
+                                                        @php
+                                                            $roleLabel = match(strtolower($slug)) {
+                                                                'developer' => 'Developer',
+                                                                'pm' => 'PM (Project Manager)',
+                                                                'qc' => 'QC (Quality Control)',
+                                                                'designer' => 'UI/UX Designer',
+                                                                'devops' => 'DevOps',
+                                                                default => ucwords(str_replace(['_', '-'], ' ', $slug))
+                                                            };
+                                                        @endphp
+                                                        <option value="{{ $slug }}">{{ $roleLabel }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Status Kompetensi <span class="text-red-500">*</span></label>
+                                                <select name="skill_level" x-model="form.skill_level" @change="onRoleOrSkillChange()" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border font-medium">
+                                                    <option value="entry">Junior (Entry)</option>
+                                                    <option value="middle">Middle</option>
+                                                    <option value="senior">Senior</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Rate / Jam (Rp) <span class="text-red-500">*</span></label>
+                                                <input type="number" step="1000" min="0" name="base_rate" x-model.number="form.base_rate" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border font-bold text-primary">
+                                            </div>
+                                        </div>
+
+                                        <!-- Mode Edit Fallback: Single Date Range (if date_ranges empty) -->
+                                        <template x-if="editWorkLog && (!date_ranges || date_ranges.length === 0)">
+                                            <div class="space-y-3">
+                                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Tanggal Mulai <span class="text-red-500">*</span></label>
+                                                        <input type="date" name="work_date" x-model="form.work_date" @change="onEditRangeChange()" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Tanggal Selesai <span class="text-red-500">*</span></label>
+                                                        <input type="date" name="end_date" x-model="form.end_date" :min="form.work_date" @change="onEditRangeChange()" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Jam per Hari <span class="text-red-500">*</span></label>
+                                                        <input type="number" step="0.5" min="0.5" max="24" name="hours_per_day" x-model.number="form.hours_per_day" @input="onEditRangeChange()" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border font-bold text-center">
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" name="days_count" :value="form.days_count">
+                                                <input type="hidden" name="hours_worked" :value="totalCalculatedHours">
+                                                <div class="text-[11px] text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 flex items-center justify-between">
+                                                    <span>Rentang Kerja: <strong x-text="form.days_count + ' hari'"></strong></span>
+                                                    <span>Total Durasi: <strong x-text="totalCalculatedHours.toFixed(1) + ' jam'"></strong></span>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Date Ranges Repeater (Create Mode & Edit Mode with date_ranges) -->
+                                        <template x-if="!editWorkLog || (date_ranges && date_ranges.length > 0)">
+                                            <div class="space-y-3">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest">
+                                                        Rentang Tanggal & Jam Kerja <span class="text-red-500">*</span>
+                                                    </label>
+                                                    <span class="text-[11px] text-gray-500">Bisa menambahkan lebih dari 1 rentang</span>
+                                                </div>
+
+                                                <div class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                                                    <template x-for="(range, idx) in date_ranges" :key="idx">
+                                                        <div class="p-3 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
+                                                            <div class="flex items-center justify-between text-xs font-bold text-gray-700">
+                                                                <span class="flex items-center gap-1.5 text-primary">
+                                                                    <span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                                                                    <span x-text="'Rentang #' + (idx + 1)"></span>
+                                                                </span>
+                                                                <span class="text-indigo-600 font-semibold" x-text="getRangeDays(range) + ' hari (' + (getRangeDays(range) * (parseFloat(range.hours_per_day) || 0)).toFixed(1) + ' jam)'"></span>
+                                                            </div>
+                                                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                                                                <div class="sm:col-span-4">
+                                                                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal Mulai <span class="text-red-500">*</span></label>
+                                                                    <input type="date" :name="'date_ranges[' + idx + '][start_date]'" x-model="range.start_date" required class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary text-xs p-2 border">
+                                                                </div>
+                                                                <div class="sm:col-span-4">
+                                                                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal Selesai <span class="text-red-500">*</span></label>
+                                                                    <input type="date" :name="'date_ranges[' + idx + '][end_date]'" :min="range.start_date" x-model="range.end_date" required class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary text-xs p-2 border">
+                                                                </div>
+                                                                <div class="sm:col-span-3">
+                                                                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Jam / Hari <span class="text-red-500">*</span></label>
+                                                                    <input type="number" step="0.5" min="0.5" max="24" :name="'date_ranges[' + idx + '][hours_per_day]'" x-model.number="range.hours_per_day" required class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary text-xs p-2 border font-bold text-center">
+                                                                </div>
+                                                                <div class="sm:col-span-1 flex items-end justify-center pt-2 sm:pt-4">
+                                                                    <button type="button" x-show="date_ranges.length > 1" @click="removeDateRange(idx)" class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Hapus rentang ini">
+                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="flex items-center gap-5 pt-1.5 border-t border-gray-200/60 mt-2">
+                                                                <label class="flex items-center cursor-pointer">
+                                                                    <input type="checkbox" :name="'date_ranges[' + idx + '][is_weekend]'" x-model="range.is_weekend" value="1" class="w-3.5 h-3.5 text-primary rounded border-gray-300">
+                                                                    <span class="ml-1.5 text-[11px] font-semibold text-gray-700">Akhir Pekan (1.1x)</span>
+                                                                </label>
+                                                                <label class="flex items-center cursor-pointer">
+                                                                    <input type="checkbox" :name="'date_ranges[' + idx + '][is_overtime]'" x-model="range.is_overtime" value="1" class="w-3.5 h-3.5 text-primary rounded border-gray-300">
+                                                                    <span class="ml-1.5 text-[11px] font-semibold text-gray-700">Lembur (1.2x)</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+
+                                                <button type="button" @click="addDateRange()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-primary bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition cursor-pointer">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                    + Tambah Rentang Tanggal
+                                                </button>
+                                            </div>
+                                        </template>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Sumber Dana <span class="text-red-500">*</span></label>
+                                                <select name="source_account_type" x-model="form.source_account_type" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
+                                                    <option value="office_account">Kas Kantor</option>
+                                                    <option value="personal_reimbursement">Reimburse Pribadi</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Status Pembayaran <span class="text-red-500">*</span></label>
+                                                <select name="payment_status" x-model="form.payment_status" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
+                                                    <option value="unpaid">Unpaid (Belum Bayar)</option>
+                                                    <option value="pending_approval">Pending Approval</option>
+                                                    <option value="paid">Paid (Terbayar)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Total Jam & Upah Preview -->
+                                        <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl space-y-2">
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="font-bold uppercase text-indigo-700 tracking-wider">Estimasi Total Hari & Durasi</span>
+                                                <span class="font-bold text-gray-800">
+                                                    <span x-text="totalCalculatedDays"></span> Hari Kerja (<span x-text="totalCalculatedHours.toFixed(1)"></span> Jam)
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center justify-between border-t border-indigo-100 pt-2">
+                                                <div>
+                                                    <span class="text-[11px] font-bold uppercase text-indigo-700 tracking-wider">Estimasi Upah Tervalidasi</span>
+                                                    <p class="text-[10px] text-gray-500">Total Jam &times; Tarif &times; Multiplier</p>
+                                                </div>
+                                                <div class="text-right">
+                                                    <span class="text-xl font-black text-indigo-900">Rp <span x-text="formatRp(calculatedNominal)"></span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Catatan / Aktivitas (Opsional)</label>
+                                            <textarea name="notes" rows="2" x-model="form.notes" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-3 border" placeholder="Uraian pekerjaan teknis..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-2">
+                                        <button type="submit" class="px-5 py-2.5 bg-primary hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition cursor-pointer">
+                                            Simpan Log Upah
+                                        </button>
+                                        <button type="button" @click="openAddWorkLog = false" class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+                                            Batal
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                @endcanany
+            </div>
+            @endcanany
         </div>
 
         <!-- Sidebar Info -->
@@ -437,7 +1115,14 @@
                 </div>
             </div>
 
-            <!-- Project Team Card (Project-Scoped Multi-Role) -->
+            <!-- Master Rate Card Datalist for Position & Rate Benchmarks -->
+            <datalist id="project_master_roles_list">
+                @foreach($manHourRates as $mr)
+                    <option value="{{ $mr->role_slug }}">{{ $mr->role_slug }} ({{ $mr->skill_level }}) - Rp {{ number_format($mr->base_rate_per_hour, 0, ',', '.') }}/jam</option>
+                @endforeach
+            </datalist>
+
+            <!-- Project Team Card (Project-Scoped Multi-Role & Functional Position/Rate) -->
             <div class="bg-white rounded-lg shadow-sm border border-blue-100 overflow-hidden" x-data="{
                 openAddModal: false,
                 openEditModal: false,
@@ -445,11 +1130,72 @@
                 editActionUrl: '',
                 editRoles: [],
                 assignableRoles: {{ json_encode($assignableRoles->map(fn($r) => ['slug' => $r->slug, 'name' => $r->name, 'badge_classes' => $r->badge_classes])) }},
-                startEdit(member) {
-                    this.editMember = member;
-                    this.editActionUrl = '/projects/{{ $project->id }}/members/' + member.id;
-                    this.editRoles = member.roles.map(r => r.slug);
+                masterRates: {{ json_encode($manHourRates->map(fn($r) => [
+                    'role_slug' => $r->role_slug,
+                    'skill_level' => $r->skill_level,
+                    'base_rate' => (float)$r->base_rate_per_hour,
+                    'weekend_multiplier' => (float)$r->weekend_multiplier,
+                    'overtime_multiplier' => (float)$r->overtime_multiplier,
+                ])) }},
+                addForm: {
+                    user_id: '',
+                    role_in_project: '',
+                    rate_per_hour: 0,
+                    weekend_multiplier: 1.10,
+                    overtime_multiplier: 1.20,
+                    roles: ['staff'],
+                },
+                editForm: {
+                    id: '',
+                    name: '',
+                    role_in_project: '',
+                    rate_per_hour: 0,
+                    weekend_multiplier: 1.10,
+                    overtime_multiplier: 1.20,
+                    roles: [],
+                },
+                onAddRoleChange() {
+                    const typed = this.addForm.role_in_project.trim().toLowerCase();
+                    const match = this.masterRates.find(r => r.role_slug.toLowerCase() === typed || r.role_slug.toLowerCase().replace(/_/g, ' ') === typed);
+                    if (match) {
+                        this.addForm.rate_per_hour = match.base_rate;
+                        this.addForm.weekend_multiplier = match.weekend_multiplier;
+                        this.addForm.overtime_multiplier = match.overtime_multiplier;
+                    }
+                },
+                onEditRoleChange() {
+                    const typed = this.editForm.role_in_project.trim().toLowerCase();
+                    const match = this.masterRates.find(r => r.role_slug.toLowerCase() === typed || r.role_slug.toLowerCase().replace(/_/g, ' ') === typed);
+                    if (match && (!this.editForm.rate_per_hour || this.editForm.rate_per_hour == 0)) {
+                        this.editForm.rate_per_hour = match.base_rate;
+                        this.editForm.weekend_multiplier = match.weekend_multiplier;
+                        this.editForm.overtime_multiplier = match.overtime_multiplier;
+                    }
+                },
+                startEdit(data) {
+                    this.editMember = data;
+                    this.editActionUrl = '/projects/{{ $project->id }}/members/' + data.id;
+                    this.editRoles = [...data.roles];
+                    this.editForm = {
+                        id: data.id,
+                        name: data.name,
+                        role_in_project: data.role_in_project || '',
+                        rate_per_hour: data.rate_per_hour || 0,
+                        weekend_multiplier: data.weekend_multiplier || 1.10,
+                        overtime_multiplier: data.overtime_multiplier || 1.20,
+                        roles: [...data.roles],
+                    };
                     this.openEditModal = true;
+                },
+                toggleAddRole(slug) {
+                    let idx = this.addForm.roles.indexOf(slug);
+                    if (idx > -1) {
+                        if (this.addForm.roles.length > 1) {
+                            this.addForm.roles.splice(idx, 1);
+                        }
+                    } else {
+                        this.addForm.roles.push(slug);
+                    }
                 },
                 toggleEditRole(slug) {
                     let idx = this.editRoles.indexOf(slug);
@@ -460,6 +1206,7 @@
                     } else {
                         this.editRoles.push(slug);
                     }
+                    this.editForm.roles = [...this.editRoles];
                 }
             }">
                 <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 border-b border-blue-600 text-white flex justify-between items-center">
@@ -485,14 +1232,32 @@
                                 <p class="text-sm font-bold text-gray-800">{{ $member->user->name ?? 'User' }}</p>
                                 <p class="text-xs text-gray-500 font-mono">{{ $member->user->email ?? '-' }}</p>
                                 
-                                <!-- Role badges in this project -->
+                                <!-- Project Position & Agreed Rate -->
+                                <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        <svg class="w-3 h-3 mr-1 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                        {{ $member->display_position }}
+                                    </span>
+
+                                    @if($member->rate_per_hour > 0)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+                                        Rp {{ number_format($member->rate_per_hour, 0, ',', '.') }}/jam
+                                    </span>
+                                    @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-50 text-gray-500 border border-gray-200">
+                                        Rate Standar
+                                    </span>
+                                    @endif
+                                </div>
+
+                                <!-- RBAC system roles in this project -->
                                 <div class="flex flex-wrap gap-1 mt-1.5">
                                     @forelse($member->role_badges as $badge)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border {{ $badge['classes'] }}">
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase border {{ $badge['classes'] }}">
                                             {{ $badge['name'] }}
                                         </span>
                                     @empty
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200">
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase bg-gray-100 text-gray-600 border border-gray-200">
                                             Staf
                                         </span>
                                     @endforelse
@@ -502,7 +1267,15 @@
 
                         @can('projects.manage')
                         <div class="flex items-center space-x-2 flex-shrink-0">
-                            <button type="button" @click="startEdit({{ json_encode(['id' => $member->id, 'name' => $member->user->name, 'roles' => $member->roles]) }})" class="text-xs font-bold text-indigo-600 hover:text-indigo-900 transition cursor-pointer" title="Ubah Peran">
+                            <button type="button" @click="startEdit({{ json_encode([
+                                'id' => $member->id,
+                                'name' => $member->user->name ?? 'User',
+                                'role_in_project' => $member->role_in_project ?? '',
+                                'rate_per_hour' => $member->rate_per_hour ?? 0,
+                                'weekend_multiplier' => $member->weekend_multiplier ?? 1.10,
+                                'overtime_multiplier' => $member->overtime_multiplier ?? 1.20,
+                                'roles' => $member->roles->pluck('slug')->toArray()
+                            ]) }})" class="text-xs font-bold text-indigo-600 hover:text-indigo-900 transition cursor-pointer" title="Ubah Posisi & Rate">
                                 Edit
                             </button>
                             <span class="text-gray-300">|</span>
@@ -527,7 +1300,7 @@
                     @endforelse
                 </div>
 
-                <!-- Modal: Add Team Member -->
+                <!-- Modal: Add Team Member & Set Rate -->
                 @can('projects.manage')
                 <template x-if="openAddModal">
                     <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -538,12 +1311,12 @@
                                 <form action="{{ route('projects.members.store', $project) }}" method="POST">
                                     @csrf
                                     <div class="bg-white px-6 pt-6 pb-4 sm:p-6 sm:pb-4 space-y-4">
-                                        <h3 class="text-lg font-black text-gray-900 uppercase tracking-wider">Tugaskan Anggota Tim</h3>
-                                        <p class="text-xs text-gray-500">Pilih staf dan peran untuk proyek ini (multi-role didukung).</p>
+                                        <h3 class="text-lg font-black text-gray-900 uppercase tracking-wider">Tugaskan Anggota & Atur Tarif</h3>
+                                        <p class="text-xs text-gray-500">Tentukan posisi fungsional, tarif jam kerja kesepakatan, dan hak akses RBAC proyek.</p>
 
                                         <div>
-                                             <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Pilih Pengguna</label>
-                                            <select name="user_id" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
+                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Pilih Pengguna <span class="text-red-500">*</span></label>
+                                            <select name="user_id" x-model="addForm.user_id" required class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border">
                                                 <option value="">-- Pilih Staf --</option>
                                                 @foreach($availableUsers as $u)
                                                     @if(!$project->hasMember($u))
@@ -553,13 +1326,35 @@
                                             </select>
                                         </div>
 
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Posisi Proyek</label>
+                                                <input type="text" name="role_in_project" x-model="addForm.role_in_project" @input="onAddRoleChange()" list="project_master_roles_list" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border font-medium" placeholder="Programmer, System Analyst...">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Tarif / Jam (Rp)</label>
+                                                <input type="number" step="1000" min="0" name="rate_per_hour" x-model.number="addForm.rate_per_hour" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border font-bold text-primary" placeholder="85000">
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Multiplier Akhir Pekan</label>
+                                                <input type="number" step="0.05" min="1.0" max="3.0" name="weekend_multiplier" x-model.number="addForm.weekend_multiplier" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Multiplier Lembur</label>
+                                                <input type="number" step="0.05" min="1.0" max="3.0" name="overtime_multiplier" x-model.number="addForm.overtime_multiplier" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border">
+                                            </div>
+                                        </div>
+
                                         <div>
-                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Pilih Peran Proyek</label>
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
+                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Hak Akses Sistem Proyek (Dual-Layer RBAC)</label>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto p-1">
                                                 @foreach($assignableRoles as $role)
-                                                <label class="flex items-center p-3 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer transition">
+                                                <label class="flex items-center p-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer transition">
                                                     <input type="checkbox" name="roles[]" value="{{ $role->slug }}" {{ $role->slug === 'staff' ? 'checked' : '' }} class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                                                    <span class="ml-2.5 text-xs font-bold text-gray-800">{{ $role->name }}</span>
+                                                    <span class="ml-2 text-xs font-bold text-gray-800">{{ $role->name }}</span>
                                                     <span class="ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border {{ $role->badge_classes }}">{{ $role->slug }}</span>
                                                 </label>
                                                 @endforeach
@@ -569,7 +1364,7 @@
 
                                     <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-2">
                                         <button type="submit" class="px-5 py-2.5 bg-primary hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition cursor-pointer">
-                                            Simpan Penugasan
+                                            Simpan Penugasan & Tarif
                                         </button>
                                         <button type="button" @click="openAddModal = false" class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-bold text-xs uppercase tracking-wider transition cursor-pointer">
                                             Batal
@@ -581,7 +1376,7 @@
                     </div>
                 </template>
 
-                <!-- Modal: Edit Team Member Roles -->
+                <!-- Modal: Edit Team Member Position, Rate & Roles -->
                 <template x-if="openEditModal">
                     <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
                         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -592,20 +1387,42 @@
                                     @csrf
                                     @method('PUT')
                                     <div class="bg-white px-6 pt-6 pb-4 sm:p-6 sm:pb-4 space-y-4">
-                                        <h3 class="text-lg font-black text-gray-900 uppercase tracking-wider">Ubah Peran Anggota</h3>
-                                        <p class="text-xs text-gray-500">Sesuaikan peran untuk <strong class="text-gray-800" x-text="editMember ? editMember.name : ''"></strong> pada proyek ini.</p>
+                                        <h3 class="text-lg font-black text-gray-900 uppercase tracking-wider">Ubah Posisi, Tarif & Peran</h3>
+                                        <p class="text-xs text-gray-500">Sesuaikan posisi fungsional, tarif jam kerja, dan peran sistem untuk <strong class="text-gray-800" x-text="editForm.name"></strong> pada proyek ini.</p>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Posisi Proyek</label>
+                                                <input type="text" name="role_in_project" x-model="editForm.role_in_project" @input="onEditRoleChange()" list="project_master_roles_list" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border font-medium" placeholder="Programmer, SA...">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Tarif / Jam (Rp)</label>
+                                                <input type="number" step="1000" min="0" name="rate_per_hour" x-model.number="editForm.rate_per_hour" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-sm p-3 border font-bold text-primary">
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Multiplier Akhir Pekan</label>
+                                                <input type="number" step="0.05" min="1.0" max="3.0" name="weekend_multiplier" x-model.number="editForm.weekend_multiplier" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1.5">Multiplier Lembur</label>
+                                                <input type="number" step="0.05" min="1.0" max="3.0" name="overtime_multiplier" x-model.number="editForm.overtime_multiplier" class="block w-full border-gray-300 rounded-xl shadow-sm focus:ring-primary focus:border-primary text-xs p-2.5 border">
+                                            </div>
+                                        </div>
 
                                         <div>
-                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Peran Proyek</label>
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
+                                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Hak Akses Sistem Proyek</label>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto p-1">
                                                 <template x-for="role in assignableRoles" :key="role.slug">
-                                                    <label class="flex items-center p-3 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer transition"
+                                                    <label class="flex items-center p-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer transition"
                                                            :class="editRoles.includes(role.slug) ? 'border-primary bg-blue-50/40 ring-1 ring-primary' : ''">
                                                         <input type="checkbox" name="roles[]" :value="role.slug"
                                                                :checked="editRoles.includes(role.slug)"
                                                                @change="toggleEditRole(role.slug)"
                                                                class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                                                        <span class="ml-2.5 text-xs font-bold text-gray-800" x-text="role.name"></span>
+                                                        <span class="ml-2 text-xs font-bold text-gray-800" x-text="role.name"></span>
                                                         <span class="ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border border-gray-200" x-text="role.slug"></span>
                                                     </label>
                                                 </template>
@@ -615,7 +1432,7 @@
 
                                     <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-2">
                                         <button type="submit" class="px-5 py-2.5 bg-primary hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition cursor-pointer">
-                                            Perbarui Peran
+                                            Perbarui Posisi & Tarif
                                         </button>
                                         <button type="button" @click="openEditModal = false" class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-bold text-xs uppercase tracking-wider transition cursor-pointer">
                                             Batal

@@ -131,7 +131,7 @@
                     </li>
                     @endcan
 
-                    @canany(['finance.view', 'finance.transactions', 'finance.bank_accounts'])
+                    @canany(['finance.view', 'finance.transactions', 'finance.bank_accounts', 'finance.work_logs.view', 'finance.work_logs.manage', 'finance.marketing.manage', 'finance.closings.generate', 'finance.closings.audit', 'finance.closings.export', 'finance.fixed_expenses.view', 'finance.fixed_expenses.manage'])
                     <li x-data="{ open: {{ request()->routeIs('finance.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open" 
                                 class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('finance.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -153,6 +153,41 @@
                                 </a>
                             </li>
                             @endcan
+                            @canany(['finance.work_logs.view', 'finance.work_logs.manage'])
+                            <li>
+                                <a href="{{ route('finance.work-logs.index') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.work-logs.*') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
+                                    Log Kerja & Man-Hour
+                                </a>
+                            </li>
+                            @endcanany
+                            @can('finance.work_logs.manage')
+                            <li>
+                                <a href="{{ route('finance.rates.index') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.rates.*') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
+                                    Rate Card & Member
+                                </a>
+                            </li>
+                            @endcan
+                            @can('finance.marketing.manage')
+                            <li>
+                                <a href="{{ route('finance.marketing.index') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.marketing.*') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
+                                    Marketing & Funnel
+                                </a>
+                            </li>
+                            @endcan
+                            @canany(['finance.closings.generate', 'finance.closings.audit', 'finance.closings.export'])
+                            <li>
+                                <a href="{{ route('finance.closings.index') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.closings.*') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
+                                    Closing Bulanan
+                                </a>
+                            </li>
+                            @endcanany
+                            @canany(['finance.fixed_expenses.view', 'finance.fixed_expenses.manage'])
+                            <li>
+                                <a href="{{ route('finance.fixed-expenses.index') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.fixed-expenses.*') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
+                                    Pengeluaran Tetap
+                                </a>
+                            </li>
+                            @endcanany
                             @can('finance.bank_accounts')
                             <li>
                                 <a href="{{ route('finance.bank-accounts') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.bank-accounts') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">

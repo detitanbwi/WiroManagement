@@ -18,6 +18,10 @@ class ProjectTaskObserver
      */
     public function created(ProjectTask $task): void
     {
+        if (($task->type ?? 'gantt') !== 'gantt') {
+            return;
+        }
+
         $this->wbsService->reindexProjectWbs($task->project_id);
 
         if ($task->parent_id) {
@@ -32,6 +36,10 @@ class ProjectTaskObserver
      */
     public function updated(ProjectTask $task): void
     {
+        if (($task->type ?? 'gantt') !== 'gantt') {
+            return;
+        }
+
         // If progress, dates, or duration changed
         if ($task->wasChanged(['progress', 'start_date', 'due_date', 'duration_days'])) {
             $this->progressService->recalculateParent($task);
@@ -56,6 +64,10 @@ class ProjectTaskObserver
      */
     public function deleted(ProjectTask $task): void
     {
+        if (($task->type ?? 'gantt') !== 'gantt') {
+            return;
+        }
+
         $this->wbsService->reindexProjectWbs($task->project_id);
 
         if ($task->parent_id) {

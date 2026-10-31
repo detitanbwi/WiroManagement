@@ -39,3 +39,20 @@ Route::prefix('v1/mitra')->group(function () {
     });
 });
 
+// Fixed Expenses Management API (v1)
+Route::prefix('v1/fixed-expenses')->middleware(['auth:sanctum,web'])->group(function () {
+    Route::middleware('permission:finance.fixed_expenses.view,finance.fixed_expenses.manage')->group(function () {
+        Route::get('/monthly-summary', [\App\Http\Controllers\Api\FixedExpenseController::class, 'monthlySummary']);
+        Route::get('/', [\App\Http\Controllers\Api\FixedExpenseController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Api\FixedExpenseController::class, 'show']);
+    });
+
+    Route::middleware('permission:finance.fixed_expenses.manage')->group(function () {
+        Route::post('/generate-cycle', [\App\Http\Controllers\Api\FixedExpenseController::class, 'generateCycle']);
+        Route::post('/realizations/{id}/mark-paid', [\App\Http\Controllers\Api\FixedExpenseController::class, 'markPaid']);
+        Route::post('/', [\App\Http\Controllers\Api\FixedExpenseController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Api\FixedExpenseController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Api\FixedExpenseController::class, 'destroy']);
+    });
+});
+

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Project;
 use App\Models\Client;
+use App\Models\ManHourRate;
 use App\Models\Role;
 use App\Models\User;
 
@@ -69,11 +70,22 @@ class ProjectController extends Controller
     public function show(Project $project)
     {
         abort_unless(auth()->user()->can('projects.manage'), 403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola proyek ini.');
-        $project->load(['client', 'quotations', 'invoices.items', 'changeRequests', 'members.user', 'members.roles']);
+        $project->load([
+            'client',
+            'quotations',
+            'invoices.items',
+            'changeRequests',
+            'members.user',
+            'members.roles',
+            'members.memberRate',
+            'workLogs' => fn($q) => $q->with('user')->latest('work_date'),
+            'expenses' => fn($q) => $q->latest('date'),
+        ]);
         $availableUsers = User::whereNull('client_id')->where('is_active', true)->get();
         $assignableRoles = Role::where('slug', '!=', 'client')->orderBy('id')->get();
+        $manHourRates = ManHourRate::orderBy('role_slug')->orderBy('skill_level')->get();
 
-        return view('projects.show', compact('project', 'availableUsers', 'assignableRoles'));
+        return view('projects.show', compact('project', 'availableUsers', 'assignableRoles', 'manHourRates'));
     }
 
     public function qc(Project $project)

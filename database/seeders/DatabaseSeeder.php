@@ -26,8 +26,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PermissionSeeder::class,
             AdminSeeder::class,
-            ClientProfileSeeder::class,
-            ProjectSeeder::class,
+            ManHourRateSeeder::class,
         ]);
     }
 }

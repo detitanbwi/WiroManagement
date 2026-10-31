@@ -90,6 +90,16 @@ class Project extends Model
         return $this->hasMany(ProjectExpense::class);
     }
 
+    public function workLogs()
+    {
+        return $this->hasMany(ProjectWorkLog::class);
+    }
+
+    public function memberRates()
+    {
+        return $this->hasMany(ProjectMemberRate::class);
+    }
+
     public function tasks()
     {
         return $this->hasMany(ProjectTask::class);
@@ -106,13 +116,23 @@ class Project extends Model
     }
 
     /**
-     * Assign a user to this project with one or more roles.
+     * Assign a user to this project with optional roles, functional position, and hourly rate.
      *
      * @param User|int $user
      * @param array<string|Role> $roles
+     * @param string|null $roleInProject
+     * @param float|null $ratePerHour
+     * @param float|null $weekendMultiplier
+     * @param float|null $overtimeMultiplier
      */
-    public function assignMember(User|int $user, array $roles): ProjectMember
-    {
+    public function assignMember(
+        User|int $user,
+        array $roles = [],
+        ?string $roleInProject = null,
+        ?float $ratePerHour = null,
+        ?float $weekendMultiplier = null,
+        ?float $overtimeMultiplier = null
+    ): ProjectMember {
         $userId = $user instanceof User ? $user->id : $user;
 
         $member = ProjectMember::firstOrCreate([
@@ -120,8 +140,28 @@ class Project extends Model
             'user_id' => $userId,
         ]);
 
-        $member->syncRoles($roles);
-        return $member;
+        if ($roleInProject !== null) {
+            $member->role_in_project = $roleInProject;
+            $member->save();
+        }
+
+        if (!empty($roles)) {
+            $member->syncRoles($roles);
+        }
+
+        if ($ratePerHour !== null && $ratePerHour > 0) {
+            ProjectMemberRate::updateOrCreate(
+                ['project_id' => $this->id, 'user_id' => $userId],
+                [
+                    'role_slug' => $roleInProject,
+                    'rate_per_hour' => $ratePerHour,
+                    'weekend_multiplier' => $weekendMultiplier ?: 1.10,
+                    'overtime_multiplier' => $overtimeMultiplier ?: 1.20,
+                ]
+            );
+        }
+
+        return $member->fresh(['roles', 'memberRate', 'user']);
     }
 
     /**
@@ -131,6 +171,7 @@ class Project extends Model
     {
         $userId = $user instanceof User ? $user->id : $user;
         $this->members()->where('user_id', $userId)->delete();
+        ProjectMemberRate::where('project_id', $this->id)->where('user_id', $userId)->delete();
     }
 
     /**
@@ -195,6 +236,52 @@ class Project extends Model
     public function getNettAttribute()
     {
         return $this->grand_total - $this->total_expenses;
+    }
+
+    /**
+     * Total Labor Cost (sum of work logs nominal).
+     */
+    public function totalLaborCost(bool $paidOnly = true): float
+    {
+        $query = $this->workLogs();
+        if ($paidOnly) {
+            $query->where('payment_status', 'paid');
+        }
+        return (float) $query->sum('calculated_nominal');
+    }
+
+    /**
+     * Total Infrastructure and direct operational cost (from project_expenses).
+     */
+    public function totalInfraCost(bool $paidOnly = true): float
+    {
+        $query = $this->expenses();
+        if ($paidOnly) {
+            $query->where('is_paid', true);
+        }
+        return (float) $query->sum('amount');
+    }
+
+    /**
+     * Cost of Goods Sold (COGS) = Labor + Infrastructure/Direct Expenses.
+     */
+    public function cogs(bool $paidOnly = true): float
+    {
+        return $this->totalLaborCost($paidOnly) + $this->totalInfraCost($paidOnly);
+    }
+
+    /**
+     * Gross Margin Percentage based on Grand Total.
+     */
+    public function grossMargin(bool $paidOnly = true): float
+    {
+        $revenue = (float) $this->grand_total;
+        if ($revenue <= 0) {
+            return 0.0;
+        }
+
+        $cogs = $this->cogs($paidOnly);
+        return round((($revenue - $cogs) / $revenue) * 100, 2);
     }
 
     /**

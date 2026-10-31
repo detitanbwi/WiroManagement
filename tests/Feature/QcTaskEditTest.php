@@ -206,6 +206,7 @@ class QcTaskEditTest extends TestCase
 
         ProjectTask::create([
             'project_id' => $project->id,
+            'type' => 'qc',
             'code' => 'TSK-106',
             'title' => 'Task with Assignee ID',
             'assignee_id' => $dev->id,

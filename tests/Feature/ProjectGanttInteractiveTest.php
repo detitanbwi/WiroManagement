@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\User;
@@ -17,6 +18,10 @@ class ProjectGanttInteractiveTest extends TestCase
     {
         parent::setUp();
         $this->artisan('db:seed', ['--class' => 'DatabaseSeeder']);
+        Client::firstOrCreate(
+            ['id' => 1],
+            ['name' => 'Test Client', 'email' => 'client@test.com', 'phone' => '08123456789']
+        );
     }
 
     public function test_interactive_update_dates_and_progress_with_ancestors_and_project_sync(): void

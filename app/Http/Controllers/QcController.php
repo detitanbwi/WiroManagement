@@ -36,7 +36,7 @@ class QcController extends Controller
 
     public function getTasks(Project $project)
     {
-        $tasks = $project->tasks()->with([
+        $tasks = $project->tasks()->qc()->with([
             'assignee',
             'testCases' => function($q) {
                 $q->with(['bugs.projectTask'])->orderBy('sort_order')->orderBy('id');
@@ -253,6 +253,7 @@ class QcController extends Controller
 
         $task = ProjectTask::create([
             'project_id' => $project->id,
+            'type' => 'qc',
             'code' => 'TSK-' . strtoupper(substr(uniqid(), -5)),
             'title' => $request->title,
             'description' => $request->description,
@@ -430,6 +431,7 @@ class QcController extends Controller
             if ($createTask) {
                 $newTask = \App\Models\ProjectTask::create([
                     'project_id' => $testCase->project_id,
+                    'type' => 'qc',
                     'code' => 'TSK-' . strtoupper(substr(uniqid(), -5)),
                     'title' => 'Bug: ' . substr($request->bug_description, 0, 50) . (strlen($request->bug_description) > 50 ? '...' : ''),
                     'description' => "Auto-generated bug report from Test Case: " . $testCase->code . "\n\n" . $request->bug_description,
@@ -805,6 +807,7 @@ class QcController extends Controller
 
         $newTask = \App\Models\ProjectTask::create([
             'project_id' => $projectId,
+            'type' => 'qc',
             'code' => 'TSK-' . strtoupper(substr(uniqid(), -5)),
             'title' => 'Bug: ' . substr($bug->description, 0, 50) . (strlen($bug->description) > 50 ? '...' : ''),
             'description' => "Bug report from Test Case: " . $testCaseCode . "\n\n" . $bug->description,
@@ -857,6 +860,7 @@ class QcController extends Controller
 
         $newTask = \App\Models\ProjectTask::create([
             'project_id' => $project->id,
+            'type' => 'qc',
             'code' => 'TSK-' . strtoupper(substr(uniqid(), -5)),
             'title' => $request->title,
             'description' => $description,

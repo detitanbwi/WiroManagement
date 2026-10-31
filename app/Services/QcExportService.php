@@ -47,7 +47,7 @@ class QcExportService
      */
     protected function buildKanbanSheet(Worksheet $sheet, Project $project): void
     {
-        $tasks = $project->tasks()->with([
+        $tasks = $project->tasks()->qc()->with([
             'assignee',
             'testCases',
             'bugs.testCase',

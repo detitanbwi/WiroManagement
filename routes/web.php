@@ -10,6 +10,9 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ProjectExpenseController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\Finance\WorkLogController;
+use App\Http\Controllers\Finance\MarketingCampaignController;
+use App\Http\Controllers\Finance\MonthlyClosingController;
 use App\Http\Controllers\QcController;
 use App\Http\Controllers\CompanyTaskController;
 use Illuminate\Support\Facades\Route;
@@ -183,8 +186,8 @@ Route::middleware(['auth', 'internal'])->group(function () {
         Route::get('/documents/receipt/{payment}/pdf', [DocumentController::class, 'streamReceipt'])->name('documents.receipt.pdf');
     });
 
-    // Finance Monitoring Routes (Overview & Transactions: finance.view, finance.transactions; Bank Accounts: finance.bank_accounts)
-    Route::prefix('finance')->name('finance.')->middleware('permission:finance.view,finance.transactions,finance.bank_accounts')->group(function () {
+    // Finance Monitoring Routes (Overview, Transactions, Rates, Labor Logs, Marketing, Closings, Fixed Expenses)
+    Route::prefix('finance')->name('finance.')->middleware('permission:finance.view,finance.transactions,finance.bank_accounts,finance.work_logs.view,finance.work_logs.manage,finance.marketing.manage,finance.closings.generate,finance.closings.audit,finance.closings.export,finance.fixed_expenses.view,finance.fixed_expenses.manage')->group(function () {
         Route::get('/overview', [\App\Http\Controllers\FinanceController::class, 'overview'])
             ->name('overview')
             ->middleware('permission:finance.view');
@@ -198,6 +201,59 @@ Route::middleware(['auth', 'internal'])->group(function () {
             Route::post('/bank-accounts', [\App\Http\Controllers\FinanceController::class, 'storeBankAccount'])->name('bank-accounts.store');
             Route::put('/bank-accounts/{id}', [\App\Http\Controllers\FinanceController::class, 'updateBankAccount'])->name('bank-accounts.update');
             Route::delete('/bank-accounts/{id}', [\App\Http\Controllers\FinanceController::class, 'deleteBankAccount'])->name('bank-accounts.destroy');
+        });
+
+        // Labor Work Logs & Rate Management
+        Route::middleware('permission:finance.work_logs.view,finance.work_logs.manage')->group(function () {
+            Route::get('/work-logs', [WorkLogController::class, 'index'])->name('work-logs.index');
+            Route::post('/work-logs/calculate-rate', [WorkLogController::class, 'calculateRate'])->name('work-logs.calculate-rate');
+
+            Route::middleware('permission:finance.work_logs.manage')->group(function () {
+                Route::post('/work-logs', [WorkLogController::class, 'store'])->name('work-logs.store');
+                Route::put('/work-logs/{workLog}', [WorkLogController::class, 'update'])->name('work-logs.update');
+                Route::delete('/work-logs/{workLog}', [WorkLogController::class, 'destroy'])->name('work-logs.destroy');
+                Route::post('/work-logs/batch-status', [WorkLogController::class, 'batchUpdateStatus'])->name('work-logs.batch-status');
+
+                // Master & Member Rate Cards
+                Route::get('/rates', [WorkLogController::class, 'ratesIndex'])->name('rates.index');
+                Route::post('/rates/master', [WorkLogController::class, 'storeMasterRate'])->name('rates.master.store');
+                Route::put('/rates/master/{rate}', [WorkLogController::class, 'updateMasterRate'])->name('rates.master.update');
+                Route::delete('/rates/master/{rate}', [WorkLogController::class, 'destroyMasterRate'])->name('rates.master.destroy');
+
+                Route::post('/rates/members', [WorkLogController::class, 'storeMemberRate'])->name('rates.members.store');
+                Route::put('/rates/members/{memberRate}', [WorkLogController::class, 'updateMemberRate'])->name('rates.members.update');
+                Route::delete('/rates/members/{memberRate}', [WorkLogController::class, 'destroyMemberRate'])->name('rates.members.destroy');
+            });
+        });
+
+        // Marketing Campaigns & Funnel Analytics
+        Route::middleware('permission:finance.marketing.manage')->group(function () {
+            Route::get('/marketing', [MarketingCampaignController::class, 'index'])->name('marketing.index');
+            Route::post('/marketing', [MarketingCampaignController::class, 'store'])->name('marketing.store');
+            Route::put('/marketing/{marketing}', [MarketingCampaignController::class, 'update'])->name('marketing.update');
+            Route::delete('/marketing/{marketing}', [MarketingCampaignController::class, 'destroy'])->name('marketing.destroy');
+        });
+
+        // Monthly Financial Closings & Statement Auditor
+        Route::middleware('permission:finance.closings.generate,finance.closings.audit,finance.closings.export')->group(function () {
+            Route::get('/closings', [MonthlyClosingController::class, 'index'])->name('closings.index');
+            Route::post('/closings/generate', [MonthlyClosingController::class, 'generate'])->name('closings.generate')->middleware('permission:finance.closings.generate');
+            Route::get('/closings/{closing}', [MonthlyClosingController::class, 'show'])->name('closings.show');
+            Route::post('/closings/{closing}/audit', [MonthlyClosingController::class, 'audit'])->name('closings.audit')->middleware('permission:finance.closings.audit');
+            Route::get('/closings/{closing}/pdf', [MonthlyClosingController::class, 'exportPdf'])->name('closings.pdf')->middleware('permission:finance.closings.export');
+        });
+
+        // Monthly Fixed Expenses (Pengeluaran Tetap Bulanan)
+        Route::middleware('permission:finance.fixed_expenses.view,finance.fixed_expenses.manage')->group(function () {
+            Route::get('/fixed-expenses', [\App\Http\Controllers\Finance\FixedExpenseWebController::class, 'index'])->name('fixed-expenses.index');
+
+            Route::middleware('permission:finance.fixed_expenses.manage')->group(function () {
+                Route::post('/fixed-expenses', [\App\Http\Controllers\Finance\FixedExpenseWebController::class, 'store'])->name('fixed-expenses.store');
+                Route::put('/fixed-expenses/{fixedExpense}', [\App\Http\Controllers\Finance\FixedExpenseWebController::class, 'update'])->name('fixed-expenses.update');
+                Route::delete('/fixed-expenses/{fixedExpense}', [\App\Http\Controllers\Finance\FixedExpenseWebController::class, 'destroy'])->name('fixed-expenses.destroy');
+                Route::post('/fixed-expenses/generate-cycle', [\App\Http\Controllers\Finance\FixedExpenseWebController::class, 'generateCycle'])->name('fixed-expenses.generate-cycle');
+                Route::post('/fixed-expenses/realizations/{realization}/mark-paid', [\App\Http\Controllers\Finance\FixedExpenseWebController::class, 'markPaid'])->name('fixed-expenses.mark-paid');
+            });
         });
     });
 

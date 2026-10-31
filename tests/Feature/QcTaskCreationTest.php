@@ -177,4 +177,96 @@ class QcTaskCreationTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_qc_task_is_typed_qc_and_does_not_appear_in_gantt_nor_affect_progress(): void
+    {
+        $admin = User::factory()->create(['is_active' => true]);
+        $admin->syncRoles(['superadmin']);
+
+        $project = $this->createProject();
+
+        // 1. Create a 100% completed Gantt task
+        $ganttTask = ProjectTask::create([
+            'project_id'    => $project->id,
+            'type'          => 'gantt',
+            'code'          => 'TSK-GANTT-01',
+            'title'         => 'Gantt Root Work Package',
+            'start_date'    => now()->format('Y-m-d'),
+            'due_date'      => now()->addDays(5)->format('Y-m-d'),
+            'duration_days' => 5,
+            'progress'      => 100.0,
+            'status'        => 'completed',
+        ]);
+
+        $project->refresh();
+        $this->assertEquals(100, $project->progress_percentage);
+
+        // 2. Create QC task via QC API endpoint
+        $response = $this->actingAs($admin)->postJson("/api/projects/{$project->id}/qc/tasks", [
+            'title'       => 'QC Bug Kanban Task',
+            'description' => 'Defect found during testing.',
+            'column_id'   => 'todo',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('task.type', 'qc');
+
+        $qcTask = ProjectTask::where('title', 'QC Bug Kanban Task')->first();
+        $this->assertNotNull($qcTask);
+        $this->assertEquals('qc', $qcTask->type);
+        $this->assertNull($qcTask->wbs_code);
+
+        // 3. Project progress remains 100% (QC task with 0% progress does not drag it down)
+        $project->refresh();
+        $this->assertEquals(100, $project->progress_percentage);
+
+        // 4. QC task does not appear in Gantt chart data endpoint
+        $ganttResponse = $this->actingAs($admin)->getJson("/projects/{$project->id}/gantt/data");
+        $ganttResponse->assertOk();
+
+        $tasksInGantt = collect($ganttResponse->json('tasks'));
+        $this->assertTrue($tasksInGantt->contains('db_id', $ganttTask->id));
+        $this->assertFalse($tasksInGantt->contains('db_id', $qcTask->id));
+        $this->assertCount(1, $tasksInGantt);
+    }
+
+    public function test_gantt_task_does_not_appear_in_qc_tasks_endpoint(): void
+    {
+        $admin = User::factory()->create(['is_active' => true]);
+        $admin->syncRoles(['superadmin']);
+
+        $project = $this->createProject();
+
+        // 1. Create a Gantt task
+        $ganttTask = ProjectTask::create([
+            'project_id'    => $project->id,
+            'type'          => 'gantt',
+            'code'          => 'TSK-GANTT-02',
+            'title'         => 'Gantt Engineering Task',
+            'start_date'    => now()->format('Y-m-d'),
+            'due_date'      => now()->addDays(5)->format('Y-m-d'),
+            'duration_days' => 5,
+            'progress'      => 50.0,
+            'status'        => 'in_progress',
+        ]);
+
+        // 2. Create a QC task
+        $this->actingAs($admin)->postJson("/api/projects/{$project->id}/qc/tasks", [
+            'title'     => 'QC Only Issue',
+            'column_id' => 'todo',
+        ])->assertOk();
+
+        $qcTask = ProjectTask::where('title', 'QC Only Issue')->first();
+        $this->assertNotNull($qcTask);
+
+        // 3. Query QC tasks API
+        $qcResponse = $this->actingAs($admin)->getJson("/api/projects/{$project->id}/qc/tasks");
+        $qcResponse->assertOk();
+
+        $tasksInQc = collect($qcResponse->json());
+        $this->assertTrue($tasksInQc->contains('id', $qcTask->id));
+        $this->assertFalse($tasksInQc->contains('id', $ganttTask->id));
+        $this->assertCount(1, $tasksInQc);
+    }
 }

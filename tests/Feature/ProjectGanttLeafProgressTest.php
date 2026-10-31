@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\User;
@@ -18,6 +19,10 @@ class ProjectGanttLeafProgressTest extends TestCase
         parent::setUp();
         // Seed basic permissions and superadmin
         $this->artisan('db:seed', ['--class' => 'DatabaseSeeder']);
+        Client::firstOrCreate(
+            ['id' => 1],
+            ['name' => 'Test Client', 'email' => 'client@test.com', 'phone' => '08123456789']
+        );
     }
 
     public function test_parent_and_child_task_progress_only_counts_leaf_tasks(): void
@@ -144,5 +149,67 @@ class ProjectGanttLeafProgressTest extends TestCase
             ->filter(fn($t) => $t['progress'] > 0 && $t['progress'] < 100)
             ->count();
         $this->assertEquals(1, $inProgressLeafCount);
+    }
+
+    public function test_qc_task_does_not_dilute_leaf_progress_or_appear_in_gantt_chart(): void
+    {
+        $superadmin = User::where('email', 'admin@wirodev.com')->first();
+        $this->assertNotNull($superadmin);
+
+        $project = Project::create([
+            'client_id'      => 1,
+            'title'          => 'Gantt & QC Separation Project',
+            'contract_value' => 5000000,
+            'status'         => 'in_progress',
+        ]);
+
+        // 1. Create a 100% completed Gantt task
+        $ganttTask = ProjectTask::create([
+            'project_id'    => $project->id,
+            'type'          => 'gantt',
+            'parent_id'     => null,
+            'code'          => 'TSK-GANTT-DONE',
+            'title'         => 'Gantt Architecture Task',
+            'start_date'    => now()->format('Y-m-d'),
+            'due_date'      => now()->addDays(2)->format('Y-m-d'),
+            'duration_days' => 2,
+            'progress'      => 100.00,
+            'status'        => 'completed',
+        ]);
+
+        $project->refresh();
+        $this->assertEquals(100, $project->progress_percentage);
+
+        // 2. Create a QC Kanban task (default progress 0%, no dates)
+        $qcTask = ProjectTask::create([
+            'project_id'  => $project->id,
+            'type'        => 'qc',
+            'code'        => 'TSK-QC-BUG',
+            'title'       => 'QC Bug Issue',
+            'column_id'   => 'todo',
+            'progress'    => 0,
+        ]);
+
+        // Recalculate progress explicitly and verify
+        $progressService = app(TaskProgressService::class);
+        $progressService->recalculateProjectProgress($project->id);
+        $project->refresh();
+
+        // Project progress should remain 100% (NOT dropped to 50%)
+        $this->assertEquals(100, $project->progress_percentage);
+        $this->assertNull($qcTask->wbs_code);
+
+        // 3. Verify Gantt data endpoint
+        $response = $this->actingAs($superadmin)->getJson(route('projects.gantt.data', $project));
+        $response->assertStatus(200);
+
+        $data = $response->json();
+        $tasks = collect($data['tasks']);
+
+        // Only the gantt task exists in Gantt data
+        $this->assertCount(1, $tasks);
+        $this->assertEquals($ganttTask->id, $tasks[0]['db_id']);
+        $this->assertFalse($tasks->contains('db_id', $qcTask->id));
+        $this->assertEquals(100, $data['project']['progress_percentage']);
     }
 }

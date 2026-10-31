@@ -24,8 +24,9 @@ class ProjectGanttController extends Controller
     public function data(Project $project)
     {
         $allTasks = $project->tasks()
+            ->gantt()
             ->with(['assignee:id,name', 'dependencies:id,title,wbs_code', 'children:id,parent_id'])
-            ->withCount('children')
+            ->withCount(['children' => fn($q) => $q->gantt()])
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
             ->get();
@@ -151,11 +152,13 @@ class ProjectGanttController extends Controller
 
         // Calculate sort order: place it immediately after the last subtask of the same parent (or last root task)
         $maxSortOrder = ProjectTask::where('project_id', $project->id)
+            ->gantt()
             ->where('parent_id', $parentId)
             ->max('sort_order') ?? 0;
 
         $task = ProjectTask::create([
             'project_id'    => $project->id,
+            'type'          => 'gantt',
             'parent_id'     => $parentId,
             'code'          => 'TSK-' . strtoupper(substr(uniqid(), -6)),
             'title'         => $validated['title'],
@@ -240,6 +243,7 @@ class ProjectGanttController extends Controller
             $newParentId = $validated['parent_id'] ? (int)$validated['parent_id'] : null;
             if ($newParentId !== $task->parent_id) {
                 $maxSort = ProjectTask::where('project_id', $task->project_id)
+                    ->gantt()
                     ->where('parent_id', $newParentId)
                     ->where('id', '!=', $task->id)
                     ->max('sort_order') ?? 0;
@@ -313,6 +317,7 @@ class ProjectGanttController extends Controller
         // If target is null, move to root level at the end
         if (!$targetId) {
             $maxSort = ProjectTask::where('project_id', $projectId)
+                ->gantt()
                 ->whereNull('parent_id')
                 ->where('id', '!=', $task->id)
                 ->max('sort_order') ?? 0;
@@ -372,6 +377,7 @@ class ProjectGanttController extends Controller
 
         // Fetch current siblings under newParentId excluding task
         $siblings = ProjectTask::where('project_id', $projectId)
+            ->gantt()
             ->where('parent_id', $newParentId)
             ->where('id', '!=', $task->id)
             ->orderBy('sort_order', 'asc')
@@ -459,6 +465,7 @@ class ProjectGanttController extends Controller
 
         // Fetch all siblings under the same parent
         $siblings = ProjectTask::where('project_id', $projectId)
+            ->gantt()
             ->where('parent_id', $parentId)
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
@@ -614,6 +621,7 @@ class ProjectGanttController extends Controller
     private function normalizeSiblings(int $projectId, ?int $parentId): void
     {
         $siblings = ProjectTask::where('project_id', $projectId)
+            ->gantt()
             ->where('parent_id', $parentId)
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
