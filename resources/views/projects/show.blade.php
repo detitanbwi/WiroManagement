@@ -1115,6 +1115,164 @@
                 </div>
             </div>
 
+            <!-- Technical Access & Deployment Card -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden" x-data="{
+                showPass: false,
+                copiedField: null,
+                copyToClipboard(text, fieldName) {
+                    if (!text) return;
+                    navigator.clipboard.writeText(text).then(() => {
+                        this.copiedField = fieldName;
+                        setTimeout(() => { this.copiedField = null; }, 2000);
+                    });
+                }
+            }">
+                <div class="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4 border-b border-slate-800 text-white flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider shadow-sm">Technical Access &amp; Deployment</h3>
+                    </div>
+                    @if($project->is_credentials_visible_to_client)
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+                            Visible to Client
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-600 text-slate-300 border border-slate-500/40">
+                            Internal Only
+                        </span>
+                    @endif
+                </div>
+
+                <div class="p-6 space-y-5">
+                    <!-- Quick Action Deployment Buttons -->
+                    @if($project->demo_url || $project->repository_url || $project->production_url)
+                        <div class="space-y-2">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Deployment &amp; Code Links</span>
+                            <div class="grid grid-cols-1 gap-2">
+                                @if($project->demo_url)
+                                    <a href="{{ $project->demo_url }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between px-3 py-2 bg-amber-50 hover:bg-amber-100/80 text-amber-900 border border-amber-200 rounded-lg text-xs font-semibold transition group">
+                                        <span class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                            Buka Demo (Staging)
+                                        </span>
+                                        <svg class="w-3.5 h-3.5 text-amber-600 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+                                @endif
+
+                                @if($project->repository_url)
+                                    <a href="{{ $project->repository_url }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200 rounded-lg text-xs font-semibold transition group">
+                                        <span class="flex items-center gap-2">
+                                            <svg class="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                                            GitHub Repo
+                                        </span>
+                                        <svg class="w-3.5 h-3.5 text-gray-500 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+                                @endif
+
+                                @if($project->production_url)
+                                    <a href="{{ $project->production_url }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between px-3 py-2 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-900 border border-emerald-200 rounded-lg text-xs font-semibold transition group">
+                                        <span class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                            Live Site
+                                        </span>
+                                        <svg class="w-3.5 h-3.5 text-emerald-600 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Hosting Credentials Card -->
+                    <div class="border-t border-gray-100 pt-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kredensial Hosting</span>
+                            @if(!empty($project->hosting_credentials['password']))
+                                <button type="button" @click="showPass = !showPass" class="text-[11px] font-bold text-primary hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                                    <span x-text="showPass ? 'Sembunyikan' : 'Lihat Sandi'"></span>
+                                </button>
+                            @endif
+                        </div>
+
+                        <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-200/80 space-y-2.5 text-xs">
+                            <!-- Provider -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 text-[11px]">Provider:</span>
+                                <span class="font-bold text-gray-800">{{ $project->hosting_provider ?: '-' }}</span>
+                            </div>
+
+                            <!-- Host / IP -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 text-[11px]">Host / IP:</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-mono text-gray-800 font-semibold">{{ $project->hosting_credentials['host'] ?? '-' }}</span>
+                                    @if(!empty($project->hosting_credentials['host']))
+                                        <button type="button" @click="copyToClipboard('{{ $project->hosting_credentials['host'] }}', 'host')" class="text-gray-400 hover:text-primary cursor-pointer p-0.5 rounded hover:bg-gray-200 transition" title="Salin Host">
+                                            <svg x-show="copiedField !== 'host'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                            <span x-show="copiedField === 'host'" class="text-[10px] text-emerald-600 font-bold">✓</span>
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Port -->
+                            @if(!empty($project->hosting_credentials['port']))
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 text-[11px]">Port:</span>
+                                <span class="font-mono text-gray-800 font-semibold">{{ $project->hosting_credentials['port'] }}</span>
+                            </div>
+                            @endif
+
+                            <!-- Username -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 text-[11px]">Username:</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-mono text-gray-800 font-semibold">{{ $project->hosting_credentials['username'] ?? '-' }}</span>
+                                    @if(!empty($project->hosting_credentials['username']))
+                                        <button type="button" @click="copyToClipboard('{{ $project->hosting_credentials['username'] }}', 'username')" class="text-gray-400 hover:text-primary cursor-pointer p-0.5 rounded hover:bg-gray-200 transition" title="Salin Username">
+                                            <svg x-show="copiedField !== 'username'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                            <span x-show="copiedField === 'username'" class="text-[10px] text-emerald-600 font-bold">✓</span>
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 text-[11px]">Password:</span>
+                                <div class="flex items-center gap-1.5">
+                                    @if(!empty($project->hosting_credentials['password']))
+                                        <span x-show="!showPass" class="font-mono text-gray-500 font-semibold tracking-wider">••••••••</span>
+                                        <span x-show="showPass" class="font-mono text-gray-800 font-semibold">{{ $project->hosting_credentials['password'] }}</span>
+                                        <button type="button" @click="copyToClipboard('{{ $project->hosting_credentials['password'] }}', 'password')" class="text-gray-400 hover:text-primary cursor-pointer p-0.5 rounded hover:bg-gray-200 transition" title="Salin Password">
+                                            <svg x-show="copiedField !== 'password'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                            <span x-show="copiedField === 'password'" class="text-[10px] text-emerald-600 font-bold">✓</span>
+                                        </button>
+                                    @else
+                                        <span class="text-gray-400 italic text-[11px]">-</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            @if(!empty($project->hosting_credentials['notes']))
+                            <div class="pt-2 border-t border-gray-200/60">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Catatan Akses</span>
+                                <p class="text-gray-600 text-[11px] whitespace-pre-line leading-relaxed bg-white p-2 rounded border border-gray-200/60">{{ $project->hosting_credentials['notes'] }}</p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    @can('projects.edit')
+                    <div class="pt-2 flex justify-end">
+                        <a href="{{ route('projects.edit', $project) }}" class="text-xs font-bold text-primary hover:text-blue-700 hover:underline flex items-center gap-1">
+                            <span>Edit Kredensial &amp; URL</span> &rarr;
+                        </a>
+                    </div>
+                    @endcan
+                </div>
+            </div>
+
             <!-- Master Rate Card Datalist for Position & Rate Benchmarks -->
             <datalist id="project_master_roles_list">
                 @foreach($manHourRates as $mr)

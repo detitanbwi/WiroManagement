@@ -17,13 +17,21 @@ class Project extends Model
         'status',
         'progress_percentage',
         'start_date',
-        'end_date'
+        'end_date',
+        'demo_url',
+        'repository_url',
+        'production_url',
+        'hosting_provider',
+        'hosting_credentials',
+        'is_credentials_visible_to_client',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'progress_percentage' => 'integer',
+        'is_credentials_visible_to_client' => 'boolean',
+        'hosting_credentials' => 'encrypted:array',
     ];
 
     public function client()

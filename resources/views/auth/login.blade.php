@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | WiroManagement</title>
+    <link rel="icon" type="image/png" href="{{ asset('logo-wirodev.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -17,7 +19,7 @@
         <!-- Logo / Brand -->
         <div class="text-center mb-10">
             <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-2xl mb-6 transform -rotate-6 hover:rotate-0 transition-transform duration-500 p-4">
-                <img src="{{ asset('logo.png') }}" alt="Wirodayan Logo" class="w-full h-auto object-contain">
+                <img src="{{ asset('logo-wirodev.png') }}" alt="Wirodev Logo" class="w-full h-auto object-contain">
             </div>
             <h1 class="text-3xl font-extrabold text-white tracking-tight">WiroManagement</h1>
             <p class="text-blue-200 mt-2 text-sm opacity-80">Client & Project Administration Portal</p>

@@ -60,6 +60,19 @@ class MitraProjectController extends Controller
             ])
             ->findOrFail($id);
 
+        $hosting = null;
+        if ((bool)$project->is_credentials_visible_to_client) {
+            $credentials = is_array($project->hosting_credentials) ? $project->hosting_credentials : [];
+            $hosting = [
+                'provider' => $project->hosting_provider,
+                'host' => $credentials['host'] ?? null,
+                'username' => $credentials['username'] ?? null,
+                'password' => $credentials['password'] ?? null,
+                'port' => $credentials['port'] ?? null,
+                'notes' => $credentials['notes'] ?? null,
+            ];
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -71,6 +84,10 @@ class MitraProjectController extends Controller
                 'progress_percentage' => (int)$project->progress_percentage,
                 'start_date' => $project->start_date ? $project->start_date->format('Y-m-d') : null,
                 'end_date' => $project->end_date ? $project->end_date->format('Y-m-d') : null,
+                'demo_url' => $project->demo_url,
+                'repository_url' => $project->repository_url,
+                'production_url' => $project->production_url,
+                'hosting' => $hosting,
                 'pm' => $project->pm ? [
                     'name' => $project->pm->name,
                     'email' => $project->pm->email,

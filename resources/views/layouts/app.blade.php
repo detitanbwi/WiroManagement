@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Wirodayan Digital')</title>
+    <link rel="icon" type="image/png" href="{{ asset('logo-wirodev.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <!-- Tailwind CSS (via CDN for simplicity) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -55,7 +57,7 @@
                class="fixed inset-y-0 left-0 z-50 w-72 md:w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col shadow-xl md:shadow-none">
             <div class="h-16 md:h-20 flex items-center justify-between border-b border-gray-200 px-5 md:px-6">
                 <div class="flex items-center space-x-2.5">
-                    <img src="{{ asset('logo.png') }}" alt="Wiro Logo" class="h-8 md:h-10 w-auto">
+                    <img src="{{ asset('logo-wirodev.png') }}" alt="Wirodev Logo" class="h-8 md:h-10 w-auto">
                     <span class="text-base md:text-lg font-extrabold text-primary tracking-wide">WIRO APP</span>
                 </div>
                 <!-- Close button for mobile -->

@@ -330,7 +330,10 @@ class DocumentController extends Controller
 
     private function getBase64Logo()
     {
-        $path = public_path('logo.png');
+        $path = public_path('logo-wirodev.png');
+        if (!file_exists($path)) {
+            $path = public_path('logo.png');
+        }
         if (!file_exists($path)) return null;
 
         $type = pathinfo($path, PATHINFO_EXTENSION);

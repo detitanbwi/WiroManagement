@@ -56,11 +56,14 @@ class FinancialExportService
     }
 
     /**
-     * Encode public/logo.png into Base64 format for DomPDF compatibility.
+     * Encode public/logo-wirodev.png into Base64 format for DomPDF compatibility.
      */
     private function getBase64Logo(): ?string
     {
-        $path = public_path('logo.png');
+        $path = public_path('logo-wirodev.png');
+        if (!file_exists($path)) {
+            $path = public_path('logo.png');
+        }
         if (!file_exists($path)) {
             return null;
         }

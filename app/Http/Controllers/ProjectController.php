@@ -42,6 +42,17 @@ class ProjectController extends Controller
             'status' => 'required|in:draft,quotation_sent,approved,in_progress,completed,cancelled',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
+            'demo_url' => 'nullable|url|max:255',
+            'repository_url' => 'nullable|url|max:255',
+            'production_url' => 'nullable|url|max:255',
+            'hosting_provider' => 'nullable|string|max:100',
+            'hosting_credentials' => 'nullable|array',
+            'hosting_credentials.host' => 'nullable|string|max:255',
+            'hosting_credentials.username' => 'nullable|string|max:255',
+            'hosting_credentials.password' => 'nullable|string|max:255',
+            'hosting_credentials.port' => 'nullable|string|max:20',
+            'hosting_credentials.notes' => 'nullable|string',
+            'is_credentials_visible_to_client' => 'nullable|boolean',
             'members' => 'nullable|array',
             'members.*.user_id' => 'required|exists:users,id',
             'members.*.roles' => 'required|array|min:1',
@@ -54,6 +65,12 @@ class ProjectController extends Controller
             'status' => $validated['status'],
             'start_date' => $validated['start_date'] ?? null,
             'end_date' => $validated['end_date'] ?? null,
+            'demo_url' => $validated['demo_url'] ?? null,
+            'repository_url' => $validated['repository_url'] ?? null,
+            'production_url' => $validated['production_url'] ?? null,
+            'hosting_provider' => $validated['hosting_provider'] ?? null,
+            'hosting_credentials' => $validated['hosting_credentials'] ?? null,
+            'is_credentials_visible_to_client' => $request->boolean('is_credentials_visible_to_client'),
         ]);
 
         if (!empty($validated['members'])) {
@@ -119,8 +136,21 @@ class ProjectController extends Controller
             'title' => 'required|string|max:255',
             'status' => 'required|in:draft,quotation_sent,approved,in_progress,completed,cancelled',
             'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date'
+            'end_date' => 'nullable|date',
+            'demo_url' => 'nullable|url|max:255',
+            'repository_url' => 'nullable|url|max:255',
+            'production_url' => 'nullable|url|max:255',
+            'hosting_provider' => 'nullable|string|max:100',
+            'hosting_credentials' => 'nullable|array',
+            'hosting_credentials.host' => 'nullable|string|max:255',
+            'hosting_credentials.username' => 'nullable|string|max:255',
+            'hosting_credentials.password' => 'nullable|string|max:255',
+            'hosting_credentials.port' => 'nullable|string|max:20',
+            'hosting_credentials.notes' => 'nullable|string',
+            'is_credentials_visible_to_client' => 'nullable|boolean',
         ]);
+
+        $validated['is_credentials_visible_to_client'] = $request->boolean('is_credentials_visible_to_client');
 
         $project->update($validated);
 
