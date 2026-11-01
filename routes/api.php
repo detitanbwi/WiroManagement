@@ -56,3 +56,33 @@ Route::prefix('v1/fixed-expenses')->middleware(['auth:sanctum,web'])->group(func
     });
 });
 
+// Wirodev-Man Mobile Companion API (v1 - Quick Actions)
+Route::prefix('v1')->group(function () {
+    // Public Auth
+    Route::post('/auth/login', [\App\Http\Controllers\Api\V1\AuthController::class, 'login']);
+
+    // Protected (Sanctum Token for internal staff/admin)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/auth/logout', [\App\Http\Controllers\Api\V1\AuthController::class, 'logout']);
+        Route::get('/auth/me', [\App\Http\Controllers\Api\V1\AuthController::class, 'me']);
+
+        // Dashboard quick summary
+        Route::get('/dashboard/summary', [\App\Http\Controllers\Api\V1\DashboardApiController::class, 'summary']);
+
+        // Clients
+        Route::get('/clients', [\App\Http\Controllers\Api\V1\ClientApiController::class, 'index']);
+        Route::post('/clients', [\App\Http\Controllers\Api\V1\ClientApiController::class, 'store']);
+        Route::get('/clients/{client}', [\App\Http\Controllers\Api\V1\ClientApiController::class, 'show']);
+
+        // Projects
+        Route::get('/projects', [\App\Http\Controllers\Api\V1\ProjectApiController::class, 'index']);
+        Route::post('/projects', [\App\Http\Controllers\Api\V1\ProjectApiController::class, 'store']);
+        Route::get('/projects/{project}', [\App\Http\Controllers\Api\V1\ProjectApiController::class, 'show']);
+        Route::get('/projects/{project}/next-invoice-number', [\App\Http\Controllers\Api\V1\InvoiceApiController::class, 'getNextNumber']);
+
+        // Invoices
+        Route::get('/invoices', [\App\Http\Controllers\Api\V1\InvoiceApiController::class, 'index']);
+        Route::post('/invoices', [\App\Http\Controllers\Api\V1\InvoiceApiController::class, 'store']);
+        Route::get('/invoices/{invoice}', [\App\Http\Controllers\Api\V1\InvoiceApiController::class, 'show']);
+    });
+});
