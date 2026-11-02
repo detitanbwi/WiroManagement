@@ -10,13 +10,14 @@
     formattedBalance: '',
     formatNumber(val) {
         if (val === '' || val === null || val === undefined) return '';
-        let num = String(val).replace(/\D/g, '');
-        return num ? Number(num).toLocaleString('id-ID') : '';
+        let parsed = Math.round(parseFloat(val) || 0);
+        return parsed ? parsed.toLocaleString('id-ID') : '0';
     },
     onBalanceInput(event) {
         let raw = event.target.value.replace(/\D/g, '');
-        this.currentAccount.balance = raw ? Number(raw) : 0;
-        this.formattedBalance = raw ? Number(raw).toLocaleString('id-ID') : '';
+        let num = raw ? parseInt(raw, 10) : 0;
+        this.currentAccount.balance = num;
+        this.formattedBalance = num ? num.toLocaleString('id-ID') : '';
     },
     openCreate() {
         this.isEdit = false;
@@ -26,8 +27,9 @@
     },
     openEdit(account) {
         this.isEdit = true;
-        this.currentAccount = { ...account };
-        this.formattedBalance = this.formatNumber(account.balance || 0);
+        let cleanBalance = Math.round(parseFloat(account.balance) || 0);
+        this.currentAccount = { ...account, balance: cleanBalance };
+        this.formattedBalance = cleanBalance ? cleanBalance.toLocaleString('id-ID') : '0';
         this.showModal = true;
     }
 }">
@@ -41,7 +43,7 @@
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
-            + New Account
+            New Account
         </button>
         @endcan
     </div>
