@@ -683,14 +683,9 @@
             }">
                 <div class="px-6 py-4 border-b border-indigo-600 flex flex-wrap justify-between items-center gap-2 bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 text-white">
                     <div>
-                        <h3 class="text-lg font-bold text-white shadow-sm flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <h3 class="text-lg font-bold text-white shadow-sm">
                             Log Kerja & Upah Tim
                         </h3>
-                        <p class="text-xs text-indigo-100 mt-0.5">
-                            Beban HPP Tenaga Kerja Langsung: <span class="font-bold text-white">Rp {{ number_format($project->totalLaborCost(false), 0, ',', '.') }}</span>
-                            (Terbayar: <span class="font-bold text-emerald-200">Rp {{ number_format($project->totalLaborCost(true), 0, ',', '.') }}</span>)
-                        </p>
                     </div>
                     @canany(['finance.work_logs.manage', 'projects.manage'])
                     <button type="button" @click="resetForm(); openAddWorkLog = true" class="text-xs font-bold text-indigo-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm uppercase tracking-wider transition-colors cursor-pointer">
