@@ -204,6 +204,12 @@ class Project extends Model
         return $this->getMember($user) !== null;
     }
 
+    // Accessor for name alias (title)
+    public function getNameAttribute(): ?string
+    {
+        return $this->title;
+    }
+
     // Ledger Logic
     public function getContractValueAttribute()
     {

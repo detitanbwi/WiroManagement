@@ -115,8 +115,39 @@ class WorkLogController extends Controller
      */
     public function store(StoreWorkLogRequest $request): RedirectResponse|JsonResponse
     {
+        $user = $request->user();
         $data = $request->validated();
         $projectId = (int)$data['project_id'];
+        $project = Project::findOrFail($projectId);
+
+        $hasManagePermission = $user->hasPermission('finance.work_logs.manage', $project);
+        $hasSelfPermission = $user->hasPermission('finance.work_logs.self', $project);
+
+        if (!$hasManagePermission && !$hasSelfPermission) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mencatat log kerja.');
+        }
+
+        // Jika user hanya memiliki izin finance.work_logs.self (tanpa finance.work_logs.manage)
+        if (!$hasManagePermission) {
+            // Syarat 1: user_id yang diisi adalah ID pengguna yang sedang login (auth()->id())
+            if ((int)$data['user_id'] !== (int)$user->id) {
+                abort(403, 'Akses ditolak. Anda hanya diizinkan mencatat jam kerja mandiri untuk akun Anda sendiri.');
+            }
+
+            // Syarat 2: pengguna terdaftar dalam tim proyek tersebut ($project->hasMember(auth()->user()) atau role PM)
+            $isMember = $project->hasMember($user);
+            $isPm = $user->isPm() || $user->hasProjectRole($project, 'pm');
+            if (!$isMember && !$isPm) {
+                abort(403, 'Akses ditolak. Anda tidak terdaftar sebagai anggota tim dalam proyek ini.');
+            }
+
+            // Hak menentukan tarif manual dibatasi hanya untuk pemegang izin finance.work_logs.manage
+            unset($data['base_rate']);
+
+            // Mengubah status pembayaran tetap dibatasi hanya untuk pemegang izin finance.work_logs.manage
+            $data['payment_status'] = 'unpaid';
+            $data['payment_date'] = null;
+        }
 
         if (!empty($data['date_ranges']) && is_array($data['date_ranges'])) {
             $earliestStart = null;
@@ -321,6 +352,12 @@ class WorkLogController extends Controller
      */
     public function update(UpdateWorkLogRequest $request, ProjectWorkLog $workLog): RedirectResponse|JsonResponse
     {
+        $user = $request->user();
+        $project = $workLog->project;
+        if (!$user->isSuperAdmin() && !$user->hasPermission('finance.work_logs.manage', $project)) {
+            abort(403, 'Akses ditolak. Mengubah log kerja atau status pembayaran hanya dapat dilakukan oleh pemegang izin finance.work_logs.manage.');
+        }
+
         $data = $request->validated();
 
         if (!empty($data['date_ranges']) && is_array($data['date_ranges'])) {

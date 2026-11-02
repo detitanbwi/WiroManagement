@@ -34,6 +34,7 @@ class MonthlyClosingController extends Controller
         $totalRevenueAll = (float)$allClosings->sum('total_revenue');
         $totalCogsAll = (float)$allClosings->sum('total_cogs');
         $totalGrossProfitAll = (float)$allClosings->sum('gross_profit');
+        $totalOpexAll = (float)$allClosings->sum('total_opex');
         $totalNetProfitAll = (float)$allClosings->sum('net_profit');
         $latestClosing = $closings->first();
 
@@ -43,6 +44,7 @@ class MonthlyClosingController extends Controller
             'totalRevenueAll',
             'totalCogsAll',
             'totalGrossProfitAll',
+            'totalOpexAll',
             'totalNetProfitAll'
         ));
     }

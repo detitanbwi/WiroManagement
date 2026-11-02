@@ -133,7 +133,7 @@
                     </li>
                     @endcan
 
-                    @canany(['finance.view', 'finance.transactions', 'finance.bank_accounts', 'finance.work_logs.view', 'finance.work_logs.manage', 'finance.marketing.manage', 'finance.closings.generate', 'finance.closings.audit', 'finance.closings.export', 'finance.fixed_expenses.view', 'finance.fixed_expenses.manage'])
+                    @canany(['finance.view', 'finance.transactions', 'finance.bank_accounts', 'finance.work_logs.view', 'finance.work_logs.manage', 'finance.marketing.manage', 'finance.closings.generate', 'finance.closings.audit', 'finance.closings.export', 'finance.fixed_expenses.view', 'finance.fixed_expenses.manage', 'finance.rups.view', 'finance.rups.manage'])
                     <li x-data="{ open: {{ request()->routeIs('finance.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open" 
                                 class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg group transition-all duration-200 {{ request()->routeIs('finance.*') ? 'bg-primary text-white font-semibold shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-primary' }}">
@@ -180,6 +180,18 @@
                             <li>
                                 <a href="{{ route('finance.closings.index') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.closings.*') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
                                     Closing Bulanan
+                                </a>
+                            </li>
+                            @endcanany
+                            @canany(['finance.rups.view', 'finance.rups.manage'])
+                            <li>
+                                <a href="{{ route('finance.rups.index') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.rups.*') || request()->routeIs('finance.quarterly-closings.*') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
+                                    RUPS & Dividen Kuartalan
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('finance.shareholders.index') }}" class="block px-3 py-2 text-sm rounded-md transition-colors {{ request()->routeIs('finance.shareholders.*') ? 'text-primary font-bold bg-blue-50' : 'text-gray-500 hover:text-primary hover:bg-gray-50' }}">
+                                    Pemegang Saham
                                 </a>
                             </li>
                             @endcanany

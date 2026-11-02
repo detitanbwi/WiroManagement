@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             AdminSeeder::class,
             ManHourRateSeeder::class,
+            ShareholderSeeder::class,
         ]);
     }
 }

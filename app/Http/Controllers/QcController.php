@@ -788,8 +788,76 @@ class QcController extends Controller
         return response()->json($formattedBugs);
     }
 
+    public function storeBug(Request $request, ?Project $project = null)
+    {
+        if (!$project && $request->filled('project_id')) {
+            $project = Project::find($request->project_id);
+        }
+
+        if (!$project) {
+            return response()->json(['status' => 'error', 'message' => 'Project tidak ditemukan.'], 404);
+        }
+
+        $request->validate([
+            'description' => 'required|string',
+            'severity' => 'nullable|string|in:Low,Medium,High,Critical',
+            'actual_result' => 'nullable|string',
+            'environment' => 'nullable|string',
+            'app_version' => 'nullable|string|max:100',
+            'steps_to_reproduce' => 'nullable',
+            'project_task_id' => 'nullable|exists:project_tasks,id',
+            'test_case_id' => 'nullable|exists:test_cases,id',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx,xls,xlsx|max:10240',
+        ]);
+
+        $lastBug = TaskBug::where('project_id', $project->id)
+            ->orderBy('id', 'desc')
+            ->first();
+        $lastNum = 0;
+        if ($lastBug && preg_match('/BUG-(\d+)/', $lastBug->code, $matches)) {
+            $lastNum = (int)$matches[1];
+        }
+        $code = 'BUG-' . str_pad($lastNum + 1, 3, '0', STR_PAD_LEFT);
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('attachments/bugs', 'public');
+        }
+
+        $bug = TaskBug::create([
+            'code' => $code,
+            'project_id' => $project->id,
+            'project_task_id' => $request->project_task_id,
+            'test_case_id' => $request->test_case_id,
+            'description' => $request->description,
+            'steps_to_reproduce' => $request->steps_to_reproduce,
+            'severity' => $request->severity ?? 'Medium',
+            'actual_result' => $request->actual_result,
+            'environment' => $request->environment ?? 'Staging',
+            'app_version' => $request->app_version,
+            'attachment_path' => $attachmentPath,
+            'status' => 'open',
+        ]);
+
+        $bug->load(['testCase', 'projectTask']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bug report berhasil dibuat.',
+            'bug' => $bug,
+        ], 201);
+    }
+
     public function convertBugToTask(Request $request, TaskBug $bug)
     {
+        $project = $bug->project ?? $bug->projectTask?->project;
+        if ($project && $this->isStaffOnlyUser($project)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Konversi bug ke task hanya dapat dimoderasi oleh QA dan PM.',
+            ], 403);
+        }
+
         $request->validate([
             'assignee_id' => 'nullable|exists:users,id',
         ]);
@@ -826,6 +894,13 @@ class QcController extends Controller
 
     public function bulkConvertBugsToTask(Request $request, Project $project)
     {
+        if ($this->isStaffOnlyUser($project)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Konversi bug ke task hanya dapat dimoderasi oleh QA dan PM.',
+            ], 403);
+        }
+
         $request->validate([
             'bug_ids' => 'required|array|min:1',
             'bug_ids.*' => 'required|exists:task_bugs,id',
@@ -917,6 +992,14 @@ class QcController extends Controller
 
     public function destroyBug(TaskBug $bug)
     {
+        $project = $bug->project ?? $bug->projectTask?->project;
+        if ($project && $this->isStaffOnlyUser($project)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Role Staff tidak memiliki izin untuk menghapus bug.',
+            ], 403);
+        }
+
         if ($bug->attachment_path) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($bug->attachment_path);
         }
@@ -926,6 +1009,16 @@ class QcController extends Controller
 
     public function updateBug(Request $request, TaskBug $bug)
     {
+        $project = $bug->project ?? $bug->projectTask?->project;
+        if ($project && $this->isStaffOnlyUser($project)) {
+            if ($request->filled('status') && in_array($request->status, ['resolved', 'closed'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Akses ditolak. Penutupan status bug (resolved/closed) hanya dapat dimoderasi oleh QA dan PM.',
+                ], 403);
+            }
+        }
+
         $request->validate([
             'description' => 'required|string',
             'severity' => 'nullable|string|in:Low,Medium,High,Critical',

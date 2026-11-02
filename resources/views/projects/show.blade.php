@@ -687,7 +687,7 @@
                             Log Kerja & Upah Tim
                         </h3>
                     </div>
-                    @canany(['finance.work_logs.manage', 'projects.manage'])
+                    @canany(['finance.work_logs.manage', 'projects.manage', 'finance.work_logs.self'])
                     <button type="button" @click="resetForm(); openAddWorkLog = true" class="text-xs font-bold text-indigo-50 hover:text-white bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm uppercase tracking-wider transition-colors cursor-pointer">
                         + Catat Log Kerja
                     </button>

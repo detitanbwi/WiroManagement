@@ -34,6 +34,18 @@ class MonthlyClosingService
             $startDate = Carbon::parse($periodMonth . '-01')->startOfMonth();
             $endDate = Carbon::parse($periodMonth . '-01')->endOfMonth();
 
+            // Auto-Roll Forward Saldo Kas Awal:
+            // Jika openingBalance bernilai 0 atau tidak diinput, tarik ending_cash_balance dari M-1 (approved / audited)
+            if ($openingBalance <= 0) {
+                $prevMonth = Carbon::parse($periodMonth . '-01')->subMonth()->format('Y-m');
+                $prevClosing = MonthlyClosing::where('period_month', $prevMonth)
+                    ->whereIn('audit_status', ['approved', 'audited'])
+                    ->first();
+                if ($prevClosing) {
+                    $openingBalance = (float)$prevClosing->ending_cash_balance;
+                }
+            }
+
             // 1. REVENUE: Client payments received during the month
             $payments = Payment::whereBetween('payment_date', [$startDate->toDateString(), $endDate->toDateString()])
                 ->with(['invoice.project'])
@@ -64,12 +76,46 @@ class MonthlyClosingService
             $totalCogs = $totalInfraCost + $totalLaborCost;
 
             // 3. OPEX (Marketing Spend + Office Operational / Utilities / Salary)
-            // A. Marketing ad spend
+            // A. Marketing ad spend (Perhitungan proporsional harian untuk mencegah duplikasi lintas bulan)
             $marketingCampaigns = MarketingCampaign::where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('start_date', [$startDate->toDateString(), $endDate->toDateString()])
-                    ->orWhereBetween('end_date', [$startDate->toDateString(), $endDate->toDateString()]);
+                $q->where(function ($sub) use ($startDate, $endDate) {
+                    $sub->whereNotNull('end_date')
+                        ->where('start_date', '<=', $endDate->toDateString())
+                        ->where('end_date', '>=', $startDate->toDateString());
+                })->orWhere(function ($sub) use ($startDate, $endDate) {
+                    $sub->whereNull('end_date')
+                        ->whereBetween('start_date', [$startDate->toDateString(), $endDate->toDateString()]);
+                });
             })->get();
-            $totalMarketingSpend = (float)$marketingCampaigns->sum('ad_spend');
+
+            $totalMarketingSpend = 0.0;
+            $allocatedMarketingCampaigns = [];
+
+            foreach ($marketingCampaigns as $camp) {
+                $campStart = Carbon::parse($camp->start_date)->startOfDay();
+                $campEnd = $camp->end_date ? Carbon::parse($camp->end_date)->startOfDay() : null;
+
+                if ($campEnd && $campEnd->greaterThanOrEqualTo($campStart)) {
+                    $totalDays = (int)$campStart->diffInDays($campEnd) + 1;
+                    $overlapStart = $campStart->greaterThan($startDate) ? $campStart : $startDate;
+                    $overlapEnd = $campEnd->lessThan($endDate) ? $campEnd : $endDate;
+                    $overlapDays = $overlapStart->greaterThan($overlapEnd) ? 0 : ((int)$overlapStart->diffInDays($overlapEnd) + 1);
+                } else {
+                    $totalDays = 1;
+                    $overlapDays = ($campStart->greaterThanOrEqualTo($startDate) && $campStart->lessThanOrEqualTo($endDate)) ? 1 : 0;
+                }
+
+                if ($overlapDays > 0 && (float)$camp->ad_spend > 0) {
+                    $allocatedAmount = round(((float)$camp->ad_spend / $totalDays) * $overlapDays, 2);
+                    $totalMarketingSpend += $allocatedAmount;
+                    $allocatedMarketingCampaigns[] = [
+                        'campaign' => $camp,
+                        'allocated_spend' => $allocatedAmount,
+                        'overlap_days' => $overlapDays,
+                        'total_days' => $totalDays,
+                    ];
+                }
+            }
 
             // B. Operational tracker expenses
             $trackerExpenses = TrackerExpense::where('type', 'company')
@@ -179,12 +225,12 @@ class MonthlyClosingService
                     $items[] = [
                         'closing_id' => $closing->id,
                         'account_code' => '5000-01-01',
-                        'account_name' => 'HPP Tenaga Kerja Langsung: ' . ($proj ? $proj->title : 'Proyek #' . $projectId),
+                        'account_name' => 'HPP Tenaga Kerja Langsung: Honor Eksekusi Teknis Proyek',
                         'category' => 'cogs',
                         'debit' => round($subLabor, 2),
                         'credit' => 0,
                         'project_id' => $projectId,
-                        'notes' => 'Total jam kerja terealisasi: ' . $hours . ' jam (' . $logs->count() . ' log kerja terbayar)',
+                        'notes' => ($proj ? 'Proyek: ' . $proj->title . '. ' : '') . 'Total jam kerja terealisasi: ' . $hours . ' jam (' . $logs->count() . ' log kerja terbayar)',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
@@ -213,17 +259,18 @@ class MonthlyClosingService
             }
 
             // OPEX: Marketing
-            if ($marketingCampaigns->isNotEmpty()) {
-                foreach ($marketingCampaigns as $camp) {
+            if (!empty($allocatedMarketingCampaigns)) {
+                foreach ($allocatedMarketingCampaigns as $allocated) {
+                    $camp = $allocated['campaign'];
                     $items[] = [
                         'closing_id' => $closing->id,
                         'account_code' => '6000-01-01',
                         'account_name' => 'Beban Iklan & Pemasaran: ' . $camp->campaign_name,
                         'category' => 'opex',
-                        'debit' => round((float)$camp->ad_spend, 2),
+                        'debit' => $allocated['allocated_spend'],
                         'credit' => 0,
                         'project_id' => null,
-                        'notes' => 'Platform: ' . strtoupper($camp->platform) . ', Leads: ' . $camp->messages_count . ', Deals: ' . $camp->deals_count,
+                        'notes' => 'Platform: ' . strtoupper($camp->platform) . ' (Proporsional: ' . $allocated['overlap_days'] . '/' . $allocated['total_days'] . ' hari). Leads: ' . $camp->messages_count . ', Deals: ' . $camp->deals_count,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
@@ -265,6 +312,11 @@ class MonthlyClosingService
                         default => '6000-02-02',
                     };
 
+                    $accountName = match ($accountCode) {
+                        '6000-05-01' => 'Beban Tetap (PAYROLL): Gaji Pokok Struktural / Manajerial',
+                        default => 'Beban Tetap (' . $category . '): ' . $expenseName,
+                    };
+
                     $paymentDateFormatted = $realization->payment_date
                         ? Carbon::parse($realization->payment_date)->format('d/m/Y')
                         : $periodMonth;
@@ -272,7 +324,7 @@ class MonthlyClosingService
                     $items[] = [
                         'closing_id' => $closing->id,
                         'account_code' => $accountCode,
-                        'account_name' => 'Beban Tetap (' . $category . '): ' . $expenseName,
+                        'account_name' => $accountName,
                         'category' => 'opex',
                         'debit' => round((float)$realization->paid_amount, 2),
                         'credit' => 0,

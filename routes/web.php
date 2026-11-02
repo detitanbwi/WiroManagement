@@ -13,6 +13,8 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\Finance\WorkLogController;
 use App\Http\Controllers\Finance\MarketingCampaignController;
 use App\Http\Controllers\Finance\MonthlyClosingController;
+use App\Http\Controllers\Finance\QuarterlyClosingController;
+use App\Http\Controllers\Finance\ShareholderController;
 use App\Http\Controllers\QcController;
 use App\Http\Controllers\CompanyTaskController;
 use Illuminate\Support\Facades\Route;
@@ -24,8 +26,8 @@ use Illuminate\Support\Facades\File;
 
 // Route to bypass broken symlinks on shared hosting
 Route::get('/storage/{path}', function ($path) {
-    // Allow attachments and clients directories
-    if (str_starts_with($path, 'attachments/') || str_starts_with($path, 'clients/')) {
+    // Allow attachments, clients, and receipts directories
+    if (str_starts_with($path, 'attachments/') || str_starts_with($path, 'clients/') || str_starts_with($path, 'receipts/')) {
         $fullPath = storage_path("app/public/{$path}");
         if (File::exists($fullPath)) {
             return response()->file($fullPath);
@@ -140,6 +142,11 @@ Route::middleware(['auth', 'internal'])->group(function () {
             ->name('api.qc.tasks.destroy')
             ->middleware('permission:qc.manage_tasks');
         Route::get('api/projects/{project}/qc/bugs', [QcController::class, 'getProjectBugs'])->name('api.qc.project.bugs');
+        Route::post('api/projects/{project}/qc/bugs', [QcController::class, 'storeBug'])
+            ->name('api.qc.bugs.store')
+            ->middleware('permission:qc.manage_bugs');
+        Route::post('api/qc/bugs', [QcController::class, 'storeBug'])
+            ->middleware('permission:qc.manage_bugs');
         Route::post('api/qc/bugs/{bug}/convert', [QcController::class, 'convertBugToTask'])
             ->name('api.qc.bugs.convert')
             ->middleware('permission:qc.manage_bugs');
@@ -186,8 +193,8 @@ Route::middleware(['auth', 'internal'])->group(function () {
         Route::get('/documents/receipt/{payment}/pdf', [DocumentController::class, 'streamReceipt'])->name('documents.receipt.pdf');
     });
 
-    // Finance Monitoring Routes (Overview, Transactions, Rates, Labor Logs, Marketing, Closings, Fixed Expenses)
-    Route::prefix('finance')->name('finance.')->middleware('permission:finance.view,finance.transactions,finance.bank_accounts,finance.work_logs.view,finance.work_logs.manage,finance.marketing.manage,finance.closings.generate,finance.closings.audit,finance.closings.export,finance.fixed_expenses.view,finance.fixed_expenses.manage')->group(function () {
+    // Finance Monitoring Routes (Overview, Transactions, Rates, Labor Logs, Marketing, Closings, Fixed Expenses, RUPS & Dividends)
+    Route::prefix('finance')->name('finance.')->middleware('permission:finance.view,finance.transactions,finance.bank_accounts,finance.work_logs.view,finance.work_logs.manage,finance.work_logs.self,finance.marketing.manage,finance.closings.generate,finance.closings.audit,finance.closings.export,finance.fixed_expenses.view,finance.fixed_expenses.manage,finance.rups.view,finance.rups.manage')->group(function () {
         Route::get('/overview', [\App\Http\Controllers\FinanceController::class, 'overview'])
             ->name('overview')
             ->middleware('permission:finance.view');
@@ -204,12 +211,14 @@ Route::middleware(['auth', 'internal'])->group(function () {
         });
 
         // Labor Work Logs & Rate Management
-        Route::middleware('permission:finance.work_logs.view,finance.work_logs.manage')->group(function () {
+        Route::middleware('permission:finance.work_logs.view,finance.work_logs.manage,finance.work_logs.self')->group(function () {
             Route::get('/work-logs', [WorkLogController::class, 'index'])->name('work-logs.index');
             Route::post('/work-logs/calculate-rate', [WorkLogController::class, 'calculateRate'])->name('work-logs.calculate-rate');
+            Route::post('/work-logs', [WorkLogController::class, 'store'])
+                ->name('work-logs.store')
+                ->middleware('permission:finance.work_logs.manage,finance.work_logs.self');
 
             Route::middleware('permission:finance.work_logs.manage')->group(function () {
-                Route::post('/work-logs', [WorkLogController::class, 'store'])->name('work-logs.store');
                 Route::put('/work-logs/{workLog}', [WorkLogController::class, 'update'])->name('work-logs.update');
                 Route::delete('/work-logs/{workLog}', [WorkLogController::class, 'destroy'])->name('work-logs.destroy');
                 Route::post('/work-logs/batch-status', [WorkLogController::class, 'batchUpdateStatus'])->name('work-logs.batch-status');
@@ -254,6 +263,31 @@ Route::middleware(['auth', 'internal'])->group(function () {
                 Route::post('/fixed-expenses/generate-cycle', [\App\Http\Controllers\Finance\FixedExpenseWebController::class, 'generateCycle'])->name('fixed-expenses.generate-cycle');
                 Route::post('/fixed-expenses/realizations/{realization}/mark-paid', [\App\Http\Controllers\Finance\FixedExpenseWebController::class, 'markPaid'])->name('fixed-expenses.mark-paid');
             });
+        });
+
+        // Quarterly Closing & RUPS Dividend Engine (finance.rups.view, finance.rups.manage)
+        Route::middleware('permission:finance.rups.view,finance.rups.manage')->group(function () {
+            // Shareholders CRUD
+            Route::get('/shareholders', [ShareholderController::class, 'index'])->name('shareholders.index');
+            Route::post('/shareholders', [ShareholderController::class, 'store'])->name('shareholders.store')->middleware('permission:finance.rups.manage');
+            Route::put('/shareholders/{shareholder}', [ShareholderController::class, 'update'])->name('shareholders.update')->middleware('permission:finance.rups.manage');
+            Route::delete('/shareholders/{shareholder}', [ShareholderController::class, 'destroy'])->name('shareholders.destroy')->middleware('permission:finance.rups.manage');
+
+            // Main /rups routes
+            Route::get('/rups', [QuarterlyClosingController::class, 'index'])->name('rups.index');
+            Route::post('/rups/generate', [QuarterlyClosingController::class, 'generate'])->name('rups.generate')->middleware('permission:finance.rups.manage');
+            Route::get('/rups/{id}', [QuarterlyClosingController::class, 'show'])->name('rups.show');
+            Route::get('/rups/{id}/pdf', [QuarterlyClosingController::class, 'exportPdf'])->name('rups.pdf')->middleware('permission:finance.rups.view');
+            Route::post('/rups/{id}/distribute', [QuarterlyClosingController::class, 'distribute'])->name('rups.distribute')->middleware('permission:finance.rups.manage');
+            Route::post('/rups/payouts/{id}/mark-paid', [QuarterlyClosingController::class, 'markPaid'])->name('rups.payouts.mark-paid')->middleware('permission:finance.rups.manage');
+
+            // Route prefix /quarterly-closings aliases
+            Route::get('/quarterly-closings', [QuarterlyClosingController::class, 'index'])->name('quarterly-closings.index');
+            Route::post('/quarterly-closings/generate', [QuarterlyClosingController::class, 'generate'])->name('quarterly-closings.generate')->middleware('permission:finance.rups.manage');
+            Route::get('/quarterly-closings/{id}', [QuarterlyClosingController::class, 'show'])->name('quarterly-closings.show');
+            Route::get('/quarterly-closings/{id}/pdf', [QuarterlyClosingController::class, 'exportPdf'])->name('quarterly-closings.pdf')->middleware('permission:finance.rups.view');
+            Route::post('/quarterly-closings/{id}/distribute', [QuarterlyClosingController::class, 'distribute'])->name('quarterly-closings.distribute')->middleware('permission:finance.rups.manage');
+            Route::post('/quarterly-closings/payouts/{id}/mark-paid', [QuarterlyClosingController::class, 'markPaid'])->name('quarterly-closings.payouts.mark-paid')->middleware('permission:finance.rups.manage');
         });
     });
 

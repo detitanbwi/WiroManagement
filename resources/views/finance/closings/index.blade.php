@@ -43,7 +43,7 @@
     @endif
 
     <!-- Financial KPI Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
             <span class="text-xs font-semibold text-gray-500 uppercase">Total Revenue</span>
             <div class="text-2xl font-black text-gray-900 mt-2">Rp {{ number_format($totalRevenueAll, 0, ',', '.') }}</div>
@@ -60,6 +60,12 @@
             <span class="text-xs font-semibold text-gray-500 uppercase">Gross Profit</span>
             <div class="text-2xl font-black text-indigo-700 mt-2">Rp {{ number_format($totalGrossProfitAll, 0, ',', '.') }}</div>
             <div class="text-[10px] text-gray-400 mt-1">Revenue dikurangi COGS</div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
+            <span class="text-xs font-semibold text-gray-500 uppercase">Total Beban OPEX</span>
+            <div class="text-2xl font-black text-amber-700 mt-2">Rp {{ number_format($totalOpexAll ?? 0, 0, ',', '.') }}</div>
+            <div class="text-[10px] text-gray-400 mt-1">Biaya operasional & rutin</div>
         </div>
 
         <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
@@ -124,7 +130,7 @@
                         <td class="py-3 px-4 text-right font-bold text-indigo-700">
                             Rp {{ number_format($closing->gross_profit, 0, ',', '.') }}
                         </td>
-                        <td class="py-3 px-4 text-right text-gray-700">
+                        <td class="py-3 px-4 text-right font-semibold text-amber-700">
                             Rp {{ number_format($closing->total_opex, 0, ',', '.') }}
                         </td>
                         <td class="py-3 px-4 text-right font-black {{ $closing->net_profit >= 0 ? 'text-emerald-600' : 'text-red-600' }}">

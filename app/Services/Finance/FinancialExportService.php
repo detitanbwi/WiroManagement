@@ -3,6 +3,8 @@
 namespace App\Services\Finance;
 
 use App\Models\MonthlyClosing;
+use App\Models\QuarterlyClosing;
+use App\Models\Shareholder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -53,6 +55,49 @@ class FinancialExportService
         $pdf = $this->generatePdf($closing);
         $filename = "Monthly-Closing-{$closing->period_month}.pdf";
         return $pdf->download($filename);
+    }
+
+    /**
+     * Generate DomPdf instance for the RUPS Minutes (Berita Acara RUPS) document.
+     */
+    public function generateRupsPdf(QuarterlyClosing $closing)
+    {
+        $closing->load(['profitDistribution.payouts.shareholder', 'approver', 'capitalHistories.shareholder']);
+
+        $logo = $this->getBase64Logo();
+        $shareholders = Shareholder::where('is_active', true)->orderBy('ownership_percentage', 'desc')->get();
+        $distribution = $closing->profitDistribution;
+
+        $data = [
+            'closing' => $closing,
+            'distribution' => $distribution,
+            'shareholders' => $shareholders,
+            'logo' => $logo,
+        ];
+
+        return Pdf::loadView('documents.pdf.rups-minutes', $data)->setPaper('a4', 'portrait');
+    }
+
+    /**
+     * Stream RUPS Minutes PDF in browser.
+     */
+    public function streamRupsPdf(QuarterlyClosing $closing): Response
+    {
+        $pdf = $this->generateRupsPdf($closing);
+        $docNum = $closing->profitDistribution?->document_number ?: "BA-RUPS-{$closing->period_label}";
+        $sanitizedDocNum = str_replace(['/', '\\'], '-', $docNum);
+        return $pdf->stream("{$sanitizedDocNum}.pdf");
+    }
+
+    /**
+     * Download RUPS Minutes PDF.
+     */
+    public function downloadRupsPdf(QuarterlyClosing $closing): Response
+    {
+        $pdf = $this->generateRupsPdf($closing);
+        $docNum = $closing->profitDistribution?->document_number ?: "BA-RUPS-{$closing->period_label}";
+        $sanitizedDocNum = str_replace(['/', '\\'], '-', $docNum);
+        return $pdf->download("{$sanitizedDocNum}.pdf");
     }
 
     /**

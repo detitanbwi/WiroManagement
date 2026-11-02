@@ -91,7 +91,7 @@
     @endif
 
     <!-- Executive Summary Dashboard Cards (October 2026 Spreadsheet Layout) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-gray-500 uppercase">Total Revenue</span>
@@ -107,7 +107,7 @@
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">{{ $closing->cogs_ratio }}% Rasio</span>
             </div>
             <div class="text-2xl font-black text-red-600 mt-2">Rp {{ number_format($closing->total_cogs, 0, ',', '.') }}</div>
-            <div class="text-xs text-gray-500 mt-1">Tenaga kerja + infrastruktur/server</div>
+            <div class="text-xs text-gray-500 mt-1">Tenaga kerja + server proyek</div>
         </div>
 
         <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
@@ -121,6 +121,15 @@
 
         <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
             <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-gray-500 uppercase">Beban OPEX</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">{{ $closing->opex_ratio }}% Rasio</span>
+            </div>
+            <div class="text-2xl font-black text-amber-700 mt-2">Rp {{ number_format($closing->total_opex, 0, ',', '.') }}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ $opexItems->count() }} pos beban operasional</div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+            <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-gray-500 uppercase">Net Profit (Laba Bersih)</span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-black {{ $closing->net_profit >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
                     {{ $closing->net_profit_margin }}% Margin
@@ -129,7 +138,7 @@
             <div class="text-2xl font-black {{ $closing->net_profit >= 0 ? 'text-emerald-600' : 'text-red-600' }} mt-2">
                 Rp {{ number_format($closing->net_profit, 0, ',', '.') }}
             </div>
-            <div class="text-xs text-gray-500 mt-1">Setelah beban OPEX: Rp {{ number_format($closing->total_opex, 0, ',', '.') }}</div>
+            <div class="text-xs text-gray-500 mt-1">Laba bersih final periode</div>
         </div>
     </div>
 
@@ -184,20 +193,89 @@
                         <span class="font-black text-indigo-700">Rp {{ number_format($closing->gross_profit, 0, ',', '.') }}</span>
                     </div>
 
-                    <div class="pl-4 space-y-2 text-xs">
-                        <div class="flex items-center justify-between text-gray-600">
-                            <span>Beban Pemasaran & Iklan Berbayar</span>
-                            <span class="font-medium">Rp {{ number_format($opexItems->where('account_code', '6000-01-01')->sum('debit'), 0, ',', '.') }}</span>
+                    <!-- 4. Rincian Pos Beban Operasional (OPEX) Dinamis -->
+                    <div class="space-y-3 pt-1">
+                        <div class="flex items-center justify-between pb-1.5 border-b border-gray-200 text-xs">
+                            <span class="font-bold text-gray-800 uppercase tracking-wide flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                Rincian Pos Beban Operasional (OPEX)
+                            </span>
+                            <span class="text-[11px] font-semibold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                                {{ $opexItems->count() }} pos terdaftar
+                            </span>
                         </div>
-                        <div class="flex items-center justify-between text-gray-600">
-                            <span>Beban Utilitas & Operasional Kantor</span>
-                            <span class="font-medium">Rp {{ number_format($opexItems->where('account_code', '6000-02-01')->sum('debit'), 0, ',', '.') }}</span>
+
+                        @php
+                            $opexGroups = $opexItems->groupBy('account_code');
+                            $categoryNames = [
+                                '6000-01-01' => 'Pemasaran & Iklan Berbayar (Marketing Ads)',
+                                '6000-02-01' => 'Beban Operasional Kantor Umum & Tracker',
+                                '6000-02-02' => 'Beban Operasional Tetap Lainnya',
+                                '6000-03-01' => 'Utilitas & Fasilitas (Listrik, Air & Internet)',
+                                '6000-04-01' => 'Langganan Software, Tools & Layanan SaaS',
+                                '6000-05-01' => 'Beban Tetap (PAYROLL): Gaji Pokok Struktural / Manajerial',
+                                '6000-06-01' => 'Infrastruktur Server & Hosting Kantor',
+                            ];
+                        @endphp
+
+                        <div class="space-y-2.5 max-h-[440px] overflow-y-auto pr-1">
+                        @forelse($opexGroups as $code => $groupItems)
+                            @php
+                                $groupTitle = $categoryNames[$code] ?? ($groupItems->first()?->account_name ?? 'Beban Operasional ' . $code);
+                                $groupTotal = $groupItems->sum('debit');
+                                $groupRatio = $closing->total_revenue > 0 ? round(($groupTotal / $closing->total_revenue) * 100, 1) : 0;
+                            @endphp
+                            <div class="bg-gray-50/80 rounded-xl p-3 border border-gray-200/90 shadow-2xs space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 text-amber-900 rounded border border-amber-200/80">
+                                            {{ $code }}
+                                        </span>
+                                        <span class="text-xs font-bold text-gray-900">{{ $groupTitle }}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-black text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60 font-mono">
+                                            Rp {{ number_format($groupTotal, 0, ',', '.') }}
+                                        </span>
+                                        <span class="text-[10px] text-gray-500 ml-1.5 font-medium">({{ $groupRatio }}%)</span>
+                                    </div>
+                                </div>
+
+                                <!-- Transaction lines within group -->
+                                <div class="space-y-1.5 pl-2.5 border-l-2 border-amber-300/70 ml-1">
+                                    @foreach($groupItems as $item)
+                                    <div class="flex items-start justify-between text-xs py-1 px-1.5 rounded-lg hover:bg-white transition-colors">
+                                        <div class="pr-2">
+                                            <div class="font-medium text-gray-800 text-[11px] leading-tight">
+                                                {{ $item->account_name }}
+                                            </div>
+                                            @if($item->notes)
+                                            <div class="text-[10px] text-gray-500 mt-0.5 leading-snug">
+                                                {{ $item->notes }}
+                                            </div>
+                                            @endif
+                                        </div>
+                                        <span class="font-semibold text-gray-700 whitespace-nowrap text-[11px] font-mono">
+                                            Rp {{ number_format($item->debit, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @empty
+                            <div class="py-5 text-center text-xs text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                Belum ada rincian pengeluaran operasional (OPEX) pada periode ini.
+                            </div>
+                        @endforelse
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between py-2 border-b border-gray-100 text-sm bg-amber-50/50 px-3 rounded-lg">
-                        <span class="font-bold text-amber-800">4. TOTAL BEBAN OPERASIONAL (OPEX)</span>
-                        <span class="font-black text-amber-700">(Rp {{ number_format($closing->total_opex, 0, ',', '.') }})</span>
+                    <div class="flex items-center justify-between py-2.5 border-b border-gray-100 text-sm bg-amber-50/70 px-3.5 rounded-xl border border-amber-200/60">
+                        <div>
+                            <span class="font-bold text-amber-900">4. TOTAL BEBAN OPERASIONAL (OPEX)</span>
+                            <div class="text-[10px] text-amber-700/80">Rasio {{ $closing->opex_ratio }}% dari pendapatan</div>
+                        </div>
+                        <span class="font-black text-amber-800 text-base font-mono">(Rp {{ number_format($closing->total_opex, 0, ',', '.') }})</span>
                     </div>
 
                     <div class="flex items-center justify-between py-3 px-3 rounded-xl {{ $closing->net_profit >= 0 ? 'bg-emerald-100/70 border border-emerald-300' : 'bg-red-100/70 border border-red-300' }}">
