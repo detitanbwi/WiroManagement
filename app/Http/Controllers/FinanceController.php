@@ -22,6 +22,11 @@ class FinanceController extends Controller
 
     public function storeBankAccount(Request $request)
     {
+        if ($request->has('balance')) {
+            $cleanBalance = str_replace(['.', ',', ' '], '', (string) $request->input('balance'));
+            $request->merge(['balance' => $cleanBalance]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string',
             'type' => 'required|in:personal,company',
@@ -35,6 +40,12 @@ class FinanceController extends Controller
     public function updateBankAccount(Request $request, $id)
     {
         $account = TrackerAccount::findOrFail($id);
+
+        if ($request->has('balance')) {
+            $cleanBalance = str_replace(['.', ',', ' '], '', (string) $request->input('balance'));
+            $request->merge(['balance' => $cleanBalance]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string',
             'type' => 'required|in:personal,company',

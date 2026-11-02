@@ -7,14 +7,27 @@
     showModal: false, 
     isEdit: false, 
     currentAccount: { id: '', name: '', type: 'personal', balance: 0 },
+    formattedBalance: '',
+    formatNumber(val) {
+        if (val === '' || val === null || val === undefined) return '';
+        let num = String(val).replace(/\D/g, '');
+        return num ? Number(num).toLocaleString('id-ID') : '';
+    },
+    onBalanceInput(event) {
+        let raw = event.target.value.replace(/\D/g, '');
+        this.currentAccount.balance = raw ? Number(raw) : 0;
+        this.formattedBalance = raw ? Number(raw).toLocaleString('id-ID') : '';
+    },
     openCreate() {
         this.isEdit = false;
         this.currentAccount = { id: '', name: '', type: 'personal', balance: 0 };
+        this.formattedBalance = '';
         this.showModal = true;
     },
     openEdit(account) {
         this.isEdit = true;
         this.currentAccount = { ...account };
+        this.formattedBalance = this.formatNumber(account.balance || 0);
         this.showModal = true;
     }
 }">
@@ -119,8 +132,15 @@
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Opening Balance</label>
                                 <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-bold">Rp</span>
-                                    <input type="number" name="balance" x-model="currentAccount.balance" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="0">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-bold pointer-events-none">Rp</span>
+                                    <input type="text" 
+                                           inputmode="numeric" 
+                                           x-model="formattedBalance" 
+                                           @input="onBalanceInput($event)" 
+                                           required 
+                                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary font-medium" 
+                                           placeholder="0">
+                                    <input type="hidden" name="balance" :value="currentAccount.balance">
                                 </div>
                             </div>
                         </div>
