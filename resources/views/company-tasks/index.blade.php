@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Aktivitas & Task Internal - Wirodayan Digital')
+@section('title', 'Internal Tasks - Wirodayan Digital')
 
 @section('content')
 <div class="h-full flex flex-col bg-gray-50 overflow-y-auto" x-data="companyTasksApp()">
@@ -28,21 +28,11 @@
     <div class="px-6 py-5 bg-white border-b border-gray-200 shrink-0 shadow-xs">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <div class="flex items-center gap-2.5">
-                    <span class="inline-flex items-center justify-center p-2 rounded-lg bg-primary/10 text-primary">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
-                        </svg>
-                    </span>
-                    <div>
-                        <h1 class="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">Aktivitas & Task Internal</h1>
-                        <p class="text-xs md:text-sm text-gray-500 mt-0.5">Manajemen jadwal pertemuan klien, draf proposal, laporan akhir bulan, dan operasional manajemen.</p>
-                    </div>
-                </div>
+                <h1 class="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">Internal Tasks</h1>
             </div>
 
             <div class="flex items-center gap-2.5">
-                <!-- View Mode Switcher: 3 Tabs (Kanban, List, Kalender) -->
+                <!-- View Mode Switcher: 3 Tabs (Kanban, List, Calendar) -->
                 <div class="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-0.5">
                     <button @click="viewMode = 'kanban'" 
                             :class="viewMode === 'kanban' ? 'bg-white text-gray-900 shadow-xs font-semibold' : 'text-gray-500 hover:text-gray-700'"
@@ -58,7 +48,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
                         </svg>
-                        <span>Daftar / Agenda</span>
+                        <span>List</span>
                     </button>
                     <button @click="viewMode = 'calendar'" 
                             :class="viewMode === 'calendar' ? 'bg-white text-gray-900 shadow-xs font-semibold' : 'text-gray-500 hover:text-gray-700'"
@@ -66,7 +56,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
-                        <span>Kalender & Tenggat</span>
+                        <span>Calendar</span>
                     </button>
                 </div>
 
@@ -76,7 +66,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
-                    <span>Task Internal Baru</span>
+                    <span>New Task</span>
                 </button>
                 @endcan
             </div>
@@ -86,7 +76,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
             <div class="bg-gray-50/80 border border-gray-200/80 rounded-xl p-3 flex items-center justify-between">
                 <div>
-                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total Agenda</p>
+                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total Tasks</p>
                     <p class="text-xl font-bold text-gray-900 mt-0.5" x-text="tasks.length"></p>
                 </div>
                 <div class="w-9 h-9 rounded-lg bg-blue-100/60 text-primary flex items-center justify-center font-bold">
@@ -96,7 +86,7 @@
 
             <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex items-center justify-between">
                 <div>
-                    <p class="text-[11px] font-semibold text-indigo-700 uppercase tracking-wider">Pertemuan Klien</p>
+                    <p class="text-[11px] font-semibold text-indigo-700 uppercase tracking-wider">Client Meetings</p>
                     <p class="text-xl font-bold text-indigo-900 mt-0.5" x-text="getTasksByType('meeting').length"></p>
                 </div>
                 <div class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
@@ -106,7 +96,7 @@
 
             <div class="bg-amber-50/50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
                 <div>
-                    <p class="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Proses & Review</p>
+                    <p class="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">In Progress & Review</p>
                     <p class="text-xl font-bold text-amber-900 mt-0.5" x-text="tasks.filter(t => ['in_progress', 'waiting_client'].includes(t.status)).length"></p>
                 </div>
                 <div class="w-9 h-9 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
@@ -116,7 +106,7 @@
 
             <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3 flex items-center justify-between">
                 <div>
-                    <p class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Selesai</p>
+                    <p class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Completed</p>
                     <p class="text-xl font-bold text-emerald-900 mt-0.5" x-text="getTasksByColumn('done').length"></p>
                 </div>
                 <div class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
@@ -134,30 +124,30 @@
                 <button @click="filterType = 'all'" 
                         :class="filterType === 'all' ? 'bg-primary text-white font-semibold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0">
-                    Semua Tipe (<span x-text="tasks.length"></span>)
+                    All Types (<span x-text="tasks.length"></span>)
                 </button>
                 <button @click="filterType = 'meeting'" 
                         :class="filterType === 'meeting' ? 'bg-indigo-600 text-white font-semibold' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1.5">
-                    <span>🤝 Meeting Klien</span>
+                    <span>Client Meeting</span>
                     <span class="text-[11px] opacity-80" x-text="getTasksByType('meeting').length"></span>
                 </button>
                 <button @click="filterType = 'proposal'" 
                         :class="filterType === 'proposal' ? 'bg-amber-600 text-white font-semibold' : 'bg-amber-50 text-amber-800 hover:bg-amber-100'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1.5">
-                    <span>📑 Proposal</span>
+                    <span>Proposal</span>
                     <span class="text-[11px] opacity-80" x-text="getTasksByType('proposal').length"></span>
                 </button>
                 <button @click="filterType = 'report'" 
                         :class="filterType === 'report' ? 'bg-emerald-600 text-white font-semibold' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1.5">
-                    <span>📊 Laporan Bulanan</span>
+                    <span>Monthly Report</span>
                     <span class="text-[11px] opacity-80" x-text="getTasksByType('report').length"></span>
                 </button>
                 <button @click="filterType = 'operational'" 
                         :class="filterType === 'operational' ? 'bg-purple-600 text-white font-semibold' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'"
                         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1.5">
-                    <span>⚙️ Operasional</span>
+                    <span>Operations</span>
                     <span class="text-[11px] opacity-80" x-text="getTasksByType('operational').length"></span>
                 </button>
             </div>
@@ -168,7 +158,7 @@
                 <div class="relative w-full sm:w-64">
                     <input type="text" 
                            x-model="searchQuery" 
-                           placeholder="Cari tugas, agenda, klien..." 
+                           placeholder="Search tasks, clients..." 
                            class="w-full pl-9 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
                     <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -177,16 +167,16 @@
 
                 <!-- Priority Filter -->
                 <select x-model="filterPriority" class="text-xs bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary">
-                    <option value="all">Semua Prioritas</option>
-                    <option value="urgent">🔴 Urgent</option>
-                    <option value="high">🟠 Tinggi</option>
-                    <option value="medium">🟡 Sedang</option>
-                    <option value="low">⚪ Rendah</option>
+                    <option value="all">All Priorities</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
                 </select>
 
                 <!-- Assignee Filter -->
                 <select x-model="filterAssignee" class="text-xs bg-gray-50 border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary">
-                    <option value="all">Semua Petugas</option>
+                    <option value="all">All Assignees</option>
                     @foreach($users as $u)
                         <option value="{{ $u->id }}">{{ $u->name }}</option>
                     @endforeach
@@ -226,7 +216,7 @@
                         <!-- Drop Placeholder Area -->
                         <div x-show="dragOverColumnId === column.id && draggedTaskId" 
                              class="mb-3 p-3 border-2 border-dashed border-primary/50 bg-blue-50/70 rounded-xl text-center text-xs font-semibold text-primary transition-all">
-                            Lepaskan untuk memindahkan ke <span x-text="column.title"></span>
+                            Drop here to move to <span x-text="column.title"></span>
                         </div>
 
                         <!-- Task Cards Container -->
@@ -300,7 +290,7 @@
                                                 </span>
                                             </template>
                                             <template x-if="!task.due_date">
-                                                <span class="text-gray-400 text-[11px]">Tanpa deadline</span>
+                                                <span class="text-gray-400 text-[11px]">No deadline</span>
                                             </template>
                                         </div>
 
@@ -326,7 +316,7 @@
                                                 <span class="text-[11px] font-medium text-gray-600 max-w-[85px] truncate" x-text="getTaskAssignees(task)[0].name"></span>
                                             </template>
                                             <template x-if="getTaskAssignees(task).length > 1">
-                                                <span class="text-[11px] font-semibold text-gray-600" x-text="getTaskAssignees(task).length + ' Petugas'"></span>
+                                                <span class="text-[11px] font-semibold text-gray-600" x-text="getTaskAssignees(task).length + ' Assignees'"></span>
                                             </template>
                                             <template x-if="getTaskAssignees(task).length === 0">
                                                 <div class="flex items-center gap-1 text-gray-400">
@@ -339,13 +329,13 @@
 
                                     <!-- Quick Move Strip on hover for Mobile or quick click -->
                                     <div class="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
-                                        <span class="text-gray-400 font-medium">Pindah ke:</span>
+                                        <span class="text-gray-400 font-medium">Move to:</span>
                                         <div class="flex items-center gap-1">
                                             <template x-for="c in columns" :key="c.id">
                                                 <button x-show="c.id !== task.status" 
                                                         @click.stop="quickMoveTask(task, c.id)" 
                                                         class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                                                        :title="'Pindah ke ' + c.title"
+                                                        :title="'Move to ' + c.title"
                                                         x-text="c.shortTitle">
                                                 </button>
                                             </template>
@@ -357,7 +347,7 @@
                             <!-- Empty Column State -->
                             <div x-show="getFilteredTasksByColumn(column.id).length === 0" 
                                  class="p-6 text-center border-2 border-dashed border-gray-200 rounded-xl bg-white/40">
-                                <p class="text-xs text-gray-400 font-medium">Tidak ada tugas pada tahap ini</p>
+                                <p class="text-xs text-gray-400 font-medium">No tasks in this stage</p>
                             </div>
                         </div>
                     </div>
@@ -371,14 +361,14 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                            <th class="py-3 px-4">Kode & Judul Task</th>
-                            <th class="py-3 px-4">Tipe Agenda</th>
-                            <th class="py-3 px-4">Klien Terkait</th>
-                            <th class="py-3 px-4">Waktu / Jadwal</th>
-                            <th class="py-3 px-4">Petugas / Tim</th>
-                            <th class="py-3 px-4">Prioritas</th>
+                            <th class="py-3 px-4">Code & Task Title</th>
+                            <th class="py-3 px-4">Type</th>
+                            <th class="py-3 px-4">Client</th>
+                            <th class="py-3 px-4">Schedule / Due Date</th>
+                            <th class="py-3 px-4">Assignees</th>
+                            <th class="py-3 px-4">Priority</th>
                             <th class="py-3 px-4">Status</th>
-                            <th class="py-3 px-4 text-right">Aksi</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-xs text-gray-700">
@@ -433,7 +423,7 @@
                                         </template>
                                         <div class="text-xs text-gray-700 truncate max-w-[150px]">
                                             <template x-if="getTaskAssignees(task).length === 0">
-                                                <span class="text-gray-400 italic">Belum ditugaskan</span>
+                                                <span class="text-gray-400 italic">Unassigned</span>
                                             </template>
                                             <template x-if="getTaskAssignees(task).length === 1">
                                                 <span x-text="getTaskAssignees(task)[0].name"></span>
@@ -466,7 +456,7 @@
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
                                         @can('company_tasks.manage')
-                                        <button @click="deleteTask(task)" class="p-1.5 text-gray-400 hover:text-red-600 rounded-md transition-colors" title="Hapus">
+                                        <button @click="deleteTask(task)" class="p-1.5 text-gray-400 hover:text-red-600 rounded-md transition-colors" title="Delete">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </button>
                                         @endcan
@@ -478,7 +468,7 @@
                         <template x-if="filteredTasks.length === 0">
                             <tr>
                                 <td colspan="8" class="py-12 text-center text-gray-400">
-                                    Tidak ada data task internal yang sesuai dengan filter.
+                                    No internal tasks match the current filter.
                                 </td>
                             </tr>
                         </template>
@@ -497,16 +487,16 @@
                         <!-- Month Navigation -->
                         <div class="flex items-center gap-3">
                             <div class="flex items-center bg-white border border-gray-200 rounded-xl shadow-2xs p-1">
-                                <button @click="prevMonth()" class="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" title="Bulan Sebelumnya">
+                                <button @click="prevMonth()" class="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" title="Previous Month">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                                 </button>
-                                <button @click="nextMonth()" class="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" title="Bulan Berikutnya">
+                                <button @click="nextMonth()" class="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" title="Next Month">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                 </button>
                             </div>
                             <h2 class="text-lg font-bold text-gray-900 tracking-tight" x-text="calendarTitle"></h2>
                             <button @click="goToToday()" class="px-2.5 py-1 text-xs font-semibold bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg shadow-2xs transition-colors">
-                                Hari Ini
+                                Today
                             </button>
                         </div>
 
@@ -515,30 +505,30 @@
                             <button @click="calItemFilter = 'all'" 
                                     :class="calItemFilter === 'all' ? 'bg-primary text-white font-semibold' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'"
                                     class="px-2.5 py-1.5 rounded-lg transition-colors">
-                                Semua Agenda
+                                All Schedule
                             </button>
                             <button @click="calItemFilter = 'meeting'" 
                                     :class="calItemFilter === 'meeting' ? 'bg-indigo-600 text-white font-semibold' : 'bg-white text-indigo-700 hover:bg-indigo-50 border border-indigo-200'"
                                     class="px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
-                                <span>🤝 Pertemuan Klien</span>
+                                <span>Client Meetings</span>
                             </button>
                             <button @click="calItemFilter = 'deadline'" 
                                     :class="calItemFilter === 'deadline' ? 'bg-amber-600 text-white font-semibold' : 'bg-white text-amber-800 hover:bg-amber-50 border border-amber-200'"
                                     class="px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
-                                <span>⏰ Tenggat Tugas</span>
+                                <span>Task Deadlines</span>
                             </button>
                         </div>
                     </div>
 
                     <!-- Days of Week Header -->
                     <div class="grid grid-cols-7 border-b border-gray-200 bg-gray-50 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-gray-500">
-                        <div>Sen</div>
-                        <div>Sel</div>
-                        <div>Rab</div>
-                        <div>Kam</div>
-                        <div>Jum</div>
-                        <div class="text-blue-600">Sab</div>
-                        <div class="text-red-500">Min</div>
+                        <div>Mon</div>
+                        <div>Tue</div>
+                        <div>Wed</div>
+                        <div>Thu</div>
+                        <div>Fri</div>
+                        <div class="text-blue-600">Sat</div>
+                        <div class="text-red-500">Sun</div>
                     </div>
 
                     <!-- Monthly Grid Cells -->
@@ -561,7 +551,7 @@
                                               }"
                                               x-text="cell.day"></span>
                                         <template x-if="cell.isToday">
-                                            <span class="text-[9px] font-bold text-primary uppercase hidden sm:inline">Hari Ini</span>
+                                            <span class="text-[9px] font-bold text-primary uppercase hidden sm:inline">Today</span>
                                         </template>
                                     </div>
 
@@ -569,7 +559,7 @@
                                     @can('company_tasks.manage')
                                     <button @click.stop="openCreateModalForDate(cell.dateString)" 
                                             class="opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-400 hover:text-primary hover:bg-blue-50 transition-all"
-                                            title="Jadwalkan agenda di tanggal ini">
+                                            title="Schedule task on this date">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                     </button>
                                     @endcan
@@ -585,14 +575,14 @@
                                                  'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100': item.kind === 'deadline' && item.task.status !== 'done',
                                                  'bg-emerald-50 text-emerald-800 border-emerald-200 opacity-60 line-through': item.task.status === 'done'
                                              }"
-                                             :title="item.label + ' (' + item.task.code + ') - Klik untuk melihat detail'">
+                                             :title="item.label + ' (' + item.task.code + ') - Click to view details'">
                                             
-                                            <!-- Icon -->
+                                            <!-- Color dot -->
                                             <template x-if="item.kind === 'meeting'">
-                                                <span class="shrink-0 text-indigo-600 font-bold">🤝</span>
+                                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
                                             </template>
                                             <template x-if="item.kind === 'deadline'">
-                                                <span class="shrink-0 text-amber-600 font-bold">⏰</span>
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                             </template>
 
                                             <!-- Time / Label -->
@@ -607,21 +597,21 @@
                     <!-- Calendar Bottom Legend -->
                     <div class="p-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between flex-wrap gap-3 text-xs text-gray-500">
                         <div class="flex items-center gap-4 flex-wrap">
-                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-indigo-500"></span> <span>🤝 Pertemuan Klien</span></span>
-                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500"></span> <span>⏰ Tenggat Tugas (Deadline)</span></span>
-                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-500"></span> <span>✅ Selesai</span></span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-indigo-500"></span> <span>Client Meetings</span></span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500"></span> <span>Task Deadlines</span></span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-500"></span> <span>Completed</span></span>
                         </div>
-                        <span class="text-[11px] text-gray-400">💡 Klik pada tanggal atau kartu untuk melihat & mengedit tugas</span>
+                        <span class="text-[11px] text-gray-400">Click on a date or task card to view and edit details</span>
                     </div>
                 </div>
 
-                <!-- Right Column: Sidebar "Tenggat Waktu & Agenda Terdekat" -->
+                <!-- Right Column: Sidebar "Upcoming Deadlines & Schedule" -->
                 <div class="xl:col-span-1 space-y-4">
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-4">
                         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
                             <div>
-                                <h3 class="text-sm font-bold text-gray-900">Tenggat & Agenda Terdekat</h3>
-                                <p class="text-[11px] text-gray-500 mt-0.5">Urutan batas waktu & jadwal mendatang</p>
+                                <h3 class="text-sm font-bold text-gray-900">Upcoming Deadlines & Schedule</h3>
+                                <p class="text-[11px] text-gray-500 mt-0.5">Chronological upcoming deadlines and schedules</p>
                             </div>
                             <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-primary" 
                                   x-text="upcomingDeadlinesAndMeetings.length"></span>
@@ -639,7 +629,7 @@
                                         <div class="flex items-center gap-1.5">
                                             <template x-if="item.isOverdue">
                                                 <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 uppercase animate-pulse">
-                                                    Lewat Tenggat
+                                                    OVERDUE
                                                 </span>
                                             </template>
                                             <span class="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-white text-gray-600 border border-gray-200" x-text="item.task.code"></span>
@@ -664,9 +654,9 @@
                                     </template>
 
                                     <template x-if="item.task.client">
-                                        <div class="text-[10px] text-gray-500 truncate mb-1.5 flex items-center gap-1">
-                                            <span>🏢</span>
-                                            <span class="truncate" x-text="item.task.client.name"></span>
+                                        <div class="text-[10px] text-gray-500 truncate mb-1.5 flex items-center gap-1.5">
+                                            <svg class="w-3 h-3 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                            <span class="truncate" x-text="task.client ? task.client.name : item.task.client.name"></span>
                                         </div>
                                     </template>
 
@@ -696,7 +686,7 @@
 
                             <template x-if="upcomingDeadlinesAndMeetings.length === 0">
                                 <div class="py-8 text-center text-gray-400 text-xs">
-                                    Tidak ada jadwal agenda atau tenggat waktu tugas yang tercatat.
+                                    No upcoming schedule or task deadlines recorded.
                                 </div>
                             </template>
                         </div>
@@ -741,7 +731,7 @@
                             <span class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             </span>
-                            <h3 class="text-lg font-bold text-gray-900" x-text="modal.isEdit ? 'Edit Task Internal (' + modal.form.code + ')' : 'Buat Task Internal Baru'"></h3>
+                            <h3 class="text-lg font-bold text-gray-900" x-text="modal.isEdit ? 'Edit Task (' + modal.form.code + ')' : 'New Task'"></h3>
                         </div>
                         <button type="button" @click="closeModal()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-200 transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -752,63 +742,63 @@
                     <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
                         <!-- Title Field -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Judul Agenda / Task <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Task Title <span class="text-red-500">*</span></label>
                             <input type="text" 
                                    x-model="modal.form.title" 
                                    required 
-                                   placeholder="Contoh: Pertemuan Diskusi MVP Klien PT ABC, Rekap Laporan Kas Bulan Ini..." 
+                                   placeholder="e.g. Client Discussion MVP, Monthly Financial Recap..." 
                                    class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                         </div>
 
                         <!-- Type & Priority Row -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Kategori / Tipe <span class="text-red-500">*</span></label>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Category / Type <span class="text-red-500">*</span></label>
                                 <select x-model="modal.form.type" required class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <option value="meeting">🤝 Pertemuan Klien (Meeting)</option>
-                                    <option value="proposal">📑 Proposal & Quotation</option>
-                                    <option value="report">📊 Laporan Akhir Bulan</option>
-                                    <option value="operational">⚙️ Operasional & IT</option>
-                                    <option value="general">📌 Tugas Umum</option>
+                                    <option value="meeting">Client Meeting</option>
+                                    <option value="proposal">Proposal & Quotation</option>
+                                    <option value="report">Monthly Report</option>
+                                    <option value="operational">Operations & IT</option>
+                                    <option value="general">General Task</option>
                                 </select>
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Prioritas <span class="text-red-500">*</span></label>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Priority <span class="text-red-500">*</span></label>
                                 <select x-model="modal.form.priority" required class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <option value="urgent">🔴 Urgent</option>
-                                    <option value="high">🟠 Tinggi</option>
-                                    <option value="medium">🟡 Sedang</option>
-                                    <option value="low">⚪ Rendah</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
                                 </select>
                             </div>
                         </div>
 
                         <!-- Status Field -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Status Kolom <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Status <span class="text-red-500">*</span></label>
                             <select x-model="modal.form.status" required class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option value="todo">📌 To Do / Terjadwal</option>
-                                <option value="in_progress">⏳ In Progress</option>
-                                <option value="waiting_client">👥 Menunggu Klien / Review</option>
-                                <option value="done">✅ Selesai</option>
+                                <option value="todo">To Do / Scheduled</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="waiting_client">Waiting Client / Review</option>
+                                <option value="done">Completed</option>
                             </select>
                         </div>
 
-                        <!-- Multi-Assignee Selection Section (Add -> Pop up -> Search Karyawan -> Add -> Save) -->
+                        <!-- Multi-Assignee Selection Section -->
                         <div>
                             <div class="flex items-center justify-between mb-2">
                                 <div>
                                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                        Petugas / Penanggung Jawab
+                                        Assignees
                                     </label>
-                                    <p class="text-[11px] text-gray-500">Karyawan yang bertugas atau menghadiri agenda ini</p>
+                                    <p class="text-[11px] text-gray-500">Team members assigned to this task</p>
                                 </div>
                                 <button type="button" 
                                         @click="openAssigneeModal()" 
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-2xs">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                                    <span>+ Tambah Petugas</span>
+                                    <span>+ Add Assignee</span>
                                 </button>
                             </div>
 
@@ -823,12 +813,12 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="text-xs font-medium text-gray-600">Belum ada petugas yang ditugaskan</p>
-                                            <p class="text-[11px] text-gray-400">Klik tombol "+ Tambah Petugas" untuk mencari & menambahkan karyawan</p>
+                                            <p class="text-xs font-medium text-gray-600">No team members assigned yet</p>
+                                            <p class="text-[11px] text-gray-400">Click '+ Add Assignee' to search and select team members</p>
                                         </div>
                                     </div>
                                     <button type="button" @click="openAssigneeModal()" class="text-xs font-semibold text-primary hover:text-blue-700 bg-white border border-gray-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-gray-50 transition-colors">
-                                        Pilih
+                                        Select
                                     </button>
                                 </div>
 
@@ -853,7 +843,7 @@
                                             <button type="button" 
                                                     @click="removeAssignee(user.id)"
                                                     class="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-0.5"
-                                                    title="Hapus petugas dari agenda ini">
+                                                    title="Remove assignee">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                             </button>
                                         </div>
@@ -864,14 +854,14 @@
 
                         <!-- Client Association (Optional) -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Terkait Klien Tertentu (Opsional)</label>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Related Client (Optional)</label>
                             <select x-model="modal.form.client_id" class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option value="">-- Tidak Terikat Klien / Internal Saja --</option>
+                                <option value="">-- Not Tied to Client / Internal Only --</option>
                                 @foreach($clients as $c)
                                     <option value="{{ $c->id }}">{{ $c->name }} {{ $c->company_name ? ' - ' . $c->company_name : '' }}</option>
                                 @endforeach
                             </select>
-                            <p class="text-[11px] text-gray-400 mt-1">Pilih klien jika tugas ini berupa jadwal pertemuan, proposal, atau penagihan khusus klien.</p>
+                            <p class="text-[11px] text-gray-400 mt-1">Select a client if this task is related to a specific client meeting, proposal, or billing.</p>
                         </div>
 
                         <!-- Special Section: Meeting Details (Active if type === 'meeting') -->
@@ -880,21 +870,21 @@
                              class="p-4 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-3">
                             <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
                                 <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                <span>Detail Jadwal Pertemuan Klien</span>
+                                <span>Client Meeting Details</span>
                             </h4>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-indigo-900 mb-1">Tanggal & Jam Meeting</label>
+                                    <label class="block text-[11px] font-semibold text-indigo-900 mb-1">Meeting Date & Time</label>
                                     <input type="datetime-local" 
                                            x-model="modal.form.meeting_time" 
                                            class="w-full px-3 py-1.5 text-xs bg-white border border-indigo-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block text-[11px] font-semibold text-indigo-900 mb-1">Lokasi / Link Pertemuan</label>
+                                    <label class="block text-[11px] font-semibold text-indigo-900 mb-1">Location / Link</label>
                                     <input type="text" 
                                            x-model="modal.form.meeting_location" 
-                                           placeholder="Google Meet, Zoom, atau Alamat Kantor" 
+                                           placeholder="Google Meet, Zoom, or Office Address" 
                                            class="w-full px-3 py-1.5 text-xs bg-white border border-indigo-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                 </div>
                             </div>
@@ -902,7 +892,7 @@
 
                         <!-- Due Date (Deadline) -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Batas Waktu (Deadline) Selesai</label>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Due Date (Deadline)</label>
                             <input type="date" 
                                    x-model="modal.form.due_date" 
                                    class="w-full sm:w-1/2 px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
@@ -910,10 +900,10 @@
 
                         <!-- Description & Agenda Notes -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Deskripsi / Catatan Agenda</label>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Description & Notes</label>
                             <textarea x-model="modal.form.description" 
                                       rows="3" 
-                                      placeholder="Poin-poin pembahasan, catatan teknis, link draft dokumen, atau catatan penting lainnya..." 
+                                      placeholder="Discussion points, technical requirements, document links, or important notes..." 
                                       class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
                         </div>
                     </div>
@@ -926,7 +916,7 @@
                                 <button type="button" 
                                         @click="deleteTask(modal.form)" 
                                         class="text-xs font-semibold text-red-600 hover:text-red-800 hover:underline">
-                                    Hapus Task Ini
+                                    Delete Task
                                 </button>
                                 @endcan
                             </template>
@@ -934,13 +924,13 @@
 
                         <div class="flex items-center gap-2.5">
                             <button type="button" @click="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                                Batal
+                                Cancel
                             </button>
                             <button type="submit" 
                                     :disabled="modal.isSubmitting"
                                     class="inline-flex items-center gap-2 px-5 py-2 bg-primary hover:bg-blue-800 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors disabled:opacity-50">
-                                <span x-show="!modal.isSubmitting" x-text="modal.isEdit ? 'Simpan Perubahan' : 'Buat Task'"></span>
-                                <span x-show="modal.isSubmitting">Menyimpan...</span>
+                                <span x-show="!modal.isSubmitting" x-text="modal.isEdit ? 'Save Changes' : 'Create Task'"></span>
+                                <span x-show="modal.isSubmitting">Saving...</span>
                             </button>
                         </div>
                     </div>
@@ -986,8 +976,8 @@
                             </svg>
                         </span>
                         <div>
-                            <h3 id="assignee-modal-title" class="text-base font-bold text-gray-900 leading-tight">Pilih Karyawan / Petugas</h3>
-                            <p class="text-xs text-gray-500">Cari dan tentukan karyawan yang bertanggung jawab</p>
+                            <h3 id="assignee-modal-title" class="text-base font-bold text-gray-900 leading-tight">Select Assignees</h3>
+                            <p class="text-xs text-gray-500">Search and select responsible team members</p>
                         </div>
                     </div>
                     <button type="button" @click="closeAssigneeModal()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-200 transition-colors">
@@ -1003,7 +993,7 @@
                         </svg>
                         <input type="text"
                                x-model="assigneeModal.searchQuery"
-                               placeholder="Ketik untuk mencari nama, email, atau jabatan..."
+                               placeholder="Type to search name, email, or role..."
                                class="w-full pl-10 pr-9 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all">
                         <button x-show="assigneeModal.searchQuery" 
                                 @click="assigneeModal.searchQuery = ''" 
@@ -1012,8 +1002,8 @@
                         </button>
                     </div>
                     <div class="flex items-center justify-between mt-2 px-1 text-[11px] text-gray-500">
-                        <span>Menampilkan <strong class="text-gray-800" x-text="filteredAssigneeUsers.length"></strong> karyawan</span>
-                        <span class="font-semibold text-primary" x-text="assigneeModal.selectedIds.length + ' orang dipilih'"></span>
+                        <span>Showing <strong class="text-gray-800" x-text="filteredAssigneeUsers.length"></strong> members</span>
+                        <span class="font-semibold text-primary" x-text="assigneeModal.selectedIds.length + ' selected'"></span>
                     </div>
                 </div>
 
@@ -1042,7 +1032,7 @@
                                 </div>
                             </div>
 
-                            <!-- Right Action: Add / Terpilih button -->
+                            <!-- Right Action: Add / Selected button -->
                             <div class="shrink-0 ml-2">
                                 <!-- Selected state -->
                                 <template x-if="isAssigneeModalSelected(user.id)">
@@ -1051,8 +1041,8 @@
                                             class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-100/80 text-emerald-800 border border-emerald-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all shadow-2xs group/btn">
                                         <svg class="w-3.5 h-3.5 text-emerald-700 group-hover/btn:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                         <svg class="w-3.5 h-3.5 text-red-600 hidden group-hover/btn:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        <span class="group-hover/btn:hidden">Terpilih</span>
-                                        <span class="hidden group-hover/btn:inline">Batal</span>
+                                        <span class="group-hover/btn:hidden">Selected</span>
+                                        <span class="hidden group-hover/btn:inline">Remove</span>
                                     </button>
                                 </template>
 
@@ -1062,7 +1052,7 @@
                                             @click.stop="toggleAssigneeModalSelection(user.id)"
                                             class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-gray-700 border border-gray-200 hover:bg-primary hover:text-white hover:border-primary transition-all shadow-2xs">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                                        <span>+ Tambah</span>
+                                        <span>+ Add</span>
                                     </button>
                                 </template>
                             </div>
@@ -1073,8 +1063,8 @@
                     <template x-if="filteredAssigneeUsers.length === 0">
                         <div class="py-8 text-center text-gray-400">
                             <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                            <p class="text-xs font-medium text-gray-600">Tidak ada karyawan yang sesuai</p>
-                            <p class="text-[11px] text-gray-400 mt-0.5">Coba kata kunci pencarian nama atau email lainnya</p>
+                            <p class="text-xs font-medium text-gray-600">No matching team members found</p>
+                            <p class="text-[11px] text-gray-400 mt-0.5">Try searching with another name, email, or role keyword</p>
                         </div>
                     </template>
                 </div>
@@ -1082,19 +1072,19 @@
                 <!-- Modal Footer: Cancel & Save -->
                 <div class="bg-gray-50 px-6 py-3.5 border-t border-gray-200 flex items-center justify-between">
                     <div>
-                        <span class="text-xs font-semibold text-gray-600" x-text="assigneeModal.selectedIds.length + ' karyawan dipilih'"></span>
+                        <span class="text-xs font-semibold text-gray-600" x-text="assigneeModal.selectedIds.length + ' members selected'"></span>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" 
                                 @click="closeAssigneeModal()" 
                                 class="px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-xs font-semibold shadow-2xs transition-colors">
-                            Batal
+                            Cancel
                         </button>
                         <button type="button" 
                                 @click="saveAssigneeModal()" 
                                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-blue-800 text-white rounded-lg text-xs font-bold shadow-sm transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                            <span>Simpan Petugas</span>
+                            <span>Save Assignees</span>
                         </button>
                     </div>
                 </div>
@@ -1110,10 +1100,10 @@ function companyTasksApp() {
         tasks: @json($tasks),
         internalUsers: @json($users),
         columns: [
-            { id: 'todo', title: 'To Do / Terjadwal', shortTitle: 'To Do', dotClass: 'bg-gray-400' },
-            { id: 'in_progress', title: 'Sedang Dikerjakan', shortTitle: 'In Progress', dotClass: 'bg-blue-500' },
-            { id: 'waiting_client', title: 'Menunggu Klien / Review', shortTitle: 'Waiting', dotClass: 'bg-amber-500' },
-            { id: 'done', title: 'Selesai', shortTitle: 'Selesai', dotClass: 'bg-emerald-500' }
+            { id: 'todo', title: 'TO DO / SCHEDULED', shortTitle: 'To Do', dotClass: 'bg-gray-400' },
+            { id: 'in_progress', title: 'IN PROGRESS', shortTitle: 'In Progress', dotClass: 'bg-blue-500' },
+            { id: 'waiting_client', title: 'WAITING CLIENT / REVIEW', shortTitle: 'Review', dotClass: 'bg-amber-500' },
+            { id: 'done', title: 'COMPLETED', shortTitle: 'Done', dotClass: 'bg-emerald-500' }
         ],
 
         // Calendar States
@@ -1121,8 +1111,8 @@ function companyTasksApp() {
         calMonth: (new Date()).getMonth(), // 0 to 11
         calItemFilter: 'all', // 'all', 'meeting', 'deadline'
         monthNames: [
-            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
         ],
 
         get calendarTitle() {
@@ -1249,7 +1239,7 @@ function companyTasksApp() {
                         if (t.type !== 'meeting' || !t.meeting_time || t.meeting_time.substring(0, 10) !== dateString) {
                             items.push({
                                 kind: 'deadline',
-                                label: 'Tenggat: ' + t.title,
+                                label: 'Deadline: ' + t.title,
                                 task: t,
                                 time: null
                             });
@@ -1383,7 +1373,7 @@ function companyTasksApp() {
         saveAssigneeModal() {
             this.modal.form.assignee_ids = [...this.assigneeModal.selectedIds];
             this.assigneeModal.isOpen = false;
-            this.showToast('Petugas berhasil disimpan (' + this.modal.form.assignee_ids.length + ' orang dipilih).');
+            this.showToast('Assignees saved (' + this.modal.form.assignee_ids.length + ' selected).');
         },
 
         getSelectedAssignees() {
@@ -1435,8 +1425,8 @@ function companyTasksApp() {
 
         getAssigneesTooltip(task) {
             const assignees = this.getTaskAssignees(task);
-            if (assignees.length === 0) return 'Belum ditugaskan';
-            return 'Petugas: ' + assignees.map(a => a.name).join(', ');
+            if (assignees.length === 0) return 'Unassigned';
+            return 'Assignees: ' + assignees.map(a => a.name).join(', ');
         },
 
         getAvatarBgColor(idx) {
@@ -1505,15 +1495,15 @@ function companyTasksApp() {
         getTypeBadge(type) {
             switch(type) {
                 case 'meeting':
-                    return { label: '🤝 Meeting Klien', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
+                    return { label: 'Client Meeting', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
                 case 'proposal':
-                    return { label: '📑 Proposal', badge: 'bg-amber-50 text-amber-800 border-amber-200' };
+                    return { label: 'Proposal', badge: 'bg-amber-50 text-amber-800 border-amber-200' };
                 case 'report':
-                    return { label: '📊 Laporan', badge: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+                    return { label: 'Monthly Report', badge: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
                 case 'operational':
-                    return { label: '⚙️ Operasional', badge: 'bg-purple-50 text-purple-700 border-purple-200' };
+                    return { label: 'Operations', badge: 'bg-purple-50 text-purple-700 border-purple-200' };
                 default:
-                    return { label: '📌 Umum', badge: 'bg-gray-100 text-gray-700 border-gray-200' };
+                    return { label: 'General', badge: 'bg-gray-100 text-gray-700 border-gray-200' };
             }
         },
 
@@ -1522,11 +1512,11 @@ function companyTasksApp() {
                 case 'urgent':
                     return { label: 'Urgent', badge: 'bg-red-50 text-red-700 border-red-200', dot: 'bg-red-500 animate-pulse' };
                 case 'high':
-                    return { label: 'Tinggi', badge: 'bg-orange-50 text-orange-700 border-orange-200', dot: 'bg-orange-500' };
+                    return { label: 'High', badge: 'bg-orange-50 text-orange-700 border-orange-200', dot: 'bg-orange-500' };
                 case 'medium':
-                    return { label: 'Sedang', badge: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' };
+                    return { label: 'Medium', badge: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' };
                 default:
-                    return { label: 'Rendah', badge: 'bg-gray-100 text-gray-600 border-gray-200', dot: 'bg-gray-400' };
+                    return { label: 'Low', badge: 'bg-gray-100 text-gray-600 border-gray-200', dot: 'bg-gray-400' };
             }
         },
 
@@ -1543,13 +1533,13 @@ function companyTasksApp() {
         formatDate(dateString) {
             if (!dateString) return '-';
             const date = new Date(dateString);
-            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
         },
 
         formatDateTime(dateTimeString) {
             if (!dateTimeString) return '-';
             const date = new Date(dateTimeString);
-            return date.toLocaleDateString('id-ID', { 
+            return date.toLocaleDateString('en-US', { 
                 weekday: 'short', 
                 day: 'numeric', 
                 month: 'short', 
@@ -1614,15 +1604,15 @@ function companyTasksApp() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    this.showToast(data.message || 'Status tugas berhasil diperbarui.');
+                    this.showToast(data.message || 'Task status updated successfully.');
                 } else {
                     task.status = oldStatus;
-                    this.showToast('Gagal memindahkan tugas.', 'error');
+                    this.showToast('Failed to move task.', 'error');
                 }
             } catch (error) {
                 console.error(error);
                 task.status = oldStatus;
-                this.showToast('Terjadi kesalahan jaringan.', 'error');
+                this.showToast('Network error occurred.', 'error');
             }
         },
 
@@ -1643,14 +1633,14 @@ function companyTasksApp() {
                 });
 
                 if (response.ok) {
-                    this.showToast('Status tugas berhasil diperbarui.');
+                    this.showToast('Task status updated successfully.');
                 } else {
                     task.status = oldStatus;
-                    this.showToast('Gagal memindahkan status tugas.', 'error');
+                    this.showToast('Failed to move task.', 'error');
                 }
             } catch (err) {
                 task.status = oldStatus;
-                this.showToast('Terjadi kesalahan jaringan.', 'error');
+                this.showToast('Network error occurred.', 'error');
             }
         },
 
@@ -1741,22 +1731,22 @@ function companyTasksApp() {
                     } else {
                         this.tasks.unshift(data.task);
                     }
-                    this.showToast(data.message);
+                    this.showToast(data.message || (isEdit ? 'Task updated successfully.' : 'Task created successfully.'));
                     this.closeModal();
                 } else {
                     const err = await response.json();
-                    this.showToast(err.message || 'Gagal menyimpan task.', 'error');
+                    this.showToast(err.message || 'Failed to save task.', 'error');
                 }
             } catch (error) {
                 console.error(error);
-                this.showToast('Terjadi kesalahan jaringan.', 'error');
+                this.showToast('Network error occurred.', 'error');
             } finally {
                 this.modal.isSubmitting = false;
             }
         },
 
         async deleteTask(task) {
-            if (!confirm(`Apakah Anda yakin ingin menghapus task internal "${task.title}" (${task.code})?`)) {
+            if (!confirm(`Are you sure you want to delete internal task "${task.title}" (${task.code})?`)) {
                 return;
             }
 
@@ -1771,16 +1761,16 @@ function companyTasksApp() {
 
                 if (response.ok) {
                     this.tasks = this.tasks.filter(t => t.id !== task.id);
-                    this.showToast('Task berhasil dihapus.');
+                    this.showToast('Task deleted successfully.');
                     if (this.modal.isOpen) {
                         this.closeModal();
                     }
                 } else {
-                    this.showToast('Gagal menghapus task.', 'error');
+                    this.showToast('Failed to delete task.', 'error');
                 }
             } catch (err) {
                 console.error(err);
-                this.showToast('Terjadi kesalahan saat menghapus.', 'error');
+                this.showToast('An error occurred while deleting.', 'error');
             }
         }
     };
